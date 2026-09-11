@@ -1,0 +1,68 @@
+{% extends 'base/base.html' %}
+{% load store_tags %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="wrap">
+    <div class="crumbs"><a href="{% url 'home' %}">{% t 'home' %}</a> <span>/</span> <span>{% t 'cart' %}</span></div>
+    <h1>{% t 'cart' %}</h1>
+    <p>{{ cart.count }} {% t 'results_count' %}</p>
+  </div>
+</section>
+
+<section class="section-sm">
+  <div class="wrap">
+  {% if cart.is_empty %}
+    <div class="empty-state">
+      <div class="ico">🛒</div>
+      <h3>{% t 'cart_empty' %}</h3>
+      <p>{% t 'cart_empty_sub' %}</p>
+      <a class="btn btn-lg" href="{% url 'shop' %}">{% t 'continue_shopping' %}</a>
+    </div>
+  {% else %}
+    <div class="cart-layout">
+
+      <form method="post" action="{% url 'cart_update' %}">
+        {% csrf_token %}
+        <div class="cart-list">
+          {% for row in cart %}
+          <div class="cart-row">
+            <a class="thumb" href="{% url 'product_detail' row.product.slug %}">
+              {% if row.image %}<img src="{{ row.image.url }}" alt="{{ row.product.name }}">{% endif %}
+            </a>
+            <div>
+              <h4><a href="{% url 'product_detail' row.product.slug %}">{{ row.product.name }}</a></h4>
+              <div class="opts">
+                {% if row.color %}<span>{% t 'color' %}: {{ row.color.name }}</span>{% endif %}
+                {% if row.size %}<span>{% t 'size' %}: {{ row.size.label }}</span>{% endif %}
+                <span>{% price row.unit_price %}</span>
+              </div>
+              <div class="qty-box">
+                <button type="button" data-qty="down" aria-label="-">−</button>
+                <input type="number" name="qty_{{ row.variant.id }}" value="{{ row.quantity }}" min="1" max="{{ row.max_quantity }}">
+                <button type="button" data-qty="up" aria-label="+">+</button>
+              </div>
+            </div>
+            <div class="actions-col" style="text-align:end">
+              <div class="line-price">{% price row.line_total %}</div>
+              <a class="remove" href="{% url 'cart_remove' row.variant.id %}">{% t 'remove' %}</a>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div class="flex" style="margin-top:16px;flex-wrap:wrap">
+          <button class="btn btn-sm btn-soft" type="submit">{% t 'update_cart' %}</button>
+          <a class="btn btn-sm btn-ghost" href="{% url 'shop' %}">{% t 'continue_shopping' %}</a>
+          <span class="spacer"></span>
+          <a class="btn btn-sm btn-danger" href="{% url 'cart_clear' %}">{% t 'delete' %}</a>
+        </div>
+      </form>
+
+      {% include 'partials/summary.html' %}
+
+    </div>
+  {% endif %}
+  </div>
+</section>
+{% endblock %}

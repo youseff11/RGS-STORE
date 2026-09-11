@@ -1,0 +1,83 @@
+<aside class="sidebar">
+  <div class="sb-brand">
+    <span class="mark">RGS</span>
+    <span>
+      <b>RGS TOWER</b>
+      <small>MEN STORE</small>
+    </span>
+  </div>
+
+  <a class="sb-link {% if active_page == 'index' %}is-active{% endif %}" href="{% url 'dash_index' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></svg>
+    نظرة عامة
+  </a>
+
+  <div class="sb-label">المتجر</div>
+
+  <a class="sb-link {% if active_page == 'products' %}is-active{% endif %}" href="{% url 'dash_products' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 4l-4 3v13h16V7l-4-3"/><path d="M8 4a4 4 0 008 0"/></svg>
+    المنتجات
+  </a>
+  <a class="sb-link {% if active_page == 'categories' %}is-active{% endif %}" href="{% url 'dash_categories' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+    الأقسام
+  </a>
+  <a class="sb-link {% if active_page == 'sizes' %}is-active{% endif %}" href="{% url 'dash_sizes' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 8h18v8H3z"/><path d="M7 8v3M11 8v5M15 8v3M19 8v5"/></svg>
+    المقاسات
+  </a>
+
+  <div class="sb-label">المبيعات</div>
+
+  <a class="sb-link {% if active_page == 'orders' %}is-active{% endif %}" href="{% url 'dash_orders' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 7h12l-1 12.2a2 2 0 01-2 1.8H9a2 2 0 01-2-1.8L6 7z"/><path d="M9.2 7V5.6a2.8 2.8 0 015.6 0V7"/></svg>
+    الطلبات
+    {% if new_orders %}<span class="pill">{{ new_orders }}</span>{% endif %}
+  </a>
+  <a class="sb-link {% if active_page == 'coupons' %}is-active{% endif %}" href="{% url 'dash_coupons' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 9a2 2 0 002-2V6h14v1a2 2 0 000 4v1a2 2 0 000 4v1H5v-1a2 2 0 00-2-2z"/><path d="M9.5 9.5l5 5"/></svg>
+    أكواد الخصم
+  </a>
+  <a class="sb-link {% if active_page == 'promotions' %}is-active{% endif %}" href="{% url 'dash_promotions' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20.6 13.4L13.4 20.6a2 2 0 01-2.8 0l-7.2-7.2A2 2 0 013 12V4.5A1.5 1.5 0 014.5 3H12a2 2 0 011.4.6l7.2 7.2a2 2 0 010 2.6z"/><circle cx="7.5" cy="7.5" r="1.3"/></svg>
+    العروض والخصومات
+  </a>
+  <a class="sb-link {% if active_page == 'governorates' %}is-active{% endif %}" href="{% url 'dash_governorates' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21s7-5.5 7-11a7 7 0 10-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
+    المحافظات
+  </a>
+
+  <div class="sb-label">المحتوى</div>
+
+  <a class="sb-link {% if active_page == 'announcements' %}is-active{% endif %}" href="{% url 'dash_announcements' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 11v2a2 2 0 002 2h2l5 4V5L7 9H5a2 2 0 00-2 2z"/><path d="M16.5 9a4 4 0 010 6"/><path d="M19 6.5a7.5 7.5 0 010 11"/></svg>
+    الشريط المتحرك
+  </a>
+  <a class="sb-link {% if active_page == 'banners' %}is-active{% endif %}" href="{% url 'dash_banners' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M4 17l5-4.5 4 3.5 3-2.5 4 3.5"/></svg>
+    البانرات
+  </a>
+  <a class="sb-link {% if active_page == 'messages' %}is-active{% endif %}" href="{% url 'dash_messages' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="4.5" width="19" height="15" rx="2"/><path d="M3 6l9 7 9-7"/></svg>
+    الرسائل
+    {% if unread_messages %}<span class="pill">{{ unread_messages }}</span>{% endif %}
+  </a>
+
+  <div class="sb-label">الإعدادات</div>
+
+  <a class="sb-link {% if active_page == 'settings' %}is-active{% endif %}" href="{% url 'dash_settings' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5V21a2 2 0 11-4 0v-.1A1.6 1.6 0 008 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.6 1.6 0 00.3-1.8 1.6 1.6 0 00-1.5-1H2a2 2 0 110-4h.1A1.6 1.6 0 003.6 8a1.6 1.6 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 008 3.7 1.6 1.6 0 009 2.2V2a2 2 0 114 0v.1A1.6 1.6 0 0016 3.6a1.6 1.6 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 00-.3 1.8V8a1.6 1.6 0 001.5 1H22a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg>
+    إعدادات المتجر
+  </a>
+  <a class="sb-link" href="/django-admin/" target="_blank">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l8 4v5c0 4.4-3.4 8.4-8 9-4.6-.6-8-4.6-8-9V7z"/></svg>
+    Django Admin
+  </a>
+
+  <div class="sb-foot">
+    <a class="sb-link" href="{% url 'dash_logout' %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M15 17l5-5-5-5"/><path d="M20 12H9"/><path d="M9 20H6a2 2 0 01-2-2V6a2 2 0 012-2h3"/></svg>
+      تسجيل الخروج
+    </a>
+  </div>
+</aside>

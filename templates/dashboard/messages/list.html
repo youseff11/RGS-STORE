@@ -1,0 +1,37 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}الرسائل{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>رسائل العملاء</h2><p>{{ items.paginator.count }} رسالة</p></div>
+</div>
+
+{% if items.object_list %}
+<div class="table-wrap">
+  <table class="t">
+    <thead><tr><th>المرسل</th><th>الموضوع</th><th>التاريخ</th><th>الحالة</th><th></th></tr></thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td><b>{{ item.name }}</b><div class="small muted" dir="ltr">{{ item.phone }} {{ item.email }}</div></td>
+        <td class="small">{{ item.subject|default:'—' }}<div class="muted">{{ item.message|truncatechars:60 }}</div></td>
+        <td class="small muted">{{ item.created_at|date:"Y/m/d H:i" }}</td>
+        <td><span class="chip {% if item.is_read %}chip-muted{% else %}chip-warn{% endif %}">{% if item.is_read %}مقروءة{% else %}جديدة{% endif %}</span></td>
+        <td>
+          <div class="row-actions">
+            <a class="btn btn-sm btn-soft" href="{% url 'dash_message_detail' item.pk %}">فتح</a>
+            <form method="post" action="{% url 'dash_message_delete' item.pk %}" data-confirm="حذف الرسالة؟">
+              {% csrf_token %}<button class="btn btn-sm btn-danger" type="submit">حذف</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% with page_obj=items %}{% include 'dashboard/_pager.html' %}{% endwith %}
+{% else %}
+<div class="card"><div class="empty"><div class="ico">✉️</div>لا توجد رسائل</div></div>
+{% endif %}
+{% endblock %}

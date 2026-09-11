@@ -1,0 +1,54 @@
+{% extends 'base/dashboard_base.html' %}
+{% load store_tags %}
+{% block page_name %}العروض والخصومات{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2>العروض والخصومات</h2>
+    <p>خصم تلقائي على كل المنتجات، أو قسم معيّن، أو منتجات محددة — بيظهر على السعر فورًا</p>
+  </div>
+  <a class="btn" href="{% url 'dash_promotion_new' %}">+ عرض جديد</a>
+</div>
+
+{% if promotions %}
+<div class="table-wrap">
+  <table class="t">
+    <thead><tr><th>العرض</th><th>النطاق</th><th>الخصم</th><th>المدة</th><th>الحالة</th><th></th></tr></thead>
+    <tbody>
+      {% for promo in promotions %}
+      <tr>
+        <td>
+          <b>{{ promo.title }}</b>
+          {% if promo.badge %}<div><span class="chip chip-accent" style="margin-top:4px">{{ promo.badge }}</span></div>{% endif %}
+        </td>
+        <td class="small">
+          {{ promo.get_scope_display }}
+          {% if promo.scope == 'category' %}
+            <div class="muted">{% for c in promo.categories.all %}{{ c.name }}{% if not forloop.last %}، {% endif %}{% endfor %}</div>
+          {% elif promo.scope == 'product' %}
+            <div class="muted">{{ promo.products.count }} منتج</div>
+          {% endif %}
+        </td>
+        <td><b>{% if promo.discount_type == 'percent' %}{{ promo.value|money }}%{% else %}{% price promo.value %}{% endif %}</b></td>
+        <td class="small muted">
+          {% if promo.start_at %}{{ promo.start_at|date:"Y/m/d" }}{% else %}—{% endif %} → {% if promo.end_at %}{{ promo.end_at|date:"Y/m/d" }}{% else %}∞{% endif %}
+        </td>
+        <td><span class="chip {% if promo.is_running %}chip-ok{% else %}chip-muted{% endif %}">{% if promo.is_running %}شغّال{% else %}متوقف{% endif %}</span></td>
+        <td>
+          <div class="row-actions">
+            <a class="btn btn-sm btn-soft" href="{% url 'dash_promotion_edit' promo.pk %}">تعديل</a>
+            <form method="post" action="{% url 'dash_promotion_delete' promo.pk %}" data-confirm="حذف العرض؟">
+              {% csrf_token %}<button class="btn btn-sm btn-danger" type="submit">حذف</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card"><div class="empty"><div class="ico">🏷️</div>لا توجد عروض حاليًا</div></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,120 @@
+{% extends 'base/base.html' %}
+{% load store_tags %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="wrap">
+    <div class="crumbs">
+      <a href="{% url 'home' %}">{% t 'home' %}</a> <span>/</span>
+      <a href="{% url 'cart' %}">{% t 'cart' %}</a> <span>/</span> <span>{% t 'checkout' %}</span>
+    </div>
+    <h1>{% t 'checkout_title' %}</h1>
+    <p>{% t 'cod_note' %}</p>
+  </div>
+</section>
+
+<section class="section-sm">
+  <div class="wrap cart-layout">
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="form-card" style="margin-bottom:18px">
+        <h3>{% t 'shipping_details' %}</h3>
+
+        <div class="field-row">
+          <div class="field {% if errors.full_name %}has-error{% endif %}">
+            <label>{% t 'full_name' %} <span class="req">*</span></label>
+            <input type="text" name="full_name" value="{{ data.full_name }}" required>
+            {% if errors.full_name %}<div class="err">{{ errors.full_name }}</div>{% endif %}
+          </div>
+          <div class="field {% if errors.phone %}has-error{% endif %}">
+            <label>{% t 'phone' %} <span class="req">*</span></label>
+            <input type="tel" name="phone" value="{{ data.phone }}" dir="ltr" required>
+            {% if errors.phone %}<div class="err">{{ errors.phone }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>{% t 'phone_alt' %}</label>
+            <input type="tel" name="phone_alt" value="{{ data.phone_alt }}" dir="ltr">
+          </div>
+          <div class="field">
+            <label>{% t 'email' %}</label>
+            <input type="email" name="email" value="{{ data.email }}" dir="ltr">
+          </div>
+        </div>
+
+        <div class="field-row">
+          {% if governorates %}
+          <div class="field {% if errors.governorate %}has-error{% endif %}">
+            <label>{% t 'governorate' %} <span class="req">*</span></label>
+            <select name="governorate" required>
+              <option value="">—</option>
+              {% for gov in governorates %}
+                <option value="{{ gov.id }}" {% if data.governorate == gov.id|stringformat:'s' %}selected{% endif %}>{{ gov.name }}</option>
+              {% endfor %}
+            </select>
+            {% if errors.governorate %}<div class="err">{{ errors.governorate }}</div>{% endif %}
+          </div>
+          {% endif %}
+          <div class="field">
+            <label>{% t 'city' %}</label>
+            <input type="text" name="city" value="{{ data.city }}">
+          </div>
+        </div>
+
+        <div class="field {% if errors.address %}has-error{% endif %}">
+          <label>{% t 'address' %} <span class="req">*</span></label>
+          <textarea name="address" rows="3" required>{{ data.address }}</textarea>
+          {% if errors.address %}<div class="err">{{ errors.address }}</div>{% endif %}
+        </div>
+
+        <div class="field" style="margin-bottom:0">
+          <label>{% t 'notes' %}</label>
+          <textarea name="notes" rows="2">{{ data.notes }}</textarea>
+        </div>
+      </div>
+
+      <div class="form-card" style="margin-bottom:18px">
+        <h3>{% t 'payment_method' %}</h3>
+        <div class="pay-option">
+          <span class="ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="26" height="26"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6 12h.01M18 12h.01"/></svg>
+          </span>
+          <div>
+            <h4>{% t 'cod' %}</h4>
+            <p>{% t 'cod_note' %}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <h3>{% t 'your_order' %}</h3>
+        <div class="mini-list">
+          {% for row in cart %}
+          <div class="mini-row">
+            <div class="thumb">{% if row.image %}<img src="{{ row.image.url }}" alt="">{% endif %}</div>
+            <div>
+              <div class="n">{{ row.product.name }}</div>
+              <div class="o">
+                {% if row.color %}{{ row.color.name }}{% endif %}
+                {% if row.size %}· {{ row.size.label }}{% endif %} · ×{{ row.quantity }}
+              </div>
+            </div>
+            <div class="p">{% price row.line_total %}</div>
+          </div>
+          {% endfor %}
+        </div>
+        <button class="btn btn-lg btn-block" type="submit" style="margin-top:18px">
+          {% t 'place_order' %} — {% price totals.total %}
+        </button>
+      </div>
+    </form>
+
+    {% include 'partials/summary.html' with hide_checkout=1 %}
+
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}المقاسات والكميات{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2>{{ product.name }}</h2>
+    <p>حدد المقاسات المتاحة، وكمية كل لون × مقاس</p>
+  </div>
+  <a class="btn btn-ghost" href="{% url 'dash_products' %}">رجوع</a>
+</div>
+
+<div class="filters-bar">
+  <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_edit' product.pk %}">١. البيانات</a>
+  <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_media' product.pk %}">٢. الألوان والصور</a>
+  <a class="btn btn-sm" href="{% url 'dash_product_stock' product.pk %}">٣. المقاسات والكميات</a>
+  <span class="spacer"></span>
+  <span class="chip chip-accent">إجمالي المخزون: {{ product.total_stock }}</span>
+</div>
+
+{% if not sizes %}
+<div class="card">
+  <div class="empty">
+    <div class="ico">📏</div>
+    لا توجد مقاسات معرفة في المتجر
+    <div style="margin-top:14px"><a class="btn" href="{% url 'dash_sizes' %}">إضافة المقاسات</a></div>
+  </div>
+</div>
+{% else %}
+
+<form method="post">
+  {% csrf_token %}
+
+  <div class="card">
+    <div class="card-head"><h3>المقاسات المتاحة لهذا المنتج</h3></div>
+    <div class="size-toggles">
+      {% for size in sizes %}
+        <label>
+          <input type="checkbox" name="sizes" value="{{ size.id }}" {% if size.id in active_size_ids %}checked{% endif %}>
+          {{ size.name }}
+        </label>
+      {% endfor %}
+    </div>
+    <div class="help" style="margin-top:10px">شيل علامة الصح على أي مقاس مش متاح للمنتج ده.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>الكميات</h3>
+      <span class="small muted">اترك الخانة فارغة لو التركيبة دي مش موجودة</span>
+    </div>
+
+    <div class="matrix">
+      <table>
+        <thead>
+          <tr>
+            <th class="row-h">اللون \ المقاس</th>
+            {% for size in sizes %}<th>{{ size.name }}</th>{% endfor %}
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in grid %}
+          <tr>
+            <th class="row-h">
+              {% if row.color %}
+                <span class="swatch" style="background:{{ row.color.hex_code }}"></span>{{ row.color.name }}
+              {% else %}
+                بدون لون
+              {% endif %}
+            </th>
+            {% for cell in row.cells %}
+              <td><input type="number" min="0" name="{{ cell.key }}" value="{{ cell.value }}" placeholder="—"></td>
+            {% endfor %}
+            <td><button class="btn btn-sm btn-soft" type="button" data-fill-row>تعبئة الصف</button></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if not product.colors.all %}
+      <div class="help" style="margin-top:12px">
+        المنتج ده مالوش ألوان — <a href="{% url 'dash_product_media' product.pk %}">أضف ألوان</a> لو عايز تحدد كمية لكل لون.
+      </div>
+    {% endif %}
+
+    <button class="btn" type="submit" style="margin-top:16px">حفظ المخزون</button>
+  </div>
+</form>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends 'base/dashboard_base.html' %}
+{% load store_tags %}
+{% block page_name %}المنتجات{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2>المنتجات</h2>
+    <p>{{ page_obj.paginator.count }} منتج في المتجر</p>
+  </div>
+  <a class="btn" href="{% url 'dash_product_new' %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    منتج جديد
+  </a>
+</div>
+
+<form class="filters-bar" method="get">
+  <input class="inp" type="search" name="q" value="{{ q }}" placeholder="ابحث بالاسم أو الكود...">
+  <select class="inp select" name="category" style="max-width:190px">
+    <option value="">كل الأقسام</option>
+    {% for cat in categories %}
+      <option value="{{ cat.id }}" {% if category == cat.id|stringformat:'s' %}selected{% endif %}>{{ cat.name }}</option>
+    {% endfor %}
+  </select>
+  <select class="inp select" name="status" style="max-width:170px">
+    <option value="">كل الحالات</option>
+    <option value="active" {% if status == 'active' %}selected{% endif %}>معروض</option>
+    <option value="hidden" {% if status == 'hidden' %}selected{% endif %}>مخفي</option>
+    <option value="out" {% if status == 'out' %}selected{% endif %}>نفد المخزون</option>
+  </select>
+  <button class="btn btn-sm" type="submit">بحث</button>
+  <a class="btn btn-sm btn-ghost" href="{% url 'dash_products' %}">مسح</a>
+</form>
+
+{% if page_obj.object_list %}
+<div class="table-wrap">
+  <table class="t">
+    <thead>
+      <tr><th>المنتج</th><th>القسم</th><th>السعر</th><th>المخزون</th><th>الحالة</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for product in page_obj %}
+      <tr>
+        <td>
+          <div class="flex">
+            {% if product.main_image %}
+              <img class="thumb" src="{{ product.main_image.url }}" alt="">
+            {% else %}
+              <span class="thumb" style="display:grid;place-items:center;font-size:9px;color:var(--muted)">لا صورة</span>
+            {% endif %}
+            <div style="min-width:0">
+              <b>{{ product.name }}</b>
+              <div class="small muted">{% if product.sku %}{{ product.sku }}{% else %}—{% endif %}</div>
+            </div>
+          </div>
+        </td>
+        <td class="small">{{ product.category.name|default:'—' }}</td>
+        <td>
+          <b>{% price product.final_price %}</b>
+          {% if product.old_price %}<div class="small muted" style="text-decoration:line-through">{{ product.old_price|money }}</div>{% endif %}
+        </td>
+        <td>
+          {% if product.stock %}
+            <span class="chip {% if product.stock <= 5 %}chip-warn{% else %}chip-ok{% endif %}">{{ product.stock }}</span>
+          {% else %}
+            <span class="chip chip-bad">0</span>
+          {% endif %}
+        </td>
+        <td>
+          <a href="{% url 'dash_product_toggle' product.pk %}" class="chip {% if product.is_active %}chip-ok{% else %}chip-muted{% endif %}">
+            {% if product.is_active %}معروض{% else %}مخفي{% endif %}
+          </a>
+        </td>
+        <td>
+          <div class="row-actions">
+            <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_stock' product.pk %}" title="المخزون">📦</a>
+            <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_media' product.pk %}" title="الألوان والصور">🎨</a>
+            <a class="btn btn-sm btn-soft" href="{% url 'dash_product_edit' product.pk %}">تعديل</a>
+            <form method="post" action="{% url 'dash_product_delete' product.pk %}" data-confirm="حذف «{{ product.name }}» نهائيًا؟" style="display:inline">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-danger" type="submit">حذف</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include 'dashboard/_pager.html' %}
+{% else %}
+<div class="card"><div class="empty"><div class="ico">👕</div>لا توجد منتجات — ابدأ بإضافة أول منتج</div></div>
+{% endif %}
+{% endblock %}

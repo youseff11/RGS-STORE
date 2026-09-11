@@ -1,0 +1,110 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}الألوان والصور{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2>{{ product.name }}</h2>
+    <p>أضف ألوان المنتج، وارفع صور كل لون</p>
+  </div>
+  <a class="btn btn-ghost" href="{% url 'dash_products' %}">رجوع</a>
+</div>
+
+<div class="filters-bar">
+  <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_edit' product.pk %}">١. البيانات</a>
+  <a class="btn btn-sm" href="{% url 'dash_product_media' product.pk %}">٢. الألوان والصور</a>
+  <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_stock' product.pk %}">٣. المقاسات والكميات</a>
+  <span class="spacer"></span>
+  <a class="btn btn-sm btn-soft" href="{% url 'product_detail' product.slug %}" target="_blank">معاينة</a>
+</div>
+
+<div class="split">
+  <div>
+    {# ------------------------------------------------------- images #}
+    <div class="card">
+      <div class="card-head">
+        <h3>صور المنتج ({{ images|length }})</h3>
+      </div>
+
+      <form method="post" enctype="multipart/form-data" style="margin-bottom:18px">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="upload_images">
+        <div class="grid g2">
+          <div class="field">
+            <label>اختر الصور (يمكن اختيار أكثر من صورة)</label>
+            <input class="inp file" type="file" name="images" accept="image/*" multiple required>
+          </div>
+          <div class="field">
+            <label>اللون الخاص بالصور</label>
+            <select class="inp select" name="color">
+              <option value="">— صور عامة —</option>
+              {% for color in colors %}<option value="{{ color.id }}">{{ color.name }}</option>{% endfor %}
+            </select>
+            <div class="help">اختَر اللون علشان الصور تظهر لما العميل يختاره</div>
+          </div>
+        </div>
+        <button class="btn" type="submit">رفع الصور</button>
+      </form>
+
+      {% if images %}
+      <div class="img-grid">
+        {% for image in images %}
+        <div class="img-cell {% if image.is_main %}is-main{% endif %}">
+          <img src="{{ image.image.url }}" alt="">
+          <div class="bar">
+            <span>{{ image.color.name|default:"عام" }}</span>
+            <span class="flex" style="gap:8px">
+              {% if not image.is_main %}<a href="{% url 'dash_image_main' image.pk %}" title="اجعلها الرئيسية">★</a>{% else %}<span>★ رئيسية</span>{% endif %}
+              <form method="post" action="{% url 'dash_image_delete' image.pk %}" data-confirm="حذف الصورة؟" style="display:inline">
+                {% csrf_token %}<button type="submit" title="حذف">✕</button>
+              </form>
+            </span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+        <div class="empty"><div class="ico">🖼️</div>لا توجد صور بعد</div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# --------------------------------------------------------- colors #}
+  <div>
+    <div class="card">
+      <div class="card-head"><h3>إضافة لون</h3></div>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_color">
+        <div class="field"><label>اسم اللون</label>{{ color_form.name_en }}{% for e in color_form.name_en.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+        <div class="field"><label>الكود اللوني</label>{{ color_form.hex_code }}</div>
+        <button class="btn btn-block" type="submit">إضافة اللون</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>ألوان المنتج ({{ colors|length }})</h3></div>
+      {% if colors %}
+        {% for color in colors %}
+        <div class="color-card" style="margin-bottom:9px">
+          <span class="dot" style="background:{{ color.hex_code }}"></span>
+          <div style="flex:1;min-width:0">
+            <div class="n">{{ color.name }}</div>
+            <div class="s">{{ color.images.count }} صورة · {{ color.stock }} قطعة</div>
+          </div>
+          <form method="post" action="{% url 'dash_color_delete' color.pk %}" data-confirm="حذف اللون وصوره؟">
+            {% csrf_token %}<button class="btn btn-sm btn-danger" type="submit">حذف</button>
+          </form>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty" style="padding:26px"><div class="ico">🎨</div>لم تضف ألوانًا بعد</div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <a class="btn btn-block" href="{% url 'dash_product_stock' product.pk %}">التالي: المقاسات والكميات ←</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

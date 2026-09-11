@@ -1,0 +1,34 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}البانرات{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>بانرات الصفحة الرئيسية</h2><p>الصور الكبيرة اللي بتظهر أول ما العميل يفتح الموقع</p></div>
+  <a class="btn" href="{% url 'dash_banner_new' %}">+ بانر جديد</a>
+</div>
+
+{% if banners %}
+<div class="grid g2">
+  {% for banner in banners %}
+  <div class="card" style="padding:0;overflow:hidden">
+    {% if banner.image %}<img src="{{ banner.image.url }}" style="width:100%;aspect-ratio:16/7;object-fit:cover">{% endif %}
+    <div style="padding:16px">
+      <div class="between">
+        <b>{{ banner.title|default:"بدون عنوان" }}</b>
+        <span class="chip {% if banner.is_active %}chip-ok{% else %}chip-muted{% endif %}">{% if banner.is_active %}ظاهر{% else %}مخفي{% endif %}</span>
+      </div>
+      <div class="small muted">{{ banner.subtitle|default:'' }}</div>
+      <div class="row-actions" style="margin-top:12px">
+        <a class="btn btn-sm btn-soft" href="{% url 'dash_banner_edit' banner.pk %}">تعديل</a>
+        <form method="post" action="{% url 'dash_banner_delete' banner.pk %}" data-confirm="حذف البانر؟">
+          {% csrf_token %}<button class="btn btn-sm btn-danger" type="submit">حذف</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card"><div class="empty"><div class="ico">🖼️</div>لا توجد بانرات — الموقع هيعرض تصميم بديل جميل لحد ما تضيف واحد</div></div>
+{% endif %}
+{% endblock %}

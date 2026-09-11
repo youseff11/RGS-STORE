@@ -1,0 +1,63 @@
+{% extends 'base/dashboard_base.html' %}
+{% load store_tags %}
+{% block page_name %}الطلبات{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>الطلبات</h2><p>{{ page_obj.paginator.count }} طلب</p></div>
+</div>
+
+<form class="filters-bar" method="get">
+  <input class="inp" type="search" name="q" value="{{ q }}" placeholder="رقم الطلب أو اسم أو موبايل العميل...">
+  <select class="inp select" name="status" style="max-width:200px">
+    <option value="">كل الحالات</option>
+    {% for value, label in statuses %}
+      <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn btn-sm" type="submit">بحث</button>
+  <a class="btn btn-sm btn-ghost" href="{% url 'dash_orders' %}">مسح</a>
+</form>
+
+{% if page_obj.object_list %}
+<div class="table-wrap">
+  <table class="t">
+    <thead><tr><th>رقم الطلب</th><th>العميل</th><th>المنتجات</th><th>الإجمالي</th><th>الحالة</th><th>التاريخ</th><th></th></tr></thead>
+    <tbody>
+      {% for order in page_obj %}
+      <tr>
+        <td><b>{{ order.order_number }}</b>{% if order.coupon_code %}<div class="small muted">🎟 {{ order.coupon_code }}</div>{% endif %}</td>
+        <td>
+          {{ order.full_name }}
+          <div class="small muted" dir="ltr">{{ order.phone }}</div>
+          <div class="small muted">{{ order.governorate.name|default:'' }}</div>
+        </td>
+        <td class="small muted">{{ order.items_count }} قطعة</td>
+        <td><b>{% price order.total %}</b></td>
+        <td>
+          <form method="post" action="{% url 'dash_order_status' order.pk %}">
+            {% csrf_token %}
+            <select class="inp select" name="status" style="padding:6px 9px;font-size:12px;min-width:140px" onchange="this.form.submit()">
+              {% for value, label in statuses %}
+                <option value="{{ value }}" {% if order.status == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        </td>
+        <td class="small muted">{{ order.created_at|date:"Y/m/d" }}<div>{{ order.created_at|date:"H:i" }}</div></td>
+        <td>
+          <div class="row-actions">
+            <a class="btn btn-sm btn-soft" href="{% url 'dash_order_detail' order.pk %}">تفاصيل</a>
+            <a class="btn btn-sm btn-ghost" href="{% url 'dash_order_print' order.pk %}" target="_blank">🖨</a>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include 'dashboard/_pager.html' %}
+{% else %}
+<div class="card"><div class="empty"><div class="ico">📦</div>لا توجد طلبات</div></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,159 @@
+{% extends 'base/base.html' %}
+{% load store_tags %}
+
+{% block content %}
+<section class="section-sm" style="padding-top:28px">
+  <div class="wrap">
+
+    <div class="crumbs" style="margin-bottom:20px">
+      <a href="{% url 'home' %}">{% t 'home' %}</a> <span>/</span>
+      <a href="{% url 'shop' %}">{% t 'shop' %}</a>
+      {% if product.category %}<span>/</span><a href="{% url 'category_detail' product.category.slug %}">{{ product.category.name }}</a>{% endif %}
+      <span>/</span> <span>{{ product.name }}</span>
+    </div>
+
+    <div class="pd" data-product>
+
+      {# -------------------------------------------------------- gallery #}
+      <div class="pd-gallery">
+        <div class="pd-main">
+          {% if images %}
+            <img data-main-img src="{{ images.0.image.url }}" alt="{{ product.name }}">
+          {% else %}
+            <div class="placeholder" style="display:grid;place-items:center;height:100%;color:var(--muted)">RGS TOWER</div>
+          {% endif %}
+          <div class="card-badges">
+            {% if product.is_new %}<span class="badge badge-new">{% t 'new_badge' %}</span>{% endif %}
+            {% if product.discount_percent %}<span class="badge badge-sale">-{{ product.discount_percent }}%</span>{% endif %}
+          </div>
+        </div>
+
+        {% if images|length > 1 %}
+        <div class="pd-thumbs">
+          {% for image in images %}
+            <button type="button" class="pd-thumb {% if forloop.first %}is-active{% endif %}"
+                    data-full="{{ image.image.url }}" data-color-id="{{ image.color_id|default:0 }}">
+              <img src="{{ image.image.url }}" alt="" loading="lazy">
+            </button>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+      {# ----------------------------------------------------------- info #}
+      <div class="pd-info">
+        <h1>{{ product.name }}</h1>
+
+        <div class="pd-meta">
+          {% if product.category %}<span>{{ product.category.name }}</span>{% endif %}
+          {% if product.sku %}<span>{% t 'sku' %}: {{ product.sku }}</span>{% endif %}
+        </div>
+
+        <div class="pd-price">
+          <span class="price-now">{% price product.final_price %}</span>
+          {% if product.old_price %}
+            <span class="price-old">{{ product.old_price|money }}</span>
+            <span class="price-off">-{{ product.discount_percent }}%</span>
+          {% endif %}
+        </div>
+
+        {% if product.short %}<p class="pd-desc">{{ product.short }}</p>{% endif %}
+
+        <div class="stock-line" data-stock-line><span class="dot"></span></div>
+
+        {# --------------------------------------------------- variants #}
+        <form method="post" action="{% url 'cart_add' %}" data-cart-form data-choose-msg="{% t 'choose_options' %}">
+          {% csrf_token %}
+          <input type="hidden" name="variant_id" id="variant-id" value="">
+
+          {% if colors %}
+          <div class="opt-group">
+            <div class="opt-label">{% t 'color' %}: <b data-color-label>{{ colors.0.name }}</b></div>
+            <div class="colors-row">
+              {% for color in colors %}
+                <button type="button" class="color-opt" data-color="{{ color.id }}" data-name="{{ color.name }}" title="{{ color.name }}">
+                  <span style="background:{{ color.hex_code }}"></span>
+                </button>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          {% if sizes %}
+          <div class="opt-group">
+            <div class="opt-label">{% t 'size' %}: <b data-size-label>—</b></div>
+            <div class="sizes-row">
+              {% for size in sizes %}
+                <button type="button" class="size-opt" data-size="{{ size.id }}" data-name="{{ size.label }}">{{ size.name }}</button>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          <div class="opt-group">
+            <div class="opt-label">{% t 'quantity' %}</div>
+            <div class="qty-box">
+              <button type="button" data-qty="down" aria-label="-">−</button>
+              <input type="number" name="quantity" value="1" min="1" max="99" inputmode="numeric">
+              <button type="button" data-qty="up" aria-label="+">+</button>
+            </div>
+          </div>
+
+          <div class="pd-actions">
+            <button class="btn btn-lg" type="submit" data-add-btn>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l-1 12.2a2 2 0 01-2 1.8H9a2 2 0 01-2-1.8L6 7z"/><path d="M9.2 7V5.6a2.8 2.8 0 015.6 0V7"/></svg>
+              {% t 'add_to_cart' %}
+            </button>
+          </div>
+        </form>
+
+        <form method="post" action="{% url 'cart_add' %}" id="buy-now-form">
+          {% csrf_token %}
+          <input type="hidden" name="variant_id" value="" id="variant-id-buy">
+          <input type="hidden" name="buy_now" value="1">
+          <input type="hidden" name="quantity" value="1">
+          <button class="btn btn-lg btn-dark btn-block" type="submit" data-buy-btn>{% t 'buy_now' %}</button>
+        </form>
+
+        {# ------------------------------------------------- accordions #}
+        <div class="accordion">
+          {% if product.description %}
+          <div class="acc-item is-open">
+            <button class="acc-head" type="button">{% t 'description' %}
+              <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M6 9l6 6 6-6"/></svg></span>
+            </button>
+            <div class="acc-body" style="max-height:none"><div class="inner">{{ product.description }}</div></div>
+          </div>
+          {% endif %}
+          <div class="acc-item">
+            <button class="acc-head" type="button">{% t 'shipping_info' %}
+              <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M6 9l6 6 6-6"/></svg></span>
+            </button>
+            <div class="acc-body"><div class="inner">
+              {% t 'feature_delivery_sub' %} · {% t 'cod_note' %}
+              {% if SITE.free_shipping_threshold %}
+                <br>{% t 'free' %}: {{ SITE.free_shipping_threshold|money }} {{ CURRENCY }}+
+              {% endif %}
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ------------------------------------------------------- related #}
+    {% if related %}
+    <section class="section-sm" style="padding-bottom:0">
+      <div class="section-head"><h2 style="font-size:22px">{% t 'related_products' %}</h2></div>
+      <div class="products-grid">
+        {% for product in related %}{% include 'partials/product_card.html' %}{% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+  </div>
+</section>
+
+{{ variant_map|json_script:"variant-data" }}
+{{ pd_strings|json_script:"pd-strings" }}
+{% endblock %}
+

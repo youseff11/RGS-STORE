@@ -1,0 +1,45 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}الأقسام{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>الأقسام</h2><p>قسّم منتجاتك علشان العميل يلاقي اللي بيدور عليه</p></div>
+  <a class="btn" href="{% url 'dash_category_new' %}">+ قسم جديد</a>
+</div>
+
+{% if categories %}
+<div class="table-wrap">
+  <table class="t">
+    <thead><tr><th>القسم</th><th>عدد المنتجات</th><th>الحالة</th><th>الترتيب</th><th></th></tr></thead>
+    <tbody>
+      {% for cat in categories %}
+      <tr>
+        <td>
+          <div class="flex">
+            {% if cat.image %}<img class="thumb" src="{{ cat.image.url }}" alt="">{% else %}<span class="thumb"></span>{% endif %}
+            <div>
+              <b>{{ cat.name }}</b>
+              <div class="small muted">/{{ cat.slug }}</div>
+            </div>
+          </div>
+        </td>
+        <td><span class="chip chip-muted">{{ cat.count }}</span></td>
+        <td><span class="chip {% if cat.is_active %}chip-ok{% else %}chip-muted{% endif %}">{% if cat.is_active %}مفعّل{% else %}مخفي{% endif %}</span></td>
+        <td class="small muted">{{ cat.ordering }}</td>
+        <td>
+          <div class="row-actions">
+            <a class="btn btn-sm btn-soft" href="{% url 'dash_category_edit' cat.pk %}">تعديل</a>
+            <form method="post" action="{% url 'dash_category_delete' cat.pk %}" data-confirm="حذف القسم «{{ cat.name }}»؟">
+              {% csrf_token %}<button class="btn btn-sm btn-danger" type="submit">حذف</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card"><div class="empty"><div class="ico">🗂️</div>لا توجد أقسام بعد</div></div>
+{% endif %}
+{% endblock %}

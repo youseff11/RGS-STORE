@@ -1,0 +1,43 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}{% if object %}تعديل كود{% else %}كود خصم جديد{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2>{% if object %}تعديل: {{ object.code }}{% else %}كود خصم جديد{% endif %}</h2>
+    <p>مثال: كود RGS10 بخصم 10% وحد أدنى للطلب 500 جنيه</p>
+  </div>
+  <a class="btn btn-ghost" href="{% url 'dash_coupons' %}">رجوع</a>
+</div>
+
+<form method="post" style="max-width:820px">
+  {% csrf_token %}
+  <div class="card">
+    <div class="grid g2">
+      <div class="field"><label>الكود</label>{{ form.code }}{% for e in form.code.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+      <div class="field"><label>وصف داخلي</label>{{ form.description }}</div>
+    </div>
+    <div class="grid g2">
+      <div class="field"><label>نوع الخصم</label>{{ form.discount_type }}</div>
+      <div class="field"><label>قيمة الخصم</label>{{ form.value }}<div class="help">نسبة مئوية (مثلاً 10) أو مبلغ ثابت</div></div>
+    </div>
+    <div class="grid g2">
+      <div class="field"><label>الحد الأدنى للطلب</label>{{ form.min_order }}<div class="help">0 = بدون حد أدنى</div></div>
+      <div class="field"><label>أقصى عدد استخدامات</label>{{ form.max_uses }}<div class="help">0 = غير محدود</div></div>
+    </div>
+    <div class="grid g2">
+      <div class="field"><label>يبدأ من</label>{{ form.start_at }}</div>
+      <div class="field"><label>ينتهي في</label>{{ form.end_at }}</div>
+    </div>
+    <div class="switch">{{ form.free_shipping }}<label for="{{ form.free_shipping.id_for_label }}">يمنح شحن مجاني</label></div>
+    <div class="switch">{{ form.is_active }}<label for="{{ form.is_active.id_for_label }}">مفعّل</label></div>
+
+    <div class="field" style="margin-top:14px">
+      <label>الأقسام المرتبطة (اختياري)</label>
+      {{ form.categories }}
+    </div>
+
+    <button class="btn" type="submit">حفظ الكود</button>
+  </div>
+</form>
+{% endblock %}

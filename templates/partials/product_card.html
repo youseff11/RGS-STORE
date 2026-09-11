@@ -1,0 +1,42 @@
+{% load store_tags %}
+<article class="card reveal">
+  <a class="card-media" href="{% url 'product_detail' product.slug %}">
+    {% with img=product.main_image hover=product.hover_image %}
+      {% if img %}
+        <img src="{{ img.url }}" alt="{{ product.name }}" loading="lazy">
+        {% if hover %}<img class="img-hover" src="{{ hover.url }}" alt="" loading="lazy">{% endif %}
+      {% else %}
+        <div class="placeholder">RGS TOWER</div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="card-badges">
+      {% if product.is_new %}<span class="badge badge-new">{% t 'new_badge' %}</span>{% endif %}
+      {% if product.discount_percent %}<span class="badge badge-sale">-{{ product.discount_percent }}%</span>{% endif %}
+      {% if not product.in_stock %}<span class="badge badge-out">{% t 'out_of_stock' %}</span>{% endif %}
+    </div>
+
+    <div class="card-quick">
+      <span class="btn btn-sm btn-dark">{% t 'shop_now' %}</span>
+    </div>
+  </a>
+
+  <div class="card-body">
+    {% if product.category %}<div class="card-cat">{{ product.category.name }}</div>{% endif %}
+    <h3 class="card-title"><a href="{% url 'product_detail' product.slug %}">{{ product.name }}</a></h3>
+    <div class="card-price">
+      <span class="price-now">{% price product.final_price %}</span>
+      {% if product.old_price %}
+        <span class="price-old">{{ product.old_price|money }}</span>
+        <span class="price-off">-{{ product.discount_percent }}%</span>
+      {% endif %}
+    </div>
+    {% if product.colors.all %}
+      <div class="card-swatches">
+        {% for color in product.colors.all|slice:":5" %}
+          <span class="swatch-dot" style="background:{{ color.hex_code }}" title="{{ color.name }}"></span>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+</article>

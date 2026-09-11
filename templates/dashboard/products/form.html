@@ -1,0 +1,62 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}{% if product %}تعديل منتج{% else %}منتج جديد{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2>{% if product %}تعديل: {{ product.name }}{% else %}إضافة منتج جديد{% endif %}</h2>
+    <p>البيانات الأساسية — الألوان والصور والمخزون في خطوات تالية · المتجر إنجليزي فاكتب الأسماء بالإنجليزي</p>
+  </div>
+  <a class="btn btn-ghost" href="{% url 'dash_products' %}">رجوع</a>
+</div>
+
+{% if product %}
+<div class="filters-bar">
+  <a class="btn btn-sm" href="{% url 'dash_product_edit' product.pk %}">١. البيانات</a>
+  <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_media' product.pk %}">٢. الألوان والصور</a>
+  <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_stock' product.pk %}">٣. المقاسات والكميات</a>
+  <span class="spacer"></span>
+  <a class="btn btn-sm btn-soft" href="{% url 'product_detail' product.slug %}" target="_blank">معاينة في المتجر</a>
+</div>
+{% endif %}
+
+<form method="post">
+  {% csrf_token %}
+  <div class="split">
+    <div>
+      <div class="card">
+        <div class="card-head"><h3>بيانات المنتج</h3></div>
+        <div class="field"><label>اسم المنتج</label>{{ form.name_en }}{% for e in form.name_en.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+        <div class="grid g2">
+          <div class="field"><label>القسم</label>{{ form.category }}</div>
+          <div class="field"><label>كود المنتج (SKU)</label>{{ form.sku }}</div>
+        </div>
+        <div class="grid g2">
+          <div class="field"><label>السعر</label>{{ form.price }}{% for e in form.price.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+          <div class="field"><label>السعر قبل الخصم (اختياري)</label>{{ form.compare_price }}</div>
+        </div>
+        <div class="field"><label>وصف مختصر</label>{{ form.short_en }}</div>
+        <div class="field"><label>الوصف الكامل</label>{{ form.description_en }}</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-head"><h3>العرض</h3></div>
+        <div class="switch">{{ form.is_active }}<label for="{{ form.is_active.id_for_label }}">معروض في المتجر</label></div>
+        <div class="switch">{{ form.is_featured }}<label for="{{ form.is_featured.id_for_label }}">منتج مميز (الصفحة الرئيسية)</label></div>
+        <div class="switch">{{ form.is_new }}<label for="{{ form.is_new.id_for_label }}">علامة «جديد»</label></div>
+        <div class="field" style="margin-top:12px"><label>ترتيب الظهور</label>{{ form.ordering }}</div>
+        <div class="field"><label>الرابط (slug)</label>{{ form.slug }}<div class="help">اتركه فارغًا ليتولد تلقائيًا</div></div>
+      </div>
+
+      <div class="card">
+        <button class="btn btn-block" type="submit">حفظ المنتج</button>
+        {% if product %}
+          <button class="btn btn-block btn-soft" type="submit" name="save_and_media" value="1" style="margin-top:8px">حفظ والانتقال للصور</button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

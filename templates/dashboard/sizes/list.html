@@ -1,0 +1,47 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}المقاسات{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>المقاسات</h2><p>المقاسات دي بتستخدمها في كل المنتجات</p></div>
+</div>
+
+<div class="split">
+  <div class="card">
+    <div class="card-head"><h3>المقاسات الحالية ({{ sizes|length }})</h3></div>
+    {% if sizes %}
+    <div class="table-wrap" style="border:0">
+      <table class="t" style="min-width:auto">
+        <thead><tr><th>المقاس</th><th>الترتيب</th><th></th></tr></thead>
+        <tbody>
+          {% for size in sizes %}
+          <tr>
+            <td><b style="font-size:15px">{{ size.name }}</b></td>
+            <td class="small muted">{{ size.ordering }}</td>
+            <td>
+              <div class="row-actions">
+                <form method="post" action="{% url 'dash_size_delete' size.pk %}" data-confirm="حذف المقاس «{{ size.name }}»؟ هيتشال من كل المنتجات.">
+                  {% csrf_token %}<button class="btn btn-sm btn-danger" type="submit">حذف</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <div class="empty"><div class="ico">📏</div>لا توجد مقاسات</div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3>إضافة مقاس</h3></div>
+    <form method="post">
+      {% csrf_token %}
+      {% include 'dashboard/_form_fields.html' %}
+      <button class="btn btn-block" type="submit">إضافة</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

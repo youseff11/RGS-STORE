@@ -1,0 +1,17 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}محافظة{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>{% if object %}تعديل: {{ object.name }}{% else %}محافظة جديدة{% endif %}</h2></div>
+  <a class="btn btn-ghost" href="{% url 'dash_governorates' %}">رجوع</a>
+</div>
+
+<form method="post" style="max-width:600px">
+  {% csrf_token %}
+  <div class="card">
+    {% include 'dashboard/_form_fields.html' %}
+    <button class="btn" type="submit">حفظ</button>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends 'base/dashboard_base.html' %}
+{% load store_tags %}
+
+{% block page_name %}نظرة عامة{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h2>أهلاً {{ request.user.username }} 👋</h2>
+    <p>ملخص سريع لأداء المتجر</p>
+  </div>
+  <div class="flex">
+    <a class="btn btn-ghost" href="{% url 'dash_orders' %}">كل الطلبات</a>
+    <a class="btn" href="{% url 'dash_product_new' %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      منتج جديد
+    </a>
+  </div>
+</div>
+
+<div class="grid g4">
+  <div class="stat">
+    <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 7h12l-1 12.2a2 2 0 01-2 1.8H9a2 2 0 01-2-1.8L6 7z"/><path d="M9.2 7V5.6a2.8 2.8 0 015.6 0V7"/></svg></span>
+    <div><div class="v">{{ stats.orders }}</div><div class="l">إجمالي الطلبات</div></div>
+  </div>
+  <div class="stat warn">
+    <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+    <div><div class="v">{{ stats.pending }}</div><div class="l">طلبات قيد المراجعة</div></div>
+  </div>
+  <div class="stat ok">
+    <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg></span>
+    <div><div class="v">{% price stats.revenue %}</div><div class="l">إجمالي المبيعات المؤكدة</div></div>
+  </div>
+  <div class="stat info">
+    <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 4l-4 3v13h16V7l-4-3"/><path d="M8 4a4 4 0 008 0"/></svg></span>
+    <div><div class="v">{{ stats.active_products }}<span style="font-size:14px;color:var(--muted)">/{{ stats.products }}</span></div><div class="l">منتجات معروضة</div></div>
+  </div>
+</div>
+
+<div class="split" style="margin-top:18px">
+
+  <div>
+    <div class="card">
+      <div class="card-head">
+        <h3>مبيعات آخر ٧ أيام</h3>
+        <span class="chip chip-accent">{{ stats.week_orders }} طلب</span>
+      </div>
+      <div class="chart">
+        {% for point in chart %}
+        <div class="bar" title="{{ point.total }}">
+          <span class="val">{{ point.count }}</span>
+          <span class="fill" style="height:{{ point.height }}%"></span>
+          <span class="lbl">{{ point.label }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>أحدث الطلبات</h3>
+        <a class="btn btn-sm btn-ghost" href="{% url 'dash_orders' %}">عرض الكل</a>
+      </div>
+      {% if recent_orders %}
+      <div class="table-wrap" style="border:0">
+        <table class="t">
+          <thead><tr><th>رقم الطلب</th><th>العميل</th><th>الإجمالي</th><th>الحالة</th><th>التاريخ</th><th></th></tr></thead>
+          <tbody>
+            {% for order in recent_orders %}
+            <tr>
+              <td><b>{{ order.order_number }}</b></td>
+              <td>{{ order.full_name }}<div class="small muted" dir="ltr">{{ order.phone }}</div></td>
+              <td><b>{% price order.total %}</b></td>
+              <td><span class="chip chip-{% status_color order.status %}">{{ order.get_status_display }}</span></td>
+              <td class="small muted">{{ order.created_at|date:"Y/m/d H:i" }}</td>
+              <td class="row-actions"><a class="btn btn-sm btn-ghost" href="{% url 'dash_order_detail' order.pk %}">تفاصيل</a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <div class="empty"><div class="ico">📦</div>لا توجد طلبات بعد</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="card-head"><h3>مخزون على وشك النفاد</h3></div>
+      {% if low_stock %}
+        {% for product in low_stock %}
+        <div class="flex" style="padding:9px 0;{% if not forloop.last %}border-bottom:1px solid var(--line-soft){% endif %}">
+          {% if product.main_image %}<img src="{{ product.main_image.url }}" class="thumb" style="width:38px;height:48px;border-radius:8px;object-fit:cover">{% endif %}
+          <div style="min-width:0;flex:1">
+            <div class="small" style="font-weight:700">{{ product.name }}</div>
+            <div class="small muted">{{ product.stock|default:0 }} قطعة متبقية</div>
+          </div>
+          <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_stock' product.pk %}">تعديل</a>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty" style="padding:26px"><div class="ico">✅</div>المخزون بحالة جيدة</div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>الأكثر مبيعًا</h3></div>
+      {% if top_products %}
+        {% for product in top_products %}
+        <div class="flex" style="padding:9px 0;{% if not forloop.last %}border-bottom:1px solid var(--line-soft){% endif %}">
+          <span class="chip chip-accent">{{ forloop.counter }}</span>
+          <div style="min-width:0;flex:1" class="small"><b>{{ product.name }}</b></div>
+          <span class="chip chip-muted">{{ product.sold }} مبيع</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty" style="padding:26px"><div class="ico">📈</div>لا توجد مبيعات بعد</div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>روابط سريعة</h3></div>
+      <div class="grid" style="gap:8px">
+        <a class="btn btn-soft btn-block" href="{% url 'dash_promotion_new' %}">إضافة عرض جديد</a>
+        <a class="btn btn-soft btn-block" href="{% url 'dash_coupon_new' %}">إنشاء كود خصم</a>
+        <a class="btn btn-soft btn-block" href="{% url 'dash_announcements' %}">تعديل الشريط المتحرك</a>
+        <a class="btn btn-soft btn-block" href="{% url 'dash_settings' %}">إعدادات المتجر والسوشيال</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

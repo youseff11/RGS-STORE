@@ -1,0 +1,20 @@
+{% for field in form %}
+  {% if field.field.widget.input_type == 'checkbox' %}
+    <div class="switch">
+      {{ field }}
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    </div>
+    {% if field.help_text %}<div class="help" style="margin-top:-6px;margin-bottom:10px">{{ field.help_text }}</div>{% endif %}
+  {% else %}
+    <div class="field">
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+      {% for error in field.errors %}<div class="err-msg">{{ error }}</div>{% endfor %}
+      {% if field.field.widget.input_type == 'file' %}<div class="file-preview"></div>{% endif %}
+    </div>
+  {% endif %}
+{% endfor %}
+{% if form.non_field_errors %}
+  <div class="alert">{{ form.non_field_errors }}</div>
+{% endif %}

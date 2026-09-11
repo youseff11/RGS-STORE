@@ -1,0 +1,14 @@
+{% load store_tags %}
+{% if page_obj.paginator.num_pages > 1 %}
+<nav class="pager">
+  {% if page_obj.has_previous %}<a href="{% qs page=page_obj.previous_page_number %}">›</a>{% endif %}
+  {% for num in page_obj.paginator.page_range %}
+    {% if num == page_obj.number %}
+      <span class="cur">{{ num }}</span>
+    {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
+      <a href="{% qs page=num %}">{{ num }}</a>
+    {% endif %}
+  {% endfor %}
+  {% if page_obj.has_next %}<a href="{% qs page=page_obj.next_page_number %}">‹</a>{% endif %}
+</nav>
+{% endif %}

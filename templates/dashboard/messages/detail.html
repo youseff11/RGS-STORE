@@ -1,0 +1,25 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}رسالة{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>{{ item.subject|default:"رسالة من عميل" }}</h2><p>{{ item.created_at|date:"l Y/m/d — H:i" }}</p></div>
+  <a class="btn btn-ghost" href="{% url 'dash_messages' %}">رجوع</a>
+</div>
+
+<div class="card" style="max-width:760px">
+  <table class="t" style="min-width:auto">
+    <tr><th style="width:30%">الاسم</th><td>{{ item.name }}</td></tr>
+    {% if item.phone %}<tr><th>الموبايل</th><td dir="ltr"><a href="tel:{{ item.phone }}">{{ item.phone }}</a></td></tr>{% endif %}
+    {% if item.email %}<tr><th>الإيميل</th><td dir="ltr"><a href="mailto:{{ item.email }}">{{ item.email }}</a></td></tr>{% endif %}
+  </table>
+  <div style="margin-top:18px;white-space:pre-line;line-height:1.9">{{ item.message }}</div>
+
+  <div class="row-actions" style="margin-top:20px">
+    {% if item.phone %}<a class="btn btn-sm btn-soft" href="https://wa.me/2{{ item.phone|cut:' ' }}" target="_blank">رد على واتساب</a>{% endif %}
+    <form method="post" action="{% url 'dash_message_delete' item.pk %}" data-confirm="حذف الرسالة؟">
+      {% csrf_token %}<button class="btn btn-sm btn-danger" type="submit">حذف</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

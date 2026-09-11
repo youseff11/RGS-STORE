@@ -1,0 +1,40 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}الشريط المتحرك{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2>الشريط المتحرك (فوق الموقع)</h2>
+    <p>أي نص هنا بيجري في شريط فوق الهيدر في كل صفحات المتجر</p>
+  </div>
+  <a class="btn" href="{% url 'dash_announcement_new' %}">+ إعلان جديد</a>
+</div>
+
+{% if announcements %}
+<div class="table-wrap">
+  <table class="t">
+    <thead><tr><th>النص</th><th>الرابط</th><th>الحالة</th><th>الترتيب</th><th></th></tr></thead>
+    <tbody>
+      {% for item in announcements %}
+      <tr>
+        <td><b>{{ item.text }}</b></td>
+        <td class="small muted" dir="ltr">{{ item.link|default:'—' }}</td>
+        <td><span class="chip {% if item.is_active %}chip-ok{% else %}chip-muted{% endif %}">{% if item.is_active %}ظاهر{% else %}مخفي{% endif %}</span></td>
+        <td class="small muted">{{ item.ordering }}</td>
+        <td>
+          <div class="row-actions">
+            <a class="btn btn-sm btn-soft" href="{% url 'dash_announcement_edit' item.pk %}">تعديل</a>
+            <form method="post" action="{% url 'dash_announcement_delete' item.pk %}" data-confirm="حذف الإعلان؟">
+              {% csrf_token %}<button class="btn btn-sm btn-danger" type="submit">حذف</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card"><div class="empty"><div class="ico">📢</div>لا توجد إعلانات — أضف واحد وهيظهر فورًا فوق الموقع</div></div>
+{% endif %}
+{% endblock %}

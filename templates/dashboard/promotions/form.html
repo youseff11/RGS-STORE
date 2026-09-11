@@ -1,0 +1,47 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}{% if object %}تعديل عرض{% else %}عرض جديد{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2>{% if object %}تعديل: {{ object.title }}{% else %}عرض جديد{% endif %}</h2>
+    <p>الخصم بيتطبق تلقائيًا على أسعار المنتجات في المتجر</p>
+  </div>
+  <a class="btn btn-ghost" href="{% url 'dash_promotions' %}">رجوع</a>
+</div>
+
+<form method="post" style="max-width:860px">
+  {% csrf_token %}
+  <div class="card">
+    <div class="field"><label>اسم العرض</label>{{ form.title }}{% for e in form.title.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+
+    <div class="grid g3">
+      <div class="field"><label>يطبّق على</label>{{ form.scope }}</div>
+      <div class="field"><label>نوع الخصم</label>{{ form.discount_type }}</div>
+      <div class="field"><label>القيمة</label>{{ form.value }}</div>
+    </div>
+
+    <div class="field" data-scope="category">
+      <label>اختر الأقسام</label>
+      {{ form.categories }}
+    </div>
+
+    <div class="field" data-scope="product">
+      <label>اختر المنتجات</label>
+      {{ form.products }}
+      <div class="help">اضغط Ctrl لاختيار أكثر من منتج</div>
+    </div>
+
+    <div class="field"><label>نص الشارة</label>{{ form.badge_en }}<div class="help">مثلاً: Summer Sale</div></div>
+
+    <div class="grid g2">
+      <div class="field"><label>يبدأ من</label>{{ form.start_at }}</div>
+      <div class="field"><label>ينتهي في</label>{{ form.end_at }}</div>
+    </div>
+
+    <div class="switch">{{ form.is_active }}<label for="{{ form.is_active.id_for_label }}">مفعّل</label></div>
+
+    <button class="btn" type="submit" style="margin-top:10px">حفظ العرض</button>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}بانر{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>{% if object %}تعديل البانر{% else %}بانر جديد{% endif %}</h2><p>المقاس المفضل: 1920×840 بكسل</p></div>
+  <a class="btn btn-ghost" href="{% url 'dash_banners' %}">رجوع</a>
+</div>
+
+<form method="post" enctype="multipart/form-data" style="max-width:760px">
+  {% csrf_token %}
+  <div class="card">
+    {% if object.image %}<img src="{{ object.image.url }}" style="width:100%;aspect-ratio:16/7;object-fit:cover;border-radius:12px;margin-bottom:16px">{% endif %}
+    {% include 'dashboard/_form_fields.html' %}
+    <button class="btn" type="submit">حفظ</button>
+  </div>
+</form>
+{% endblock %}

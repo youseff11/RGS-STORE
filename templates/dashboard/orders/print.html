@@ -1,0 +1,90 @@
+{% load static store_tags %}<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>فاتورة {{ order.order_number }} — RGS TOWER</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Cairo', sans-serif; margin: 0; padding: 28px; color: #111; background: #fff; font-size: 13px; }
+    .sheet { max-width: 780px; margin: auto; }
+    .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #111; padding-bottom: 14px; margin-bottom: 18px; }
+    .brand { font-size: 22px; font-weight: 800; letter-spacing: .12em; }
+    .brand small { display: block; font-size: 11px; letter-spacing: .2em; color: #666; font-weight: 600; }
+    .code { text-align: end; }
+    .code b { font-size: 18px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+    .box { border: 1px solid #ddd; border-radius: 8px; padding: 12px; }
+    .box h4 { margin: 0 0 8px; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: .08em; }
+    .box div { padding: 2px 0; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+    th, td { padding: 9px 10px; text-align: start; border-bottom: 1px solid #e5e5e5; }
+    thead th { background: #f4f4f2; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+    .totals { max-width: 300px; margin-inline-start: auto; }
+    .totals div { display: flex; justify-content: space-between; padding: 5px 0; }
+    .totals .grand { border-top: 2px solid #111; margin-top: 6px; padding-top: 9px; font-size: 16px; font-weight: 800; }
+    .foot { margin-top: 26px; text-align: center; color: #666; font-size: 11.5px; border-top: 1px dashed #ccc; padding-top: 14px; }
+    .btn-print { display: block; margin: 0 auto 20px; padding: 10px 22px; border: 0; border-radius: 8px; background: #111; color: #fff; font-family: inherit; font-weight: 700; cursor: pointer; }
+    @media print { .btn-print { display: none; } body { padding: 0; } }
+  </style>
+</head>
+<body>
+<button class="btn-print" onclick="window.print()">🖨 طباعة</button>
+
+<div class="sheet">
+  <div class="head">
+    <div class="brand">RGS TOWER<small>MEN STORE</small></div>
+    <div class="code">
+      <div>رقم الطلب</div>
+      <b>{{ order.order_number }}</b>
+      <div>{{ order.created_at|date:"Y/m/d — H:i" }}</div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="box">
+      <h4>بيانات العميل</h4>
+      <div><b>{{ order.full_name }}</b></div>
+      <div dir="ltr">{{ order.phone }}{% if order.phone_alt %} / {{ order.phone_alt }}{% endif %}</div>
+      <div>{% if order.governorate %}{{ order.governorate.name }} — {% endif %}{{ order.city }}</div>
+      <div>{{ order.address }}</div>
+      {% if order.notes %}<div><i>ملاحظات: {{ order.notes }}</i></div>{% endif %}
+    </div>
+    <div class="box">
+      <h4>بيانات الطلب</h4>
+      <div>الحالة: <b>{{ order.get_status_display }}</b></div>
+      <div>طريقة الدفع: <b>الدفع عند الاستلام</b></div>
+      <div>عدد القطع: <b>{{ order.items_count }}</b></div>
+      <div style="margin-top:8px;font-size:17px">المطلوب تحصيله: <b>{% price order.total %}</b></div>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th>المنتج</th><th>اللون</th><th>المقاس</th><th>السعر</th><th>الكمية</th><th>الإجمالي</th></tr></thead>
+    <tbody>
+      {% for item in order.items.all %}
+      <tr>
+        <td>{{ item.product_name }}</td>
+        <td>{{ item.color_name|default:'—' }}</td>
+        <td>{{ item.size_name|default:'—' }}</td>
+        <td>{{ item.unit_price|money }}</td>
+        <td>{{ item.quantity }}</td>
+        <td>{{ item.line_total|money }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <div><span>الإجمالي الفرعي</span><b>{{ order.subtotal|money }}</b></div>
+    {% if order.discount_total %}<div><span>الخصم {{ order.coupon_code }}</span><b>− {{ order.discount_total|money }}</b></div>{% endif %}
+    <div><span>الشحن</span><b>{% if order.shipping_fee %}{{ order.shipping_fee|money }}{% else %}مجاني{% endif %}</b></div>
+    <div class="grand"><span>الإجمالي</span><span>{% price order.total %}</span></div>
+  </div>
+
+  <div class="foot">
+    شكرًا لثقتك في RGS TOWER — الدفع عند الاستلام
+  </div>
+</div>
+</body>
+</html>

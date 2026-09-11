@@ -1,0 +1,18 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}{% if object %}تعديل قسم{% else %}قسم جديد{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>{% if object %}تعديل: {{ object.name }}{% else %}قسم جديد{% endif %}</h2></div>
+  <a class="btn btn-ghost" href="{% url 'dash_categories' %}">رجوع</a>
+</div>
+
+<form method="post" enctype="multipart/form-data" style="max-width:720px">
+  {% csrf_token %}
+  <div class="card">
+    {% include 'dashboard/_form_fields.html' %}
+    {% if object.image %}<img src="{{ object.image.url }}" style="max-height:140px;border-radius:10px;margin-bottom:12px">{% endif %}
+    <button class="btn" type="submit">حفظ</button>
+  </div>
+</form>
+{% endblock %}

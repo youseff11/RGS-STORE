@@ -1,0 +1,79 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}إعدادات المتجر{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>إعدادات المتجر</h2><p>الهوية، وسائل التواصل، الشحن، والعملة · واجهة المتجر إنجليزي</p></div>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <div class="split">
+    <div>
+      <div class="card">
+        <div class="card-head"><h3>هوية المتجر</h3></div>
+        <div class="grid g2">
+          <div class="field"><label>اسم المتجر</label>{{ form.brand_name_en }}{% for e in form.brand_name_en.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+          <div class="field"><label>الشعار النصي (tagline)</label>{{ form.tagline_en }}</div>
+        </div>
+        <div class="grid g2">
+          <div class="field">
+            <label>اللوجو</label>{{ form.logo }}
+            {% if site.logo %}<img src="{{ site.logo.url }}" style="max-height:60px;margin-top:8px">{% endif %}
+          </div>
+          <div class="field">
+            <label>الأيقونة (favicon)</label>{{ form.favicon }}
+            {% if site.favicon %}<img src="{{ site.favicon.url }}" style="max-height:40px;margin-top:8px">{% endif %}
+          </div>
+        </div>
+        <div class="field"><label>نبذة عن المتجر</label>{{ form.about_en }}</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>السوشيال ميديا</h3></div>
+        <div class="help" style="margin-bottom:12px">الأيقونات بتظهر في الفوتر تلقائيًا — سيب الخانة فاضية لو مش عايز الأيقونة تظهر.</div>
+        <div class="grid g2">
+          <div class="field"><label>رابط فيسبوك</label>{{ form.facebook_url }}</div>
+          <div class="field"><label>رابط إنستجرام</label>{{ form.instagram_url }}</div>
+        </div>
+        <div class="grid g2">
+          <div class="field"><label>رابط تيك توك</label>{{ form.tiktok_url }}</div>
+          <div class="field"><label>رابط يوتيوب</label>{{ form.youtube_url }}</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>بيانات التواصل</h3></div>
+        <div class="grid g2">
+          <div class="field"><label>رقم التليفون</label>{{ form.phone }}</div>
+          <div class="field"><label>رقم الواتساب</label>{{ form.whatsapp }}<div class="help">بصيغة دولية بدون +، مثال: 201012345678</div></div>
+        </div>
+        <div class="field"><label>البريد الإلكتروني</label>{{ form.email }}</div>
+        <div class="field"><label>العنوان</label>{{ form.address_en }}</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-head"><h3>الشحن والعملة</h3></div>
+        <div class="field"><label>سعر الشحن الثابت</label>{{ form.shipping_fee }}</div>
+        <div class="field"><label>شحن مجاني فوق</label>{{ form.free_shipping_threshold }}<div class="help">0 = إلغاء ميزة الشحن المجاني</div></div>
+        <div class="field"><label>العملة</label>{{ form.currency_en }}<div class="help">اللي هيظهر جنب الأسعار، مثلاً EGP</div></div>
+        <div class="field"><label>حد تنبيه المخزون</label>{{ form.low_stock_threshold }}</div>
+        <div class="switch">{{ form.orders_enabled }}<label for="{{ form.orders_enabled.id_for_label }}">استقبال الطلبات مفعّل</label></div>
+      </div>
+
+      <div class="card">
+        <button class="btn btn-block" type="submit">حفظ الإعدادات</button>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>ملاحظة</h3></div>
+        <p class="small muted" style="margin:0">
+          الدفع في المتجر هو «الدفع عند الاستلام» فقط — مفيش بوابات دفع إلكتروني.
+        </p>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

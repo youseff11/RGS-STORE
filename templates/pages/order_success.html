@@ -1,0 +1,56 @@
+{% extends 'base/base.html' %}
+{% load store_tags %}
+
+{% block content %}
+<section class="section">
+  <div class="wrap">
+    <div class="success-card">
+      <div class="success-ring">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="38" height="38">
+          <path d="M4.5 12.5l5 5 10-11"/>
+        </svg>
+      </div>
+      <h1 style="font-size:clamp(22px,3.4vw,32px)">{% t 'order_received' %}</h1>
+      <p style="color:var(--muted)">{% t 'order_received_sub' %}</p>
+
+      <div class="order-code">{{ order.order_number }}</div>
+      <p style="font-size:12.5px;color:var(--muted)">{% t 'save_order_number' %}</p>
+
+      <div class="form-card" style="text-align:start;margin-top:26px">
+        <h3>{% t 'order_items' %}</h3>
+        <div class="mini-list">
+          {% for item in order.items.all %}
+          <div class="mini-row">
+            <div class="thumb">{% if item.image_url %}<img src="{{ item.image_url }}" alt="">{% endif %}</div>
+            <div>
+              <div class="n">{{ item.product_name }}</div>
+              <div class="o">{{ item.color_name }} {% if item.size_name %}· {{ item.size_name }}{% endif %} · ×{{ item.quantity }}</div>
+            </div>
+            <div class="p">{% price item.line_total %}</div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <table class="info-table" style="margin-top:18px">
+          <tr><th>{% t 'subtotal' %}</th><td>{% price order.subtotal %}</td></tr>
+          {% if order.discount_total %}<tr><th>{% t 'discount' %} {{ order.coupon_code }}</th><td style="color:var(--ok)">− {% price order.discount_total %}</td></tr>{% endif %}
+          <tr><th>{% t 'shipping' %}</th><td>{% if order.shipping_fee %}{% price order.shipping_fee %}{% else %}{% t 'free' %}{% endif %}</td></tr>
+          <tr><th style="color:var(--text);font-weight:800">{% t 'total' %}</th><td style="font-weight:800">{% price order.total %}</td></tr>
+        </table>
+
+        <table class="info-table" style="margin-top:14px">
+          <tr><th>{% t 'full_name' %}</th><td>{{ order.full_name }}</td></tr>
+          <tr><th>{% t 'phone' %}</th><td dir="ltr">{{ order.phone }}</td></tr>
+          <tr><th>{% t 'address' %}</th><td>{% if order.governorate %}{{ order.governorate.name }} — {% endif %}{{ order.city }} {{ order.address }}</td></tr>
+          <tr><th>{% t 'payment_method' %}</th><td>{% t 'cod' %}</td></tr>
+        </table>
+      </div>
+
+      <div class="flex" style="justify-content:center;margin-top:24px;flex-wrap:wrap">
+        <a class="btn" href="{% url 'shop' %}">{% t 'continue_shopping' %}</a>
+        <a class="btn btn-ghost" href="{% url 'track_order' %}?number={{ order.order_number }}&phone={{ order.phone }}">{% t 'track_order' %}</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

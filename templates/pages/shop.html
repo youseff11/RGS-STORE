@@ -1,0 +1,100 @@
+{% extends 'base/base.html' %}
+{% load store_tags %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="wrap">
+    <div class="crumbs">
+      <a href="{% url 'home' %}">{% t 'home' %}</a> <span>/</span>
+      {% if category %}<a href="{% url 'shop' %}">{% t 'shop' %}</a> <span>/</span> <span>{{ category.name }}</span>
+      {% else %}<span>{% t 'shop' %}</span>{% endif %}
+    </div>
+    <h1>{% if category %}{{ category.name }}{% elif active.q %}“{{ active.q }}”{% else %}{% t 'shop' %}{% endif %}</h1>
+    <p>{% if category and category.description %}{{ category.description }}{% else %}{{ total_count }} {% t 'results_count' %}{% endif %}</p>
+  </div>
+</section>
+
+<section class="section-sm">
+  <div class="wrap shop-layout">
+
+    {# ---------------------------------------------------------- filters #}
+    <aside class="filters">
+      <form method="get" action="{% if category %}{% url 'category_detail' category.slug %}{% else %}{% url 'shop' %}{% endif %}">
+        {% if active.q %}<input type="hidden" name="q" value="{{ active.q }}">{% endif %}
+        {% if active.sale %}<input type="hidden" name="sale" value="1">{% endif %}
+
+        {% if not category %}
+        <div class="filter-block">
+          <h4>{% t 'categories' %}</h4>
+          <div class="filter-list">
+            <a href="{% qs category=None %}" class="{% if not active.category %}is-active{% endif %}">{% t 'all' %}</a>
+            {% for cat in categories %}
+              <a href="{% qs category=cat.slug %}" class="{% if active.category == cat.slug %}is-active{% endif %}">
+                <span>{{ cat.name }}</span><small>{{ cat.live_products_count }}</small>
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        {% if sizes %}
+        <div class="filter-block">
+          <h4>{% t 'sizes' %}</h4>
+          <div class="size-chips">
+            {% for size in sizes %}
+              <a class="size-chip {% if active.size == size.id|stringformat:'s' %}is-active{% endif %}"
+                 href="{% if active.size == size.id|stringformat:'s' %}{% qs size=None %}{% else %}{% qs size=size.id %}{% endif %}">{{ size.name }}</a>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="filter-block">
+          <h4>{% t 'price_range' %}</h4>
+          <div class="price-inputs">
+            <input type="number" name="min" min="0" placeholder="{% t 'min_price' %}" value="{{ active.min }}">
+            <input type="number" name="max" min="0" placeholder="{% t 'max_price' %}" value="{{ active.max }}">
+          </div>
+          <button class="btn btn-sm btn-block" type="submit" style="margin-top:12px">{% t 'apply_filters' %}</button>
+        </div>
+
+        <div class="filter-block">
+          <a class="btn btn-sm btn-ghost btn-block" href="{% if category %}{% url 'category_detail' category.slug %}{% else %}{% url 'shop' %}{% endif %}">{% t 'clear_filters' %}</a>
+        </div>
+      </form>
+    </aside>
+
+    {# ---------------------------------------------------------- results #}
+    <div>
+      <div class="shop-toolbar">
+        <button class="btn btn-sm btn-ghost filters-toggle" data-filters-toggle type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" width="16" height="16"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+          {% t 'filters' %}
+        </button>
+        <span class="count">{% t 'showing' %} {{ products|length }} / {{ total_count }} {% t 'results_count' %}</span>
+        <select class="select-inline" data-sort aria-label="{% t 'sort_by' %}">
+          <option value="new" {% if active.sort == 'new' %}selected{% endif %}>{% t 'sort_newest' %}</option>
+          <option value="price_asc" {% if active.sort == 'price_asc' %}selected{% endif %}>{% t 'sort_price_low' %}</option>
+          <option value="price_desc" {% if active.sort == 'price_desc' %}selected{% endif %}>{% t 'sort_price_high' %}</option>
+          <option value="name" {% if active.sort == 'name' %}selected{% endif %}>{% t 'sort_name' %}</option>
+        </select>
+      </div>
+
+      {% if products %}
+        <div class="products-grid">
+          {% for product in products %}{% include 'partials/product_card.html' %}{% endfor %}
+        </div>
+        {% include 'partials/pagination.html' %}
+      {% else %}
+        <div class="empty-state">
+          <div class="ico">🧺</div>
+          <h3>{% t 'no_products' %}</h3>
+          <p>{% t 'no_products_sub' %}</p>
+          <a class="btn" href="{% url 'shop' %}">{% t 'shop' %}</a>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+</section>
+{% endblock %}

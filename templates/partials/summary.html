@@ -1,0 +1,58 @@
+{% load store_tags %}
+<aside class="summary">
+  <h3>{% t 'order_summary' %}</h3>
+
+  {% if totals.free_shipping_threshold %}
+    {% if totals.remaining_for_free > 0 %}
+      {% with remaining=totals.remaining_for_free|money %}
+        <div class="ship-hint">
+          {% t 'free_shipping_left' amount=remaining %} {{ CURRENCY }}
+          <div class="ship-bar">
+            <span style="width:{% widthratio totals.subtotal totals.free_shipping_threshold 100 %}%"></span>
+          </div>
+        </div>
+      {% endwith %}
+    {% else %}
+      <div class="ship-hint">✓ {% t 'free_shipping_earned' %}</div>
+    {% endif %}
+  {% endif %}
+
+  <div class="sum-row"><span>{% t 'subtotal' %}</span><b>{% price totals.subtotal %}</b></div>
+
+  {% if totals.discount %}
+    <div class="sum-row discount">
+      <span>{% t 'discount' %}{% if totals.coupon %} ({{ totals.coupon.code }}){% endif %}</span>
+      <b>− {% price totals.discount %}</b>
+    </div>
+  {% endif %}
+
+  <div class="sum-row muted">
+    <span>{% t 'shipping' %}</span>
+    <b>{% if totals.shipping %}{% price totals.shipping %}{% else %}{% t 'free' %}{% endif %}</b>
+  </div>
+
+  <div class="sum-total"><span>{% t 'total' %}</span><span>{% price totals.total %}</span></div>
+
+  {% if totals.coupon %}
+    <div class="coupon-chip">
+      <span>🎟 {{ totals.coupon.code }}</span>
+      <a href="{% url 'coupon_remove' %}" style="color:inherit;opacity:.7" aria-label="{% t 'remove' %}">✕</a>
+    </div>
+  {% else %}
+    <form class="coupon-form" method="post" action="{% url 'coupon_apply' %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.path }}">
+      <input type="text" name="code" placeholder="{% t 'promo_placeholder' %}" autocomplete="off">
+      <button class="btn btn-sm" type="submit">{% t 'apply' %}</button>
+    </form>
+  {% endif %}
+
+  {% if not hide_checkout %}
+    <a class="btn btn-lg btn-block" href="{% url 'checkout' %}" style="margin-top:8px">{% t 'checkout' %}</a>
+  {% endif %}
+
+  <div class="flex" style="margin-top:14px;justify-content:center;gap:8px;color:var(--muted);font-size:12px">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="15" height="15"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+    {% t 'cod_only' %}
+  </div>
+</aside>

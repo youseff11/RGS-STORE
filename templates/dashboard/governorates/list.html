@@ -1,0 +1,37 @@
+{% extends 'base/dashboard_base.html' %}
+{% load store_tags %}
+{% block page_name %}المحافظات{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>المحافظات</h2><p>بتظهر للعميل عند إتمام الطلب — ممكن تحدد سعر شحن خاص لأي محافظة</p></div>
+  <a class="btn" href="{% url 'dash_governorate_new' %}">+ محافظة</a>
+</div>
+
+{% if governorates %}
+<div class="table-wrap">
+  <table class="t">
+    <thead><tr><th>المحافظة</th><th>سعر شحن خاص</th><th>الحالة</th><th></th></tr></thead>
+    <tbody>
+      {% for gov in governorates %}
+      <tr>
+        <td><b>{{ gov.name }}</b></td>
+        <td class="small">{% if gov.shipping_fee != None %}{% price gov.shipping_fee %}{% else %}<span class="muted">السعر العام</span>{% endif %}</td>
+        <td><span class="chip {% if gov.is_active %}chip-ok{% else %}chip-muted{% endif %}">{% if gov.is_active %}متاحة{% else %}معطّلة{% endif %}</span></td>
+        <td>
+          <div class="row-actions">
+            <a class="btn btn-sm btn-soft" href="{% url 'dash_governorate_edit' gov.pk %}">تعديل</a>
+            <form method="post" action="{% url 'dash_governorate_delete' gov.pk %}" data-confirm="حذف المحافظة؟">
+              {% csrf_token %}<button class="btn btn-sm btn-danger" type="submit">حذف</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card"><div class="empty"><div class="ico">📍</div>لا توجد محافظات — شغّل الأمر seed_store أو أضفها يدويًا</div></div>
+{% endif %}
+{% endblock %}

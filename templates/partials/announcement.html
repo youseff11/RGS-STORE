@@ -1,0 +1,12 @@
+{% if ANNOUNCEMENTS %}
+<div class="announce" role="region" aria-label="announcements">
+  <div class="announce-track" style="--marquee-speed: {{ ANNOUNCEMENTS|length|add:1 }}0s;">
+    {% for item in ANNOUNCEMENTS %}
+      <span class="announce-item">{% if item.link %}<a href="{{ item.link }}">{{ item.text }}</a>{% else %}{{ item.text }}{% endif %}</span>
+    {% endfor %}
+    {% for item in ANNOUNCEMENTS %}
+      <span class="announce-item" aria-hidden="true">{% if item.link %}<a href="{{ item.link }}">{{ item.text }}</a>{% else %}{{ item.text }}{% endif %}</span>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}

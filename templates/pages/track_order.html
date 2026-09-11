@@ -1,0 +1,77 @@
+{% extends 'base/base.html' %}
+{% load store_tags %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="wrap">
+    <div class="crumbs"><a href="{% url 'home' %}">{% t 'home' %}</a> <span>/</span> <span>{% t 'track_order' %}</span></div>
+    <h1>{% t 'track_title' %}</h1>
+    <p>{% t 'track_sub' %}</p>
+  </div>
+</section>
+
+<section class="section-sm">
+  <div class="wrap" style="max-width:760px">
+
+    <form class="form-card" method="get" style="margin-bottom:22px">
+      <div class="field-row">
+        <div class="field">
+          <label>{% t 'order_number' %}</label>
+          <input type="text" name="number" value="{{ number }}" placeholder="RGS1234567" dir="ltr">
+        </div>
+        <div class="field">
+          <label>{% t 'phone' %}</label>
+          <input type="tel" name="phone" value="{{ phone }}" dir="ltr">
+        </div>
+      </div>
+      <button class="btn btn-block" type="submit">{% t 'track_button' %}</button>
+    </form>
+
+    {% if not_found %}
+      <div class="empty-state" style="padding:40px 20px">
+        <div class="ico">🔎</div>
+        <h3>{% t 'track_not_found' %}</h3>
+      </div>
+    {% endif %}
+
+    {% if order %}
+    <div class="form-card">
+      <div class="between" style="margin-bottom:6px">
+        <h3 style="margin:0;border:0;padding:0">{{ order.order_number }}</h3>
+        <span class="chip chip-{% status_color order.status %}">{{ order.status_label }}</span>
+      </div>
+      <p style="color:var(--muted);font-size:12.5px">{{ order.created_at|date:"Y/m/d — H:i" }}</p>
+
+      <div class="timeline">
+        {% with s=order.status %}
+        <div class="tl-step {% if s == 'pending' or s == 'confirmed' or s == 'shipped' or s == 'delivered' %}is-done{% endif %}"><span class="bullet">1</span>{% t 'order_received' %}</div>
+        <div class="tl-step {% if s == 'confirmed' or s == 'shipped' or s == 'delivered' %}is-done{% endif %}"><span class="bullet">2</span>Confirmed</div>
+        <div class="tl-step {% if s == 'shipped' or s == 'delivered' %}is-done{% endif %}"><span class="bullet">3</span>Shipped</div>
+        <div class="tl-step {% if s == 'delivered' %}is-done{% endif %}"><span class="bullet">4</span>Delivered</div>
+        {% endwith %}
+      </div>
+
+      <h3>{% t 'order_items' %}</h3>
+      <div class="mini-list">
+        {% for item in order.items.all %}
+        <div class="mini-row">
+          <div class="thumb">{% if item.image_url %}<img src="{{ item.image_url }}" alt="">{% endif %}</div>
+          <div>
+            <div class="n">{{ item.product_name }}</div>
+            <div class="o">{{ item.color_name }} {% if item.size_name %}· {{ item.size_name }}{% endif %} · ×{{ item.quantity }}</div>
+          </div>
+          <div class="p">{% price item.line_total %}</div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <table class="info-table" style="margin-top:16px">
+        <tr><th>{% t 'shipping' %}</th><td>{% if order.shipping_fee %}{% price order.shipping_fee %}{% else %}{% t 'free' %}{% endif %}</td></tr>
+        <tr><th style="color:var(--text);font-weight:800">{% t 'total' %}</th><td style="font-weight:800">{% price order.total %}</td></tr>
+      </table>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+{% endblock %}

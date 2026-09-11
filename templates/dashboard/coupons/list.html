@@ -1,0 +1,52 @@
+{% extends 'base/dashboard_base.html' %}
+{% load store_tags %}
+{% block page_name %}أكواد الخصم{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>أكواد الخصم (برومو كود)</h2><p>العميل بيكتب الكود في السلة أو عند إتمام الطلب</p></div>
+  <a class="btn" href="{% url 'dash_coupon_new' %}">+ كود جديد</a>
+</div>
+
+{% if coupons %}
+<div class="table-wrap">
+  <table class="t">
+    <thead><tr><th>الكود</th><th>الخصم</th><th>الحد الأدنى</th><th>الاستخدام</th><th>الصلاحية</th><th>الحالة</th><th></th></tr></thead>
+    <tbody>
+      {% for coupon in coupons %}
+      <tr>
+        <td>
+          <b style="letter-spacing:.08em;font-size:14px">{{ coupon.code }}</b>
+          {% if coupon.description %}<div class="small muted">{{ coupon.description }}</div>{% endif %}
+          {% if coupon.free_shipping %}<span class="chip chip-info" style="margin-top:4px">+ شحن مجاني</span>{% endif %}
+        </td>
+        <td>
+          <b>{% if coupon.discount_type == 'percent' %}{{ coupon.value|money }}%{% else %}{% price coupon.value %}{% endif %}</b>
+        </td>
+        <td class="small">{% if coupon.min_order %}{% price coupon.min_order %}{% else %}—{% endif %}</td>
+        <td class="small">
+          {{ coupon.used_count }}{% if coupon.max_uses %} / {{ coupon.max_uses }}{% else %} / ∞{% endif %}
+        </td>
+        <td class="small muted">
+          {% if coupon.start_at %}{{ coupon.start_at|date:"Y/m/d" }}{% else %}—{% endif %}
+          →
+          {% if coupon.end_at %}{{ coupon.end_at|date:"Y/m/d" }}{% else %}∞{% endif %}
+        </td>
+        <td><span class="chip {% if coupon.is_running %}chip-ok{% else %}chip-muted{% endif %}">{% if coupon.is_running %}شغّال{% else %}متوقف{% endif %}</span></td>
+        <td>
+          <div class="row-actions">
+            <a class="btn btn-sm btn-soft" href="{% url 'dash_coupon_edit' coupon.pk %}">تعديل</a>
+            <form method="post" action="{% url 'dash_coupon_delete' coupon.pk %}" data-confirm="حذف الكود «{{ coupon.code }}»؟">
+              {% csrf_token %}<button class="btn btn-sm btn-danger" type="submit">حذف</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card"><div class="empty"><div class="ico">🎟️</div>لا توجد أكواد خصم</div></div>
+{% endif %}
+{% endblock %}
