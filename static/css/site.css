@@ -273,7 +273,10 @@ html[dir="rtl"] .drawer-panel { transform: translateX(102%); }
 /* ---- editorial hero (photo right, copy left) ---- */
 .hero-main {
   position: relative;
-  min-height: clamp(520px, 78vh, 760px);
+  /* Fill the viewport under the header. The 56.25vw ceiling is the image's own
+     height at this width — never taller, so the photo is never zoomed or
+     cropped sideways: extra height only reveals more of the frame. */
+  min-height: clamp(560px, calc(100vh - 110px), 56.25vw);
   display: flex; align-items: center;
   overflow: hidden;
   background: var(--bg);
