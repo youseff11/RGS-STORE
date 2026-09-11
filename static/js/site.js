@@ -77,13 +77,6 @@
       drawer && drawer.classList.remove('is-open');
       document.body.style.overflow = '';
     }
-    if (event.target.closest('[data-search-toggle]')) {
-      const bar = $('.search-bar');
-      if (bar) {
-        bar.classList.toggle('is-open');
-        if (bar.classList.contains('is-open')) setTimeout(() => { const i = $('input', bar); i && i.focus(); }, 220);
-      }
-    }
     if (event.target.closest('[data-filters-toggle]')) {
       const panel = $('.filters');
       panel && panel.classList.toggle('is-open');

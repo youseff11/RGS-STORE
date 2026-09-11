@@ -2,12 +2,6 @@
 <header class="header">
   <div class="wrap header-inner">
 
-    <button class="icon-btn burger" data-drawer-open aria-label="{% t 'menu' %}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-        <path d="M3 6h18M3 12h18M3 18h18"/>
-      </svg>
-    </button>
-
     <a class="logo" href="{% url 'home' %}">
       {% if SITE.logo %}
         <img src="{{ SITE.logo.url }}" alt="{{ SITE.brand_name }}">
@@ -29,6 +23,13 @@
     </nav>
 
     <div class="header-actions">
+      <a class="icon-btn cart-btn" href="{% url 'cart' %}" aria-label="{% t 'cart' %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 7h12l-1 12.2a2 2 0 01-2 1.8H9a2 2 0 01-2-1.8L6 7z"/><path d="M9.2 7V5.6a2.8 2.8 0 015.6 0V7"/>
+        </svg>
+        <span class="cart-count" {% if not CART_COUNT %}style="display:none"{% endif %}>{{ CART_COUNT }}</span>
+      </a>
+
       <button class="icon-btn" data-theme-toggle aria-label="{% t 'theme' %}">
         <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
           <circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
@@ -38,27 +39,11 @@
         </svg>
       </button>
 
-      <button class="icon-btn" data-search-toggle aria-label="{% t 'search' %}">
+      <button class="icon-btn burger" data-drawer-open aria-label="{% t 'menu' %}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-          <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.2-3.2"/>
+          <path d="M3 6h18M3 12h18M3 18h18"/>
         </svg>
       </button>
-
-      <a class="icon-btn cart-btn" href="{% url 'cart' %}" aria-label="{% t 'cart' %}">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 7h12l-1 12.2a2 2 0 01-2 1.8H9a2 2 0 01-2-1.8L6 7z"/><path d="M9.2 7V5.6a2.8 2.8 0 015.6 0V7"/>
-        </svg>
-        <span class="cart-count" {% if not CART_COUNT %}style="display:none"{% endif %}>{{ CART_COUNT }}</span>
-      </a>
-    </div>
-  </div>
-
-  <div class="search-bar">
-    <div class="wrap">
-      <form action="{% url 'shop' %}" method="get">
-        <input type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="{% t 'search_placeholder' %}" autocomplete="off">
-        <button class="btn" type="submit">{% t 'search' %}</button>
-      </form>
     </div>
   </div>
 </header>
@@ -72,11 +57,19 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
     </div>
+
+    <form class="drawer-search" action="{% url 'shop' %}" method="get">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.2-3.2"/>
+      </svg>
+      <input type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="{% t 'search_placeholder' %}" autocomplete="off">
+    </form>
+
     <nav>
       <a href="{% url 'home' %}">{% t 'home' %}</a>
       <a href="{% url 'shop' %}">{% t 'shop' %}</a>
       {% for cat in NAV_CATEGORIES %}
-        <a class="nav-cat" href="{% url 'category_detail' cat.slug %}">{{ cat.name }}</a>
+        <a href="{% url 'category_detail' cat.slug %}">{{ cat.name }}</a>
       {% endfor %}
       <a href="{% url 'shop' %}?sale=1">{% t 'sale' %}</a>
       <a href="{% url 'track_order' %}">{% t 'track_order' %}</a>
