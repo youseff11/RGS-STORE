@@ -24,8 +24,10 @@
 
     <div class="header-actions">
       <a class="icon-btn cart-btn" href="{% url 'cart' %}" aria-label="{% t 'cart' %}">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 7h12l-1 12.2a2 2 0 01-2 1.8H9a2 2 0 01-2-1.8L6 7z"/><path d="M9.2 7V5.6a2.8 2.8 0 015.6 0V7"/>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7.2 3h9.6l2.2 3.4v12.1a2.5 2.5 0 01-2.5 2.5H7.5A2.5 2.5 0 015 18.5V6.4L7.2 3z"/>
+          <path d="M5 6.6h14"/>
+          <path d="M15.2 10a3.2 3.2 0 01-6.4 0"/>
         </svg>
         <span class="cart-count" {% if not CART_COUNT %}style="display:none"{% endif %}>{{ CART_COUNT }}</span>
       </a>
