@@ -7,12 +7,11 @@
 
       {# ------------------------------------------------------------ brand #}
       <div class="footer-brand">
-        <a class="logo" href="{% url 'home' %}">
+        <a class="logo" href="{% url 'home' %}" aria-label="MR — Home">
           {% if SITE.logo %}
             <img src="{{ SITE.logo.url }}" alt="{{ SITE.brand_name }}">
           {% else %}
-            <span class="logo-mark" aria-hidden="true">R</span>
-            <span class="logo-text">{{ SITE.brand_name|default:"RGS TOWER" }}</span>
+            {% include 'partials/logo.html' %}
           {% endif %}
         </a>
         <p>{{ SITE.about|default:SITE.tagline|default:'' }}</p>

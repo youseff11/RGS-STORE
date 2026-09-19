@@ -2,12 +2,11 @@
 <header class="header">
   <div class="wrap header-inner">
 
-    <a class="logo" href="{% url 'home' %}">
+    <a class="logo" href="{% url 'home' %}" aria-label="MR — Home">
       {% if SITE.logo %}
         <img src="{{ SITE.logo.url }}" alt="{{ SITE.brand_name }}">
       {% else %}
-        <span class="logo-mark" aria-hidden="true">R</span>
-        <span class="logo-text">{{ SITE.brand_name|default:"RGS TOWER" }}</span>
+        {% include 'partials/logo.html' %}
       {% endif %}
     </a>
 
@@ -54,7 +53,7 @@
   <div class="drawer-veil" data-drawer-close></div>
   <aside class="drawer-panel">
     <div class="between" style="margin-bottom:18px">
-      <span class="logo-text">{{ SITE.brand_name|default:"RGS TOWER" }}</span>
+      <a class="logo logo-drawer" href="{% url 'home' %}" aria-label="MR — Home">{% include 'partials/logo.html' %}</a>
       <button class="icon-btn" data-drawer-close aria-label="{% t 'close' %}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>

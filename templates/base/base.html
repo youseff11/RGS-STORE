@@ -7,7 +7,8 @@
   <meta name="description" content="{% block description %}{{ SITE.tagline|default:'' }}{% endblock %}">
   <meta name="theme-color" content="#0A0A0C">
 
-  {% if SITE.favicon %}<link rel="icon" href="{{ SITE.favicon.url }}">{% else %}<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>👔</text></svg>">{% endif %}
+  {% if SITE.favicon %}<link rel="icon" href="{{ SITE.favicon.url }}">{% else %}<link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">{% endif %}
+  <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

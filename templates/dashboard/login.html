@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>دخول لوحة التحكم — RGS TOWER</title>
+  <title>دخول لوحة التحكم — {{ SITE.brand_name|default:"MR" }}</title>
+  <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Jost:wght@500;700&display=swap" rel="stylesheet">
@@ -23,8 +24,7 @@
 <div class="login-wrap">
   <form class="login-card" method="post">
     {% csrf_token %}
-    <div class="mark">RGS</div>
-    <h1>RGS TOWER</h1>
+    <h1 class="login-logo">{% include 'partials/logo.html' %}</h1>
     <p>لوحة تحكم المتجر</p>
 
     {% if error %}<div class="alert">{{ error }}</div>{% endif %}

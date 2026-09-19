@@ -2,15 +2,16 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>فاتورة {{ order.order_number }} — RGS TOWER</title>
+  <title>فاتورة {{ order.order_number }} — {{ SITE.brand_name|default:"MR" }}</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
     body { font-family: 'Cairo', sans-serif; margin: 0; padding: 28px; color: #111; background: #fff; font-size: 13px; }
     .sheet { max-width: 780px; margin: auto; }
     .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #111; padding-bottom: 14px; margin-bottom: 18px; }
-    .brand { font-size: 22px; font-weight: 800; letter-spacing: .12em; }
-    .brand small { display: block; font-size: 11px; letter-spacing: .2em; color: #666; font-weight: 600; }
+    .brand .mr-logo { display: block; height: 36px; width: auto; }
+    .brand .mr-ink { fill: #111; }
+    .brand .mr-dot { fill: #1F7AE0; }
     .code { text-align: end; }
     .code b { font-size: 18px; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
@@ -33,7 +34,7 @@
 
 <div class="sheet">
   <div class="head">
-    <div class="brand">RGS TOWER<small>MEN STORE</small></div>
+    <div class="brand">{% include 'partials/logo.html' %}</div>
     <div class="code">
       <div>رقم الطلب</div>
       <b>{{ order.order_number }}</b>
@@ -83,7 +84,7 @@
   </div>
 
   <div class="foot">
-    شكرًا لثقتك في RGS TOWER — الدفع عند الاستلام
+    شكرًا لثقتك في {{ SITE.brand_name|default:"MR" }} — الدفع عند الاستلام
   </div>
 </div>
 </body>

@@ -182,21 +182,20 @@ html[dir="rtl"] .announce-track { animation-name: marquee-rtl; }
 
 .logo { display: inline-flex; align-items: center; gap: 11px; flex: none; }
 .logo img { height: 38px; width: auto; object-fit: contain; }
-.logo-mark {
-  width: 34px; height: 34px; flex: none; border-radius: 9px;
-  display: grid; place-items: center;
-  font-family: 'Archivo Black', 'Jost', sans-serif; font-size: 17px;
-  background: var(--ink); color: var(--bg);
-  transform: skewX(-8deg);
+/* MR. — outlined SVG logo (templates/partials/logo.html); colours follow the theme */
+.mr-logo {
+  --logo-ink: var(--ink); --logo-dot: var(--accent);
+  display: block; height: 30px; width: auto; overflow: visible;
 }
-:root[data-theme="dark"] .logo-mark {
-  background: linear-gradient(140deg, var(--accent-2), var(--accent)); color: #04121C;
+.mr-logo .mr-ink { fill: var(--logo-ink); transition: fill .3s var(--ease); }
+.mr-logo .mr-dot {
+  fill: var(--logo-dot); transform-box: fill-box; transform-origin: center;
+  transition: fill .3s var(--ease), transform .35s var(--ease);
 }
-.logo-text {
-  font-family: 'Jost', 'Cairo', sans-serif;
-  font-size: 19px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase;
-  color: var(--ink);
-}
+.logo:hover .mr-dot { transform: scale(1.3); }
+.logo:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; border-radius: 4px; }
+.footer-brand .mr-logo { height: 40px; }
+.logo-drawer .mr-logo { height: 26px; }
 
 .nav { display: flex; align-items: center; gap: 2px; margin-inline: auto; }
 .logo { margin-inline-end: 8px; }
@@ -1066,7 +1065,8 @@ a.contact-line:hover .ico { background: var(--accent); color: var(--on-accent); 
   .hero-slides { height: 62vh; }
   .toasts { inset-inline: 14px; inset-block-start: 76px; }
   .toast { max-width: none; }
-  .logo-text { font-size: 18px; letter-spacing: .12em; }
+  .header .mr-logo { height: 26px; }
+  .footer-brand .mr-logo { height: 34px; }
 }
 
 @media print {
