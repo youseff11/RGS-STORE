@@ -24,6 +24,27 @@
   } catch (e) {}
   apply(current);
 
+  /* mobile sidebar */
+  const sidebar  = $('.sidebar');
+  const backdrop = $('.sb-backdrop');
+  const mobile   = window.matchMedia('(max-width: 900px)');
+  const isOpen   = () => !!sidebar && sidebar.classList.contains('is-open');
+
+  function setSidebar(open, returnFocus) {
+    if (!sidebar) return;
+    sidebar.classList.toggle('is-open', open);
+    if (backdrop) backdrop.classList.toggle('is-open', open);
+    document.body.classList.toggle('sb-locked', open);
+    $$('[data-sb-toggle]').forEach((btn) => btn.setAttribute('aria-expanded', open ? 'true' : 'false'));
+    if (open) {
+      const closeBtn = $('.sb-close', sidebar);
+      if (closeBtn) setTimeout(() => closeBtn.focus({ preventScroll: true }), 60);
+    } else if (returnFocus) {
+      const toggle = $('[data-sb-toggle]');
+      if (toggle) toggle.focus({ preventScroll: true });
+    }
+  }
+
   document.addEventListener('click', (event) => {
     if (event.target.closest('[data-theme-toggle]')) {
       current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -31,10 +52,24 @@
       try { localStorage.setItem(KEY, current); } catch (e) {}
     }
     if (event.target.closest('[data-sb-toggle]')) {
-      const sb = $('.sidebar');
-      sb && sb.classList.toggle('is-open');
+      setSidebar(!isOpen());
+    } else if (event.target.closest('[data-sb-close]')) {
+      setSidebar(false, true);
+    } else if (mobile.matches && isOpen() && event.target.closest('.sidebar a')) {
+      setSidebar(false);
     }
   });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && isOpen()) setSidebar(false, true);
+  });
+
+  const onViewport = () => { if (!mobile.matches && isOpen()) setSidebar(false); };
+  if (mobile.addEventListener) mobile.addEventListener('change', onViewport);
+  else if (mobile.addListener) mobile.addListener(onViewport);
+
+  /* back/forward cache: never come back with the menu stuck open */
+  window.addEventListener('pageshow', () => { if (isOpen()) setSidebar(false); });
 
   /* delete confirmations */
   document.addEventListener('submit', (event) => {

@@ -25,10 +25,11 @@
 
 <div class="shell">
   {% include 'dashboard/_sidebar.html' %}
+  <div class="sb-backdrop" data-sb-close aria-hidden="true"></div>
 
   <div class="main">
     <header class="topbar">
-      <button class="icon-btn sb-toggle" data-sb-toggle aria-label="القائمة">
+      <button type="button" class="icon-btn sb-toggle" data-sb-toggle aria-label="القائمة" aria-controls="dash-sidebar" aria-expanded="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
       </button>
       <h1>{% block page_name %}لوحة التحكم{% endblock %}</h1>

@@ -371,7 +371,15 @@ input[type="color"].inp { padding: 4px; height: 42px; cursor: pointer; }
 .toast.error .bar { background: var(--bad); }
 
 /* responsive */
-.sb-toggle { display: none; }
+.sb-toggle, .sb-close, .sb-backdrop { display: none; }
+.sb-close {
+  width: 34px; height: 34px; place-items: center; flex: none;
+  margin-inline-start: auto; border-radius: 9px; color: var(--sidebar-tx);
+  transition: background .18s, color .18s;
+}
+.sb-close:hover { background: var(--sidebar-2); color: #fff; }
+.sb-close svg { width: 18px; height: 18px; }
+
 @media (max-width: 1100px) {
   .g4 { grid-template-columns: repeat(2, 1fr); }
   .split { grid-template-columns: 1fr; }
@@ -379,21 +387,44 @@ input[type="color"].inp { padding: 4px; height: 42px; cursor: pointer; }
 @media (max-width: 900px) {
   .sidebar {
     position: fixed; inset-block: 0; inset-inline-start: 0; z-index: 100;
-    transform: translateX(-105%); transition: transform .3s var(--ease);
+    width: min(var(--sb-w), 84vw); height: auto;
+    overscroll-behavior: contain;
+    transform: translateX(-105%); visibility: hidden;
+    transition: transform .3s var(--ease), visibility 0s linear .3s;
   }
   html[dir="rtl"] .sidebar { transform: translateX(105%); }
-  .sidebar.is-open { transform: translateX(0); }
-  .sb-toggle { display: inline-grid; }
+  /* نفس قوة قاعدة الـ RTL اللي فوق — من غيرها القائمة ما بتفتحش */
+  .sidebar.is-open,
+  html[dir="rtl"] .sidebar.is-open {
+    transform: none; visibility: visible;
+    box-shadow: 0 0 44px rgba(0,0,0,.45);
+    transition: transform .3s var(--ease), visibility 0s;
+  }
+
+  .sb-backdrop {
+    display: block; position: fixed; inset: 0; z-index: 90;
+    background: rgba(8,8,12,.55);
+    -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+    opacity: 0; visibility: hidden;
+    transition: opacity .3s var(--ease), visibility 0s linear .3s;
+  }
+  .sb-backdrop.is-open { opacity: 1; visibility: visible; transition: opacity .3s var(--ease), visibility 0s; }
+  body.sb-locked { overflow: hidden; }
+
+  .sb-toggle, .sb-close { display: inline-grid; }
   .g3, .g2 { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
   .g4 { grid-template-columns: 1fr; }
   .content { padding: 18px 14px 50px; }
-  .topbar { padding-inline: 14px; }
+  .topbar { padding-inline: 12px; gap: 6px; }
+  .topbar h1 { font-size: 15.5px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-chip { padding: 3px; }
+  .user-chip > span:not(.av) { display: none; }
 }
 
 @media print {
-  .sidebar, .topbar, .no-print { display: none !important; }
+  .sidebar, .topbar, .sb-backdrop, .no-print { display: none !important; }
   body { background: #fff; }
   .content { padding: 0; }
 }

@@ -1,10 +1,13 @@
-<aside class="sidebar">
+<aside class="sidebar" id="dash-sidebar">
   <div class="sb-brand">
     <span class="mark">RGS</span>
     <span>
       <b>RGS TOWER</b>
       <small>MEN STORE</small>
     </span>
+    <button type="button" class="sb-close" data-sb-close aria-label="إغلاق القائمة">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
   </div>
 
   <a class="sb-link {% if active_page == 'index' %}is-active{% endif %}" href="{% url 'dash_index' %}">
