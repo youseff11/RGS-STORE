@@ -32,6 +32,6 @@
   </table>
 </div>
 {% else %}
-<div class="card"><div class="empty"><div class="ico">📍</div>لا توجد محافظات — شغّل الأمر seed_store أو أضفها يدويًا</div></div>
+<div class="card"><div class="empty"><div class="ico ico-badge">{% include 'partials/icon.html' with name='pin' %}</div>لا توجد محافظات — شغّل الأمر seed_store أو أضفها يدويًا</div></div>
 {% endif %}
 {% endblock %}

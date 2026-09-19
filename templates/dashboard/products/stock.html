@@ -21,7 +21,7 @@
 {% if not sizes %}
 <div class="card">
   <div class="empty">
-    <div class="ico">📏</div>
+    <div class="ico ico-badge">{% include 'partials/icon.html' with name='ruler' %}</div>
     لا توجد مقاسات معرفة في المتجر
     <div style="margin-top:14px"><a class="btn" href="{% url 'dash_sizes' %}">إضافة المقاسات</a></div>
   </div>

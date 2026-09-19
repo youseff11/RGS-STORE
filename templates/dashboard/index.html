@@ -7,7 +7,7 @@
 
 <div class="page-head">
   <div>
-    <h2>أهلاً {{ request.user.username }} 👋</h2>
+    <h2 class="hello">أهلاً {{ request.user.username }} <span class="hello-ico">{% include 'partials/icon.html' with name='sparkles' %}</span></h2>
     <p>ملخص سريع لأداء المتجر</p>
   </div>
   <div class="flex">
@@ -81,7 +81,7 @@
         </table>
       </div>
       {% else %}
-        <div class="empty"><div class="ico">📦</div>لا توجد طلبات بعد</div>
+        <div class="empty"><div class="ico ico-badge">{% include 'partials/icon.html' with name='bag' %}</div>لا توجد طلبات بعد</div>
       {% endif %}
     </div>
   </div>
@@ -101,7 +101,7 @@
         </div>
         {% endfor %}
       {% else %}
-        <div class="empty" style="padding:26px"><div class="ico">✅</div>المخزون بحالة جيدة</div>
+        <div class="empty" style="padding:26px"><div class="ico ico-badge ok">{% include 'partials/icon.html' with name='check-circle' %}</div>المخزون بحالة جيدة</div>
       {% endif %}
     </div>
 
@@ -116,7 +116,7 @@
         </div>
         {% endfor %}
       {% else %}
-        <div class="empty" style="padding:26px"><div class="ico">📈</div>لا توجد مبيعات بعد</div>
+        <div class="empty" style="padding:26px"><div class="ico ico-badge">{% include 'partials/icon.html' with name='trend' %}</div>لا توجد مبيعات بعد</div>
       {% endif %}
     </div>
 

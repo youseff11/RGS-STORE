@@ -13,7 +13,7 @@
         </div>
       {% endwith %}
     {% else %}
-      <div class="ship-hint">✓ {% t 'free_shipping_earned' %}</div>
+      <div class="ship-hint">{% include 'partials/icon.html' with name='check' %} {% t 'free_shipping_earned' %}</div>
     {% endif %}
   {% endif %}
 
@@ -35,8 +35,8 @@
 
   {% if totals.coupon %}
     <div class="coupon-chip">
-      <span>🎟 {{ totals.coupon.code }}</span>
-      <a href="{% url 'coupon_remove' %}" style="color:inherit;opacity:.7" aria-label="{% t 'remove' %}">✕</a>
+      <span class="code-tag">{% include 'partials/icon.html' with name='ticket' %} {{ totals.coupon.code }}</span>
+      <a href="{% url 'coupon_remove' %}" style="color:inherit;opacity:.7" class="coupon-x" aria-label="{% t 'remove' %}">{% include 'partials/icon.html' with name='x' %}</a>
     </div>
   {% else %}
     <form class="coupon-form" method="post" action="{% url 'coupon_apply' %}">

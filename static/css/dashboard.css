@@ -354,6 +354,33 @@ input[type="color"].inp { padding: 4px; height: 42px; cursor: pointer; }
 .empty { text-align: center; padding: 56px 20px; color: var(--muted); }
 .empty .ico { font-size: 38px; opacity: .35; margin-bottom: 8px; }
 
+/* line icons (templates/partials/icon.html) — replace every emoji */
+svg.i { width: 1.15em; height: 1.15em; vertical-align: -.2em; flex: none; }
+.empty .ico-badge {
+  width: 58px; height: 58px; margin: 0 auto 14px; border-radius: 50%;
+  display: grid; place-items: center; opacity: 1;
+  background: var(--accent-soft); color: var(--accent);
+  box-shadow: 0 0 0 7px color-mix(in srgb, var(--accent-soft) 45%, transparent);
+}
+.empty .ico-badge svg { width: 26px; height: 26px; }
+.empty .ico-badge.ok {
+  background: color-mix(in srgb, var(--ok) 13%, transparent); color: var(--ok);
+  box-shadow: 0 0 0 7px color-mix(in srgb, var(--ok) 6%, transparent);
+}
+.hello { display: flex; align-items: center; gap: 10px; }
+.hello-ico {
+  width: 34px; height: 34px; border-radius: 11px; flex: none;
+  display: inline-grid; place-items: center;
+  background: var(--accent-soft); color: var(--accent);
+}
+.hello-ico svg { width: 19px; height: 19px; }
+.code-tag { display: flex; align-items: center; gap: 5px; }
+.code-tag svg { width: 14px; height: 14px; }
+.img-cell .bar a, .img-cell .bar button { display: inline-grid; place-items: center; }
+.img-cell .bar svg { width: 15px; height: 15px; }
+.img-cell .bar .is-main-tag { display: inline-flex; align-items: center; gap: 4px; }
+.img-cell .bar .is-main-tag svg { width: 13px; height: 13px; color: var(--accent-2); }
+
 /* pagination */
 .pager { display: flex; gap: 6px; justify-content: center; margin-top: 22px; flex-wrap: wrap; }
 .pager a, .pager span {

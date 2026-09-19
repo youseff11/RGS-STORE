@@ -655,6 +655,22 @@ html[dir="rtl"] .hero-slide::after {
 
 .empty-state { text-align: center; padding: 76px 20px; }
 .empty-state .ico { font-size: 42px; margin-bottom: 12px; opacity: .35; }
+
+/* line icons (templates/partials/icon.html) — replace every emoji */
+svg.i { width: 1.15em; height: 1.15em; vertical-align: -.2em; flex: none; }
+.empty-state .ico-badge {
+  position: relative; width: 84px; height: 84px; margin: 0 auto 22px; border-radius: 50%;
+  display: grid; place-items: center; opacity: 1;
+  background: var(--surface-2); color: var(--ink); border: 1px solid var(--line);
+  box-shadow: 0 0 0 10px color-mix(in srgb, var(--surface-2) 45%, transparent);
+}
+.empty-state .ico-badge svg { width: 34px; height: 34px; stroke-width: 1.3; }
+/* the blue dot from the MR. logo */
+.empty-state .ico-badge::after {
+  content: ''; position: absolute; top: 11px; inset-inline-end: 11px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 0 3px var(--surface-2);
+}
 .empty-state h3 { font-size: 19px; margin-bottom: 6px; }
 .empty-state p { color: var(--muted); margin-bottom: 20px; }
 
@@ -787,7 +803,13 @@ html[dir="rtl"] .hero-slide::after {
 .ship-hint {
   font-size: 12.5px; padding: 11px 14px; border-radius: 10px; margin-bottom: 14px;
   background: var(--accent-soft); color: var(--accent); font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
 }
+.ship-hint svg { width: 16px; height: 16px; stroke-width: 2.2; }
+.coupon-chip .code-tag { display: inline-flex; align-items: center; gap: 7px; font-weight: 700; }
+.coupon-chip .code-tag svg { width: 17px; height: 17px; }
+.coupon-x { display: inline-grid; place-items: center; }
+.coupon-x svg { width: 15px; height: 15px; }
 .ship-bar { height: 4px; border-radius: 4px; background: color-mix(in srgb, var(--accent) 22%, transparent); margin-top: 8px; overflow: hidden; }
 .ship-bar span { display: block; height: 100%; background: var(--accent); border-radius: 4px; transition: width .5s var(--ease); }
 

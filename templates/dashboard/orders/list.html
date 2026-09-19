@@ -26,7 +26,7 @@
     <tbody>
       {% for order in page_obj %}
       <tr>
-        <td><b>{{ order.order_number }}</b>{% if order.coupon_code %}<div class="small muted">🎟 {{ order.coupon_code }}</div>{% endif %}</td>
+        <td><b>{{ order.order_number }}</b>{% if order.coupon_code %}<div class="small muted code-tag">{% include 'partials/icon.html' with name='ticket' %} {{ order.coupon_code }}</div>{% endif %}</td>
         <td>
           {{ order.full_name }}
           <div class="small muted" dir="ltr">{{ order.phone }}</div>
@@ -48,7 +48,7 @@
         <td>
           <div class="row-actions">
             <a class="btn btn-sm btn-soft" href="{% url 'dash_order_detail' order.pk %}">تفاصيل</a>
-            <a class="btn btn-sm btn-ghost" href="{% url 'dash_order_print' order.pk %}" target="_blank">🖨</a>
+            <a class="btn btn-sm btn-ghost" href="{% url 'dash_order_print' order.pk %}" target="_blank" title="طباعة" aria-label="طباعة">{% include 'partials/icon.html' with name='printer' %}</a>
           </div>
         </td>
       </tr>
@@ -58,6 +58,6 @@
 </div>
 {% include 'dashboard/_pager.html' %}
 {% else %}
-<div class="card"><div class="empty"><div class="ico">📦</div>لا توجد طلبات</div></div>
+<div class="card"><div class="empty"><div class="ico ico-badge">{% include 'partials/icon.html' with name='bag' %}</div>لا توجد طلبات</div></div>
 {% endif %}
 {% endblock %}

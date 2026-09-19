@@ -54,9 +54,9 @@
           <div class="bar">
             <span>{{ image.color.name|default:"عام" }}</span>
             <span class="flex" style="gap:8px">
-              {% if not image.is_main %}<a href="{% url 'dash_image_main' image.pk %}" title="اجعلها الرئيسية">★</a>{% else %}<span>★ رئيسية</span>{% endif %}
+              {% if not image.is_main %}<a href="{% url 'dash_image_main' image.pk %}" title="اجعلها الرئيسية" aria-label="اجعلها الرئيسية">{% include 'partials/icon.html' with name='star' %}</a>{% else %}<span class="is-main-tag">{% include 'partials/icon.html' with name='star-fill' %} رئيسية</span>{% endif %}
               <form method="post" action="{% url 'dash_image_delete' image.pk %}" data-confirm="حذف الصورة؟" style="display:inline">
-                {% csrf_token %}<button type="submit" title="حذف">✕</button>
+                {% csrf_token %}<button type="submit" title="حذف" aria-label="حذف">{% include 'partials/icon.html' with name='x' %}</button>
               </form>
             </span>
           </div>
@@ -64,7 +64,7 @@
         {% endfor %}
       </div>
       {% else %}
-        <div class="empty"><div class="ico">🖼️</div>لا توجد صور بعد</div>
+        <div class="empty"><div class="ico ico-badge">{% include 'partials/icon.html' with name='image' %}</div>لا توجد صور بعد</div>
       {% endif %}
     </div>
   </div>
@@ -98,7 +98,7 @@
         </div>
         {% endfor %}
       {% else %}
-        <div class="empty" style="padding:26px"><div class="ico">🎨</div>لم تضف ألوانًا بعد</div>
+        <div class="empty" style="padding:26px"><div class="ico ico-badge">{% include 'partials/icon.html' with name='palette' %}</div>لم تضف ألوانًا بعد</div>
       {% endif %}
     </div>
 

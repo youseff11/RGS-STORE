@@ -10,7 +10,7 @@
   </div>
   <div class="flex">
     <a class="btn btn-ghost" href="{% url 'dash_orders' %}">رجوع</a>
-    <a class="btn btn-soft" href="{% url 'dash_order_print' order.pk %}" target="_blank">🖨 طباعة</a>
+    <a class="btn btn-soft" href="{% url 'dash_order_print' order.pk %}" target="_blank">{% include 'partials/icon.html' with name='printer' %} طباعة</a>
   </div>
 </div>
 

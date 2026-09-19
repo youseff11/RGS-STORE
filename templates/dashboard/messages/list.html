@@ -32,6 +32,6 @@
 </div>
 {% with page_obj=items %}{% include 'dashboard/_pager.html' %}{% endwith %}
 {% else %}
-<div class="card"><div class="empty"><div class="ico">✉️</div>لا توجد رسائل</div></div>
+<div class="card"><div class="empty"><div class="ico ico-badge">{% include 'partials/icon.html' with name='mail' %}</div>لا توجد رسائل</div></div>
 {% endif %}
 {% endblock %}

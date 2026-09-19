@@ -87,7 +87,7 @@
         {% include 'partials/pagination.html' %}
       {% else %}
         <div class="empty-state">
-          <div class="ico">🧺</div>
+          <div class="ico ico-badge">{% include 'partials/icon.html' with name='hanger' %}</div>
           <h3>{% t 'no_products' %}</h3>
           <p>{% t 'no_products_sub' %}</p>
           <a class="btn" href="{% url 'shop' %}">{% t 'shop' %}</a>

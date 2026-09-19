@@ -29,6 +29,6 @@
   {% endfor %}
 </div>
 {% else %}
-<div class="card"><div class="empty"><div class="ico">🖼️</div>لا توجد بانرات — الموقع هيعرض تصميم بديل جميل لحد ما تضيف واحد</div></div>
+<div class="card"><div class="empty"><div class="ico ico-badge">{% include 'partials/icon.html' with name='image' %}</div>لا توجد بانرات — الموقع هيعرض تصميم بديل جميل لحد ما تضيف واحد</div></div>
 {% endif %}
 {% endblock %}

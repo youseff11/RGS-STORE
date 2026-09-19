@@ -14,7 +14,7 @@
   <div class="wrap">
   {% if cart.is_empty %}
     <div class="empty-state">
-      <div class="ico">🛒</div>
+      <div class="ico ico-badge">{% include 'partials/icon.html' with name='bag' %}</div>
       <h3>{% t 'cart_empty' %}</h3>
       <p>{% t 'cart_empty_sub' %}</p>
       <a class="btn btn-lg" href="{% url 'shop' %}">{% t 'continue_shopping' %}</a>

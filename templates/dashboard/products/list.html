@@ -73,8 +73,8 @@
         </td>
         <td>
           <div class="row-actions">
-            <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_stock' product.pk %}" title="المخزون">📦</a>
-            <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_media' product.pk %}" title="الألوان والصور">🎨</a>
+            <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_stock' product.pk %}" title="المخزون" aria-label="المخزون">{% include 'partials/icon.html' with name='box' %}</a>
+            <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_media' product.pk %}" title="الألوان والصور" aria-label="الألوان والصور">{% include 'partials/icon.html' with name='palette' %}</a>
             <a class="btn btn-sm btn-soft" href="{% url 'dash_product_edit' product.pk %}">تعديل</a>
             <form method="post" action="{% url 'dash_product_delete' product.pk %}" data-confirm="حذف «{{ product.name }}» نهائيًا؟" style="display:inline">
               {% csrf_token %}
@@ -89,6 +89,6 @@
 </div>
 {% include 'dashboard/_pager.html' %}
 {% else %}
-<div class="card"><div class="empty"><div class="ico">👕</div>لا توجد منتجات — ابدأ بإضافة أول منتج</div></div>
+<div class="card"><div class="empty"><div class="ico ico-badge">{% include 'partials/icon.html' with name='shirt' %}</div>لا توجد منتجات — ابدأ بإضافة أول منتج</div></div>
 {% endif %}
 {% endblock %}
