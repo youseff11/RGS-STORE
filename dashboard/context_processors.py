@@ -47,10 +47,19 @@ def store(request):
             'CART': cart,
             'CART_COUNT': cart.count,
             'IS_CUSTOMER': bool(user and user.is_authenticated and not user.is_staff),
-            # a badge on «الدعم» when the store answered a ticket
-            'TICKETS_UNREAD': (
-                Ticket.objects.filter(user=user, user_unread=True).count()
-                if user is not None and user.is_authenticated else 0
-            ),
         })
+        # tickets badge: the store's staff see what customers sent, a customer
+        # sees the replies waiting for them
+        support_staff = bool(
+            user is not None and user.is_authenticated
+            and 'messages' in staff_permissions(user)
+        )
+        if support_staff:
+            unread = Ticket.objects.filter(admin_unread=True).exclude(status='closed').count()
+        elif user is not None and user.is_authenticated:
+            unread = Ticket.objects.filter(user=user, user_unread=True).count()
+        else:
+            unread = 0
+        data['SUPPORT_STAFF'] = support_staff
+        data['TICKETS_UNREAD'] = unread
     return data

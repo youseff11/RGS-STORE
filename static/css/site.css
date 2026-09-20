@@ -1626,6 +1626,40 @@ html[dir="rtl"] .pass-eye { inset-inline-end: auto; left: 8px; }
 }
 
 /* ======================================================= support tickets == */
+/* «الدعم» in the menu + the counter on the avatar */
+.nav a.nav-support { display: inline-flex; align-items: center; gap: 6px; color: var(--accent-text); }
+.nav a.nav-support svg { width: 15px; height: 15px; }
+.nav a.nav-support:hover { color: var(--accent-hover); }
+.nav-badge, .acct-menu-badge {
+  display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: 100px; background: var(--accent); color: #fff;
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 800; letter-spacing: 0;
+}
+.acct-btn { position: relative; overflow: visible; }
+.acct-badge {
+  position: absolute; top: 0; inset-inline-end: 0; min-width: 17px; height: 17px; padding: 0 4px;
+  display: grid; place-items: center; border-radius: 100px;
+  background: #D93A2F; color: #fff; font-family: 'Jost', sans-serif; font-size: 10.5px; font-weight: 800;
+  border: 2px solid var(--bg); line-height: 1;
+}
+.acct-menu-badge { margin-inline-start: auto; }
+.acct-tickets { color: var(--accent-text) !important; }
+.acct-tickets svg { color: var(--accent-text) !important; }
+
+/* the store's own view of the tickets */
+.ticket-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.ticket-tabs a {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px;
+  font-size: 13px; font-weight: 700; color: var(--muted);
+  background: var(--surface); border: 1px solid var(--line);
+}
+.ticket-tabs a:hover { color: var(--text); }
+.ticket-tabs a.is-active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.ticket-tabs span { font-family: 'Jost', sans-serif; font-size: 11px; opacity: .8; }
+.ticket-row.is-new { border-inline-start: 3px solid var(--accent); }
+.status-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+
 .account-tabs .dot-new {
   margin-inline-start: auto; min-width: 20px; height: 20px; padding: 0 6px; display: grid; place-items: center;
   border-radius: 100px; background: var(--accent); color: #fff; font-size: 11px; font-weight: 800;

@@ -1701,12 +1701,23 @@ class NavLink(models.Model):
             return bool(self.policy and self.policy.is_active)
         return True
 
+    #: what a fresh store starts with — «الدعم» is there so customers find it
+    DEFAULT_KEYS = ['home', 'shop', 'portfolio', 'sale', 'reviews', 'support', 'about', 'contact']
+
     @classmethod
     def ensure_defaults(cls):
         if cls.objects.exists():
             return
-        for index, key in enumerate(['home', 'shop', 'portfolio', 'sale', 'reviews', 'about', 'contact']):
+        for index, key in enumerate(cls.DEFAULT_KEYS):
             cls.objects.create(link_type=key, ordering=index)
+
+    @classmethod
+    def ensure_support_link(cls):
+        """Add the «الدعم» item to an existing menu (once) — staff never see it."""
+        if cls.objects.filter(link_type='support').exists():
+            return None
+        last = cls.objects.order_by('-ordering').values_list('ordering', flat=True).first() or 0
+        return cls.objects.create(link_type='support', ordering=last + 1)
 
 
 DEFAULT_POLICIES = [

@@ -25,8 +25,9 @@ from .i18n import LANGS
 from .models import (
     Banner, Category, ContactMessage, Country, Coupon, CustomerProfile, HomeSection,
     Order, OrderItem, Policy, Product, ProductVariant, Review, SiteSettings, Size,
-    TICKET_EXTS, TICKET_MAX_FILES, TICKET_MAX_FILE_MB, TICKET_TOPICS, Ticket,
-    TicketAttachment, TicketMessage, Work, WorkCategory, reviewable_orders,
+    TICKET_EXTS, TICKET_MAX_FILES, TICKET_MAX_FILE_MB, TICKET_STATUSES, TICKET_TOPICS,
+    Ticket, TicketAttachment, TicketMessage, Work, WorkCategory, reviewable_orders,
+    staff_permissions,
 )
 from .utils import Cart, money, save_ticket_attachments, ticket_uploads
 
@@ -1016,21 +1017,42 @@ def _attachment_warning(request, rejected):
                                     size=TICKET_MAX_FILE_MB))
 
 
+def is_support_staff(user):
+    """The store side of support: staff with the «الرسائل وتذاكر الدعم» permission."""
+    return bool(user and user.is_authenticated and 'messages' in staff_permissions(user))
+
+
 @login_required
 def support_list(request):
-    tickets = (
-        Ticket.objects.filter(user=request.user)
-        .select_related('order')
-        .annotate(replies=Count('messages'))
-    )
+    """«الدعم» — the customer sees their own tickets, the store sees every ticket."""
+    staff = is_support_staff(request.user)
+    tickets = Ticket.objects.select_related('order', 'user').annotate(replies=Count('messages'))
+    status = request.GET.get('status') or ''
+    if staff:
+        if status in dict(TICKET_STATUSES):
+            tickets = tickets.filter(status=status)
+        tickets = tickets.order_by('-admin_unread', '-last_message_at')
+        counts = {
+            'all': Ticket.objects.count(),
+            'open': Ticket.objects.filter(status='open').count(),
+            'answered': Ticket.objects.filter(status='answered').count(),
+            'closed': Ticket.objects.filter(status='closed').count(),
+        }
+    else:
+        tickets = tickets.filter(user=request.user)
+        counts = {}
     return render(request, 'pages/account/tickets.html', {
-        'tickets': tickets,
-        'page_title': t('support'),
+        'tickets': tickets[:100] if staff else tickets,
+        'support_staff': staff, 'status': status, 'counts': counts,
+        'page_title': t('customer_tickets') if staff else t('support'),
     })
 
 
 @login_required
 def support_new(request):
+    if is_support_staff(request.user):
+        messages.info(request, t('staff_no_new_ticket'))
+        return redirect('support')
     recent_orders = request.user.orders.order_by('-created_at')
     orders = list(recent_orders[:20])
     data = {'subject': '', 'topic': 'other', 'order': '', 'body': ''}
@@ -1077,10 +1099,23 @@ def _topic_labels():
 
 @login_required
 def support_detail(request, number):
-    ticket = get_object_or_404(
-        Ticket.objects.select_related('order', 'user'), number=number, user=request.user
+    """One conversation. The customer sees their own; the store opens any of them
+    and answers without going into the dashboard."""
+    staff = is_support_staff(request.user)
+    base = Ticket.objects.select_related('order', 'user')
+    ticket = get_object_or_404(base, number=number) if staff else get_object_or_404(
+        base, number=number, user=request.user
     )
+
     if request.method == 'POST':
+        if staff and request.POST.get('action') == 'status':
+            new_status = request.POST.get('status') or ''
+            if new_status in dict(TICKET_STATUSES):
+                ticket.status = new_status
+                ticket.save(update_fields=['status', 'updated_at'])
+                messages.success(request, f"{t('ticket_status')}: {ticket.status_label}")
+            return redirect('support_detail', number=ticket.number)
+
         if ticket.is_closed:
             messages.info(request, t('ticket_closed_note'))
             return redirect('support_detail', number=ticket.number)
@@ -1091,21 +1126,29 @@ def support_detail(request, number):
             return redirect('support_detail', number=ticket.number)
         with transaction.atomic():
             message = TicketMessage.objects.create(
-                ticket=ticket, author=request.user, is_staff=False, body=body[:4000],
+                ticket=ticket, author=request.user, is_staff=staff, body=body[:4000],
             )
             rejected = save_ticket_attachments(message, files)
-            ticket.touch(from_staff=False)
+            ticket.touch(from_staff=staff)
         _attachment_warning(request, rejected)
-        mailer.ticket_customer_replied(ticket, message)
+        if staff:
+            mailer.ticket_staff_replied(ticket, message)
+        else:
+            mailer.ticket_customer_replied(ticket, message)
         messages.success(request, t('reply_sent'))
         return redirect('support_detail', number=ticket.number)
 
-    if ticket.user_unread:
+    if staff:
+        if ticket.admin_unread:
+            Ticket.objects.filter(pk=ticket.pk).update(admin_unread=False)
+            ticket.admin_unread = False
+    elif ticket.user_unread:
         Ticket.objects.filter(pk=ticket.pk).update(user_unread=False)
     return render(request, 'pages/account/ticket_detail.html', {
         'ticket': ticket,
         'ticket_messages': ticket.messages.prefetch_related('attachments').select_related('author'),
         'max_files': TICKET_MAX_FILES, 'max_mb': TICKET_MAX_FILE_MB,
+        'support_staff': staff, 'statuses': TICKET_STATUSES,
         'page_title': f'{t("ticket")} {ticket.number}',
     })
 

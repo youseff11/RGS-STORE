@@ -13,8 +13,10 @@
     {# links come from «القائمة» in the dashboard #}
     <nav class="nav" aria-label="{% t 'menu' %}">
       {% for link in NAV_LINKS %}
+        {% if link.link_type != 'support' or not SUPPORT_STAFF %}
         <a href="{{ link.href }}"{% if link.new_tab %} target="_blank" rel="noopener"{% endif %}
-           class="{% if link.link_type == 'category' %}nav-cat{% endif %}{% if request.get_full_path == link.href %} is-active{% endif %}">{{ link.label }}</a>
+           class="{% if link.link_type == 'category' %}nav-cat{% endif %}{% if link.link_type == 'support' %} nav-support{% endif %}{% if request.get_full_path == link.href %} is-active{% endif %}">{% if link.link_type == 'support' %}{% include 'partials/icon.html' with name='chat' %}{% endif %}{{ link.label }}{% if link.link_type == 'support' and TICKETS_UNREAD %} <span class="nav-badge">{{ TICKETS_UNREAD }}</span>{% endif %}</a>
+        {% endif %}
       {% endfor %}
     </nav>
 
@@ -27,8 +29,10 @@
 
       {% if user.is_authenticated %}
         <div class="acct" data-menu>
-          <button class="icon-btn acct-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="{% t 'account' %}" data-menu-toggle>
+          <button class="icon-btn acct-btn" type="button" aria-haspopup="true" aria-expanded="false"
+                  aria-label="{% t 'account' %}{% if TICKETS_UNREAD %} — {{ TICKETS_UNREAD }} {% t 'ticket' %}{% endif %}" data-menu-toggle>
             <span class="acct-av">{{ user.first_name|default:user.get_username|slice:":1"|upper }}</span>
+            {% if TICKETS_UNREAD %}<span class="acct-badge" aria-hidden="true">{{ TICKETS_UNREAD }}</span>{% endif %}
           </button>
           <div class="acct-menu" role="menu">
             <div class="acct-head">
@@ -37,6 +41,11 @@
             </div>
             <a role="menuitem" href="{% url 'account' %}">{% include 'partials/icon.html' with name='bag' %} {% t 'my_orders' %}</a>
             <a role="menuitem" href="{% url 'account' %}?tab=profile">{% include 'partials/icon.html' with name='user' %} {% t 'my_profile' %}</a>
+            <a role="menuitem" class="acct-tickets" href="{% url 'support' %}">
+              {% include 'partials/icon.html' with name='chat' %}
+              {% if SUPPORT_STAFF %}{% t 'customer_tickets' %}{% else %}{% t 'support' %}{% endif %}
+              {% if TICKETS_UNREAD %}<span class="acct-menu-badge">{{ TICKETS_UNREAD }}</span>{% endif %}
+            </a>
             <a role="menuitem" href="{% url 'reviews' %}">{% include 'partials/icon.html' with name='star' %} {% t 'reviews' %}</a>
             {% if user.is_staff %}<a role="menuitem" href="{% url 'dash_index' %}">{% include 'partials/icon.html' with name='layout' %} لوحة التحكم</a>{% endif %}
             <form method="post" action="{% url 'account_logout' %}">
@@ -88,9 +97,14 @@
 
     <nav>
       {% for link in NAV_LINKS %}
-        <a href="{{ link.href }}"{% if link.new_tab %} target="_blank" rel="noopener"{% endif %}>{{ link.label }}</a>
+        {% if link.link_type != 'support' or not SUPPORT_STAFF %}
+        <a href="{{ link.href }}"{% if link.new_tab %} target="_blank" rel="noopener"{% endif %}>{{ link.label }}{% if link.link_type == 'support' and TICKETS_UNREAD %} <span class="nav-badge">{{ TICKETS_UNREAD }}</span>{% endif %}</a>
+        {% endif %}
       {% endfor %}
       <a href="{% url 'track_order' %}">{% t 'track_order' %}</a>
+      {% if SUPPORT_STAFF %}
+        <a href="{% url 'support' %}">{% t 'customer_tickets' %}{% if TICKETS_UNREAD %} <span class="nav-badge">{{ TICKETS_UNREAD }}</span>{% endif %}</a>
+      {% endif %}
     </nav>
 
     <div class="drawer-foot">

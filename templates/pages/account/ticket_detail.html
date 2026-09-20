@@ -5,13 +5,18 @@
 <section class="page-hero">
   <div class="wrap">
     <div class="crumbs">
-      <a href="{% url 'account' %}">{% t 'account' %}</a> <span>/</span>
-      <a href="{% url 'support' %}">{% t 'support' %}</a> <span>/</span> <span dir="ltr">{{ ticket.number }}</span>
+      {% if support_staff %}
+        <a href="{% url 'support' %}">{% t 'customer_tickets' %}</a> <span>/</span> <span dir="ltr">{{ ticket.number }}</span>
+      {% else %}
+        <a href="{% url 'account' %}">{% t 'account' %}</a> <span>/</span>
+        <a href="{% url 'support' %}">{% t 'support' %}</a> <span>/</span> <span dir="ltr">{{ ticket.number }}</span>
+      {% endif %}
     </div>
     <h1>{{ ticket.subject }}</h1>
     <p>
+      {% if support_staff %}{{ ticket.customer_name }} · {% endif %}
       {{ ticket.topic_label }}
-      {% if ticket.order %} · <a href="{% url 'account_order' ticket.order.order_number %}" style="color:inherit;text-decoration:underline">{{ ticket.order.order_number }}</a>{% endif %}
+      {% if ticket.order %} · {% if support_staff %}{{ ticket.order.order_number }}{% else %}<a href="{% url 'account_order' ticket.order.order_number %}" style="color:inherit;text-decoration:underline">{{ ticket.order.order_number }}</a>{% endif %}{% endif %}
       · {{ ticket.created_at|date:"Y/m/d" }}
       · <span class="chip {% if ticket.status == 'open' %}chip-warn{% elif ticket.status == 'answered' %}chip-ok{% else %}chip-muted{% endif %}">{{ ticket.status_label }}</span>
     </p>
@@ -20,18 +25,18 @@
 
 <section class="section-sm">
   <div class="wrap" style="max-width:820px">
-    {% include 'partials/ticket_thread.html' %}
+    {% include 'partials/ticket_thread.html' with staff_view=support_staff %}
 
-    {% if ticket.is_closed %}
+    {% if ticket.is_closed and not support_staff %}
       <div class="form-card" style="margin-top:18px;text-align:center">
         <p class="muted" style="margin:0 0 14px">{% t 'ticket_closed_note' %}</p>
         <a class="btn" href="{% url 'support_new' %}">{% t 'new_ticket' %}</a>
       </div>
-    {% else %}
+    {% elif not ticket.is_closed %}
       <form class="form-card reply-card" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="field">
-          <label>{% t 'ticket_reply_hint' %}</label>
+          <label>{% if support_staff %}{% t 'reply_as_store' %}{% else %}{% t 'ticket_reply_hint' %}{% endif %}</label>
           <textarea name="body" rows="4" maxlength="4000" placeholder="{% t 'ticket_reply_hint' %}"></textarea>
         </div>
         {% include 'partials/attach_box.html' %}
@@ -39,7 +44,23 @@
       </form>
     {% endif %}
 
-    <p style="margin-top:16px"><a class="btn btn-ghost" href="{% url 'support' %}">{% t 'my_tickets' %}</a></p>
+    {% if support_staff %}
+      <form class="form-card" method="post" style="margin-top:14px">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="status">
+        <label style="display:block;margin-bottom:10px;font-size:13px;font-weight:700">{% t 'ticket_status' %}</label>
+        <div class="status-row">
+          {% for key, label in statuses %}
+            <button class="btn btn-sm {% if ticket.status != key %}btn-ghost{% endif %}" type="submit" name="status" value="{{ key }}">{{ label }}</button>
+          {% endfor %}
+          <a class="btn btn-sm btn-soft" href="{% url 'dash_ticket_detail' ticket.pk %}">{% include 'partials/icon.html' with name='layout' %} {% t 'open_in_dashboard' %}</a>
+        </div>
+      </form>
+    {% endif %}
+
+    <p style="margin-top:16px">
+      <a class="btn btn-ghost" href="{% url 'support' %}">{% if support_staff %}{% t 'customer_tickets' %}{% else %}{% t 'my_tickets' %}{% endif %}</a>
+    </p>
   </div>
 </section>
 {% endblock %}
