@@ -1577,7 +1577,16 @@ html[dir="rtl"] .pass-eye { inset-inline-end: auto; left: 8px; }
   .about-media { aspect-ratio: 16 / 10; }
   .works-bento { grid-template-columns: repeat(2, 1fr); }
   .works-bento.is-row { grid-template-columns: repeat(2, 1fr); }
-  .account-tabs { grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; }
+  /* التبويبات بتلف سطر جديد بدل ما تعمل سكرول يمين وشمال */
+  .account-tabs {
+    display: flex; flex-wrap: wrap; gap: 6px; overflow: visible;
+  }
+  .account-tabs a, .account-tabs button {
+    width: auto; flex: 1 1 120px; min-width: 0; justify-content: center; text-align: center;
+    padding: 10px 10px; font-size: 13px; gap: 7px;
+  }
+  .account-tabs svg { width: 16px; height: 16px; }
+  .account-tabs small, .account-tabs .dot-new { margin-inline-start: 2px; }
   .account-tabs form { display: none; }
   .nav { display: none; }
   .burger { display: inline-grid; }
