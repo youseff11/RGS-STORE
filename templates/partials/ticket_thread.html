@@ -35,7 +35,7 @@ and the store sees the store's replies there instead.
                 <img src="{{ file.file.url }}" alt="{{ file.name }}" loading="lazy">
               </a>
             {% elif file.kind == 'audio' %}
-              <audio class="file-audio" controls preload="none" src="{{ file.file.url }}"></audio>
+              {% include 'partials/voice_player.html' with src=file.file.url only %}
             {% else %}
               <a class="file-doc" href="{{ file.file.url }}" target="_blank" rel="noopener" download>
                 <span class="file-ico">{% include 'partials/icon.html' with name='file' %}</span>

@@ -170,7 +170,47 @@ html[dir="rtl"] .msg.is-them { justify-content: flex-end; }
 }
 .msg-files .file-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s var(--ease, ease); }
 .msg-files .file-img:hover img { transform: scale(1.05); }
-.msg-files .file-audio { width: min(280px, 100%); height: 40px; }
+
+/* ---- a voice note, drawn by us ----------------------------------------
+   The browser's own player collapses to its ⋮ button inside a bubble that
+   sizes itself to its content, so this one carries its own width. */
+.voice {
+  display: flex; align-items: center; gap: 10px;
+  width: 248px; max-width: 100%; padding: 6px 10px 6px 6px;
+  border-radius: 12px; background: color-mix(in srgb, #000 22%, transparent);
+  border: 1px solid color-mix(in srgb, #fff 8%, transparent);
+}
+html[dir="rtl"] .voice { padding: 6px 6px 6px 10px; }
+.voice audio { display: none; }
+.voice-play {
+  flex: none; width: 36px; height: 36px; border-radius: 50%; border: 0; cursor: pointer;
+  display: grid; place-items: center; background: var(--accent); color: var(--on-accent, #fff);
+  transition: background .18s, transform .15s;
+}
+.voice-play:hover { background: var(--accent-hover); }
+.voice-play:active { transform: scale(.94); }
+.voice-play svg { width: 16px; height: 16px; }
+.voice-ico { display: grid; place-items: center; }
+.voice-ico.is-pause, .voice.is-playing .voice-ico.is-play { display: none; }
+.voice.is-playing .voice-ico.is-pause { display: grid; }
+.voice-mid { flex: 1; min-width: 0; display: grid; gap: 5px; }
+.voice-bar {
+  position: relative; height: 5px; border-radius: 4px; cursor: pointer;
+  background: color-mix(in srgb, #fff 16%, transparent);
+}
+/* fills away from the play button, so it runs right-to-left in Arabic */
+.voice-fill {
+  position: absolute; inset-block: 0; inset-inline-start: 0; width: 0;
+  border-radius: 4px; background: var(--accent-2);
+}
+.voice-fill::after {
+  content: ''; position: absolute; inset-inline-end: -5px; top: 50%; transform: translateY(-50%);
+  width: 10px; height: 10px; border-radius: 50%; background: var(--accent-2);
+}
+.voice-meta { display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: 11px; }
+.voice-meta svg { width: 12px; height: 12px; flex: none; }
+.voice-time { font-family: 'Jost', system-ui, sans-serif; font-weight: 600; direction: ltr; }
+.msg.is-mine .voice-meta { color: color-mix(in srgb, var(--accent-2) 70%, transparent); }
 .msg-files .file-doc {
   display: flex; align-items: center; gap: 10px; padding: 9px 11px; max-width: 100%;
   border-radius: 10px; background: color-mix(in srgb, #000 22%, transparent);
@@ -251,8 +291,8 @@ html[dir="rtl"] .compose-send svg { transform: scaleX(-1); }
 html[dir="rtl"] .attach-chip { padding: 5px 6px 5px 10px; }
 .attach-chip img { width: 28px; height: 28px; border-radius: 7px; object-fit: cover; flex: none; }
 .attach-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
-.attach-voice { display: flex; align-items: center; gap: 9px; margin-top: 7px; }
-.attach-voice audio { flex: 1; min-width: 0; height: 38px; }
+.attach-voice { margin-top: 7px; }
+.attach-voice .voice { width: 300px; background: var(--surface-2); border-color: var(--line); }
 .attach-x {
   flex: none; display: inline-grid; place-items: center; width: 34px; height: 34px;
   border-radius: 9px; color: var(--bad); background: var(--surface-2); cursor: pointer; border: 0;
@@ -303,6 +343,8 @@ html[dir="rtl"] .attach-chip { padding: 5px 6px 5px 10px; }
   .chat-body { padding: 12px 10px 16px; }
   .msg-bubble { max-width: 86%; font-size: 14px; }
   .msg-files .file-img { width: 116px; height: 116px; }
+  .voice { width: 230px; }
+  .attach-voice .voice { width: 100%; }
   .msg-files .file-name { max-width: 130px; }
   .chat-compose { padding: 8px 8px 10px; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
   .compose-send { width: 44px; height: 44px; }

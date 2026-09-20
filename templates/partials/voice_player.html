@@ -1,0 +1,37 @@
+{% load store_tags %}
+{% comment %}
+A voice note, drawn by us instead of the browser.
+
+The browser's own <audio controls> shrinks to its overflow button inside a
+bubble that sizes itself to its content (on Android Chrome it collapses to a
+bare ⋮), so the player here has a width of its own: a play button, a progress
+bar you can tap to seek, and the time. `attach.js` drives it through the
+data-* hooks.
+
+Pass `src` for a saved file, or nothing at all and set the src later on the
+[data-audio-el] element (that is what the recorder does before sending).
+{% endcomment %}
+<div class="voice" data-audio>
+  <button type="button" class="voice-play" data-audio-toggle aria-label="{% t 'play' %}">
+    <span class="voice-ico is-play">{% include 'partials/icon.html' with name='play' %}</span>
+    <span class="voice-ico is-pause">{% include 'partials/icon.html' with name='pause' %}</span>
+  </button>
+
+  <span class="voice-mid">
+    <span class="voice-bar" data-audio-bar>
+      <span class="voice-fill" data-audio-fill></span>
+    </span>
+    <span class="voice-meta">
+      {% include 'partials/icon.html' with name='mic' %}
+      <span class="voice-time" data-audio-time>0:00</span>
+    </span>
+  </span>
+
+  {% if clear_button %}
+    <button type="button" class="attach-x" data-voice-clear aria-label="{% t 'delete_recording' %}">
+      {% include 'partials/icon.html' with name='trash' %}
+    </button>
+  {% endif %}
+
+  <audio preload="metadata" data-audio-el {% if voice_hook %}data-voice-player{% endif %}{% if src %} src="{{ src }}"{% endif %}></audio>
+</div>

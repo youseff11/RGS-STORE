@@ -27,10 +27,7 @@ Needs: max_files, max_mb — and the form must be enctype="multipart/form-data".
   <div class="attach-list" data-attach-list hidden></div>
 
   <div class="attach-voice" data-voice-box hidden>
-    <audio controls data-voice-player></audio>
-    <button type="button" class="attach-x" data-voice-clear aria-label="{% t 'delete_recording' %}">
-      {% include 'partials/icon.html' with name='trash' %}
-    </button>
+    {% include 'partials/voice_player.html' with voice_hook=1 clear_button=1 only %}
   </div>
 
   <p class="attach-warn" data-record-error hidden>{% t 'record_unsupported' %}</p>

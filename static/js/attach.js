@@ -46,6 +46,88 @@
     });
   });
 
+  /* ------------------------------------------------- voice notes -------- */
+  /* our own little player: the browser's default one collapses to its
+     overflow button inside a bubble that sizes itself to its content */
+  const clock = (seconds) => {
+    const s = Math.max(0, Math.round(seconds || 0));
+    return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  };
+
+  $$('[data-audio]').forEach((box) => {
+    const sound = $('[data-audio-el]', box);
+    const toggle = $('[data-audio-toggle]', box);
+    const bar = $('[data-audio-bar]', box);
+    const fill = $('[data-audio-fill]', box);
+    const label = $('[data-audio-time]', box);
+    if (!sound || !toggle) return;
+
+    const span = () => (isFinite(sound.duration) && sound.duration > 0 ? sound.duration : 0);
+    const showLength = () => { if (label) label.textContent = clock(span()); };
+    const reset = () => {
+      box.classList.remove('is-playing');
+      if (fill) fill.style.width = '0%';
+      showLength();
+    };
+
+    /* a webm recorded in the browser reports Infinity until it is seeked once */
+    const measure = () => {
+      if (sound.duration !== Infinity) { showLength(); return; }
+      const settle = () => {
+        sound.removeEventListener('timeupdate', settle);
+        sound.currentTime = 0;
+        showLength();
+      };
+      sound.addEventListener('timeupdate', settle);
+      sound.currentTime = 1e101;
+    };
+    sound.addEventListener('loadedmetadata', measure);
+    sound.addEventListener('durationchange', showLength);
+    sound.addEventListener('timeupdate', () => {
+      if (sound.currentTime > 1e6) return;               // the seek trick above
+      const total = span();
+      if (fill) fill.style.width = total ? (sound.currentTime / total) * 100 + '%' : '0%';
+      if (label) label.textContent = clock(sound.currentTime);
+    });
+    sound.addEventListener('ended', reset);
+    sound.addEventListener('pause', () => box.classList.remove('is-playing'));
+    sound.addEventListener('play', () => {
+      $$('[data-audio]').forEach((other) => {
+        if (other === box) return;
+        const item = $('[data-audio-el]', other);
+        if (item && !item.paused) item.pause();          // one at a time
+      });
+      box.classList.add('is-playing');
+    });
+
+    toggle.addEventListener('click', () => {
+      if (sound.paused) {
+        const playing = sound.play();
+        if (playing && playing.catch) playing.catch(() => {});
+      } else {
+        sound.pause();
+      }
+    });
+
+    if (bar) {
+      const seek = (event) => {
+        const rect = bar.getBoundingClientRect();
+        const total = span();
+        if (!rect.width || !total) return;
+        let point = (event.clientX - rect.left) / rect.width;
+        /* the bar fills from the play button outwards, so it runs the other
+           way round in Arabic */
+        if (getComputedStyle(bar).direction === 'rtl') point = 1 - point;
+        sound.currentTime = Math.min(Math.max(point, 0), 1) * total;
+      };
+      bar.addEventListener('click', seek);
+    }
+
+    /* the recorder drops a blob in later */
+    sound.addEventListener('emptied', reset);
+    showLength();
+  });
+
   /* ------------------------------- ticket attachments + voice note ------ */
   $$('[data-attach]').forEach((box) => {
     const input = $('[data-attach-input]', box);
