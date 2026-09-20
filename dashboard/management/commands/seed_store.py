@@ -1,35 +1,19 @@
-"""Seed the store with sensible defaults: settings, governorates, sizes, categories."""
+"""Seed the store with sensible defaults: settings, countries, sizes, categories."""
 
 from decimal import Decimal
 
 from django.core.management.base import BaseCommand
 
+from dashboard.countries_data import COUNTRIES
 from dashboard.models import (
-    Announcement, Category, Governorate, HomeSection, NavLink, SiteSettings, Size,
+    Announcement, Category, Country, HomeSection, NavLink, SiteSettings, Size,
     ensure_policy_defaults,
 )
 
-GOVERNORATES_AR = {
-    'Cairo': 'القاهرة', 'Giza': 'الجيزة', 'Alexandria': 'الإسكندرية', 'Qalyubia': 'القليوبية',
-    'Dakahlia': 'الدقهلية', 'Sharqia': 'الشرقية', 'Gharbia': 'الغربية', 'Monufia': 'المنوفية',
-    'Beheira': 'البحيرة', 'Kafr El Sheikh': 'كفر الشيخ', 'Damietta': 'دمياط',
-    'Port Said': 'بورسعيد', 'Ismailia': 'الإسماعيلية', 'Suez': 'السويس',
-    'North Sinai': 'شمال سيناء', 'South Sinai': 'جنوب سيناء', 'Beni Suef': 'بني سويف',
-    'Fayoum': 'الفيوم', 'Minya': 'المنيا', 'Asyut': 'أسيوط', 'Sohag': 'سوهاج', 'Qena': 'قنا',
-    'Luxor': 'الأقصر', 'Aswan': 'أسوان', 'Red Sea': 'البحر الأحمر', 'New Valley': 'الوادي الجديد',
-    'Matrouh': 'مطروح',
-}
 CATEGORIES_AR = {
     'T-Shirts': 'تيشيرتات', 'Shirts': 'قمصان', 'Pants': 'بناطيل', 'Jackets': 'جواكت',
     'Shoes': 'أحذية', 'Accessories': 'إكسسوارات',
 }
-
-GOVERNORATES = [
-    'Cairo', 'Giza', 'Alexandria', 'Qalyubia', 'Dakahlia', 'Sharqia', 'Gharbia',
-    'Monufia', 'Beheira', 'Kafr El Sheikh', 'Damietta', 'Port Said', 'Ismailia',
-    'Suez', 'North Sinai', 'South Sinai', 'Beni Suef', 'Fayoum', 'Minya',
-    'Asyut', 'Sohag', 'Qena', 'Luxor', 'Aswan', 'Red Sea', 'New Valley', 'Matrouh',
-]
 
 SIZES = ['S', 'M', 'L', 'XL', '2XL', '3XL']
 
@@ -37,7 +21,7 @@ CATEGORIES = ['T-Shirts', 'Shirts', 'Pants', 'Jackets', 'Shoes', 'Accessories']
 
 
 class Command(BaseCommand):
-    help = 'Seed RGS TOWER with default settings, governorates, sizes and categories.'
+    help = 'Seed RGS TOWER with default settings, countries, sizes and categories.'
 
     def handle(self, *args, **options):
         site = SiteSettings.load()
@@ -51,11 +35,14 @@ class Command(BaseCommand):
         site.save()
         self.stdout.write(self.style.SUCCESS('OK  site settings'))
 
-        for index, name in enumerate(GOVERNORATES):
-            Governorate.objects.get_or_create(
-                name_en=name, defaults={'name_ar': GOVERNORATES_AR.get(name, name), 'ordering': index}
-            )
-        self.stdout.write(self.style.SUCCESS(f'OK  {len(GOVERNORATES)} governorates'))
+        # every country, switched off except Egypt — the rest are opened from the dashboard
+        known = set(Country.objects.exclude(code='').values_list('code', flat=True))
+        new = [
+            Country(code=code, name_ar=name_ar, name_en=name_en, is_active=(code == 'EG'))
+            for code, name_ar, name_en in COUNTRIES if code not in known
+        ]
+        Country.objects.bulk_create(new)
+        self.stdout.write(self.style.SUCCESS(f'OK  {len(new)} countries added ({len(known)} already there)'))
 
         for index, name in enumerate(SIZES):
             Size.objects.get_or_create(name=name, defaults={'ordering': index})

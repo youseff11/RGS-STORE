@@ -19,12 +19,12 @@ from django.views.decorators.http import require_POST
 
 from .forms import (
     AnnouncementForm, BannerForm, CategoryForm, ColorForm, CouponForm,
-    GovernorateForm, HomeSectionForm, NavLinkForm, PaymentSettingsForm, PolicyForm,
+    CountryForm, HomeSectionForm, NavLinkForm, PaymentSettingsForm, PolicyForm,
     ProductForm, PromotionForm, ReviewForm, SiteSettingsForm, SizeForm, StaffForm,
     WorkCategoryForm, WorkForm,
 )
 from .models import (
-    Announcement, Banner, Category, ContactMessage, Coupon, CustomerProfile, Governorate,
+    Announcement, Banner, Category, ContactMessage, Country, Coupon, CustomerProfile,
     HomeSection, NavLink, Order, Policy, Product, ProductColor, ProductImage, ProductVariant,
     PAYMENT_STATUSES, Promotion, Review, STAFF_PERMISSIONS, SiteSettings, Size, StaffProfile, Work,
     WorkCategory, WorkMedia, ensure_policy_defaults, staff_permissions,
@@ -152,7 +152,7 @@ def index(request):
             'coupons': Coupon.objects.filter(is_active=True).count(),
             'week_orders': orders.filter(created_at__gte=week_ago).count(),
         },
-        'recent_orders': orders.select_related('governorate')[:8],
+        'recent_orders': orders.select_related('country')[:8],
         'low_stock': low_stock,
         'top_products': top_products,
         'chart': chart,
@@ -435,7 +435,7 @@ def size_delete(request, pk):
 def order_list(request):
     query = (request.GET.get('q') or '').strip()
     status = request.GET.get('status') or ''
-    orders = Order.objects.select_related('governorate').prefetch_related('items')
+    orders = Order.objects.select_related('country').prefetch_related('items')
     if query:
         orders = orders.filter(
             Q(order_number__icontains=query) | Q(full_name__icontains=query)
@@ -458,7 +458,7 @@ def order_list(request):
 @perm_required('orders')
 def order_detail(request, pk):
     order = get_object_or_404(
-        Order.objects.select_related('governorate', 'coupon').prefetch_related('items'), pk=pk
+        Order.objects.select_related('country', 'coupon').prefetch_related('items'), pk=pk
     )
     if request.method == 'POST':
         order.admin_note = request.POST.get('admin_note') or ''
@@ -523,7 +523,7 @@ def order_delete(request, pk):
 @perm_required('orders')
 def order_print(request, pk):
     order = get_object_or_404(
-        Order.objects.select_related('governorate').prefetch_related('items'), pk=pk
+        Order.objects.select_related('country').prefetch_related('items'), pk=pk
     )
     return render(request, 'dashboard/orders/print.html', {'order': order})
 
@@ -646,34 +646,135 @@ def banner_delete(request, pk):
     return redirect('dash_banners')
 
 
-# ============================================================== governorates
+# ================================================================= countries
+def _arabic_key(text):
+    """Sort Arabic names the way people expect (أ / إ / آ = ا)."""
+    text = (text or '').strip()
+    for a in 'أإآ':
+        text = text.replace(a, 'ا')
+    return text
+
+
+def _parse_amount(raw):
+    """'' -> None (use the general value), otherwise a non-negative Decimal. Raises ValueError."""
+    raw = (raw or '').strip().replace(',', '')
+    if raw == '':
+        return None
+    value = Decimal(raw)
+    if value < 0 or value >= Decimal('100000000'):
+        raise ValueError
+    return value.quantize(Decimal('0.01'))
+
+
+def _countries_back(request):
+    target = request.POST.get('next') or ''
+    return target if target.startswith('/dashboard/countries/') else reverse('dash_countries')
+
+
 @perm_required('shipping')
-def governorate_list(request):
-    return render(request, 'dashboard/governorates/list.html', {
-        'governorates': Governorate.objects.all(),
-        'active_page': 'governorates', **_pending_counts(),
+def country_list(request):
+    show = request.GET.get('show') or 'all'
+    everything = list(Country.objects.all())
+    counts = {
+        'all': len(everything),
+        'active': sum(1 for c in everything if c.is_active),
+    }
+    counts['inactive'] = counts['all'] - counts['active']
+    countries = everything
+    if show == 'active':
+        countries = [c for c in everything if c.is_active]
+    elif show == 'inactive':
+        countries = [c for c in everything if not c.is_active]
+    else:
+        show = 'all'
+    countries.sort(key=lambda c: (not c.is_active, c.ordering, _arabic_key(c.name_ar)))
+    return render(request, 'dashboard/countries/list.html', {
+        'countries': countries, 'show': show, 'counts': counts,
+        'site': SiteSettings.load(),
+        'active_page': 'countries', **_pending_counts(),
     })
 
 
 @perm_required('shipping')
-def governorate_form(request, pk=None):
-    obj = get_object_or_404(Governorate, pk=pk) if pk else None
-    form = GovernorateForm(request.POST or None, instance=obj)
+def country_form(request, pk=None):
+    obj = get_object_or_404(Country, pk=pk) if pk else None
+    form = CountryForm(request.POST or None, instance=obj)
     if request.method == 'POST' and form.is_valid():
-        form.save()
-        messages.success(request, 'تم الحفظ')
-        return redirect('dash_governorates')
-    return render(request, 'dashboard/governorates/form.html', {
-        'form': form, 'object': obj, 'active_page': 'governorates', **_pending_counts(),
+        country = form.save()
+        messages.success(request, f'تم حفظ {country.name_ar}')
+        return redirect('dash_countries')
+    return render(request, 'dashboard/countries/form.html', {
+        'form': form, 'object': obj, 'site': SiteSettings.load(),
+        'active_page': 'countries', **_pending_counts(),
     })
 
 
 @perm_required('shipping')
 @require_POST
-def governorate_delete(request, pk):
-    get_object_or_404(Governorate, pk=pk).delete()
-    messages.info(request, 'تم الحذف')
-    return redirect('dash_governorates')
+def country_toggle(request, pk):
+    country = get_object_or_404(Country, pk=pk)
+    country.is_active = not country.is_active
+    country.save(update_fields=['is_active'])
+    if country.is_active:
+        messages.success(request, f'{country.name_ar}: الشحن متاح')
+    else:
+        messages.info(request, f'{country.name_ar}: الشحن اتقفل')
+    return redirect(_countries_back(request))
+
+
+@perm_required('shipping')
+@require_POST
+def country_fee(request, pk):
+    country = get_object_or_404(Country, pk=pk)
+    try:
+        country.shipping_fee = _parse_amount(request.POST.get('shipping_fee'))
+    except (ValueError, ArithmeticError):
+        messages.error(request, 'اكتب سعر شحن صحيح')
+        return redirect(_countries_back(request))
+    country.save(update_fields=['shipping_fee'])
+    messages.success(request, f'تم حفظ سعر الشحن لـ {country.name_ar}')
+    return redirect(_countries_back(request))
+
+
+@perm_required('shipping')
+@require_POST
+def country_bulk(request):
+    ids = [int(i) for i in request.POST.getlist('ids') if i.isdigit()]
+    action = request.POST.get('action') or ''
+    countries = Country.objects.filter(pk__in=ids)
+    if not ids or not countries.exists():
+        messages.error(request, 'اختار دولة واحدة على الأقل')
+        return redirect(_countries_back(request))
+    count = countries.count()
+    if action == 'activate':
+        countries.update(is_active=True)
+        messages.success(request, f'اتفتح الشحن لـ {count} دولة')
+    elif action == 'deactivate':
+        countries.update(is_active=False)
+        messages.info(request, f'اتقفل الشحن لـ {count} دولة')
+    elif action == 'fee':
+        try:
+            fee = _parse_amount(request.POST.get('fee'))
+        except (ValueError, ArithmeticError):
+            messages.error(request, 'اكتب سعر شحن صحيح')
+            return redirect(_countries_back(request))
+        countries.update(shipping_fee=fee)
+        messages.success(request, f'اتحدّث سعر الشحن لـ {count} دولة')
+    elif action == 'delete':
+        countries.delete()
+        messages.info(request, f'اتحذف {count} دولة')
+    else:
+        messages.error(request, 'اختار الإجراء')
+    return redirect(_countries_back(request))
+
+
+@perm_required('shipping')
+@require_POST
+def country_delete(request, pk):
+    country = get_object_or_404(Country, pk=pk)
+    country.delete()
+    messages.info(request, f'تم حذف {country.name_ar}')
+    return redirect(_countries_back(request))
 
 
 # ================================================================== messages
@@ -735,7 +836,7 @@ def payment_settings(request):
 def _customers_queryset():
     return (
         User.objects.filter(is_staff=False)
-        .select_related('customer', 'customer__governorate')
+        .select_related('customer', 'customer__country')
         .annotate(
             n_orders=Count('orders', distinct=True),
             spent=Sum('orders__total', filter=Q(orders__payment_status='paid')),
@@ -781,14 +882,14 @@ def customer_export(request):
     response['Content-Disposition'] = 'attachment; filename="customers.csv"'
     response.write('﻿')  # Excel opens Arabic correctly with a BOM
     writer = csv.writer(response)
-    writer.writerow(['الاسم', 'البريد الإلكتروني', 'الموبايل', 'موبايل آخر', 'المحافظة',
+    writer.writerow(['الاسم', 'البريد الإلكتروني', 'الموبايل', 'موبايل آخر', 'الدولة',
                      'المدينة', 'العنوان', 'عدد الطلبات', 'إجمالي المدفوع', 'تاريخ التسجيل'])
     for user in _customers_queryset().order_by('-date_joined'):
         profile = getattr(user, 'customer', None)
         writer.writerow([
             user.get_full_name(), user.email,
             profile.phone if profile else '', profile.phone_alt if profile else '',
-            profile.governorate.name_ar if profile and profile.governorate else '',
+            profile.country.name_ar if profile and profile.country else '',
             profile.city if profile else '', profile.address if profile else '',
             user.n_orders, user.spent or 0, user.date_joined.strftime('%Y-%m-%d'),
         ])
@@ -804,7 +905,7 @@ def customer_detail(request, pk):
         profile.save(update_fields=['admin_note', 'updated_at'])
         messages.success(request, 'تم حفظ الملاحظة')
         return redirect('dash_customer_detail', pk=customer.pk)
-    orders = customer.orders.select_related('governorate').prefetch_related('items')
+    orders = customer.orders.select_related('country').prefetch_related('items')
     totals = orders.aggregate(
         n=Count('id'),
         paid=Sum('total', filter=Q(payment_status='paid')),

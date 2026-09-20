@@ -30,8 +30,8 @@
           </div>
           <div class="field {% if errors.phone %}has-error{% endif %}">
             <label>{% t 'phone' %} <span class="req">*</span></label>
-            <input type="tel" name="phone" value="{{ data.phone }}" dir="ltr" placeholder="01xxxxxxxxx" required>
-            {% if errors.phone %}<div class="err">{{ errors.phone }}</div>{% endif %}
+            <input type="tel" name="phone" value="{{ data.phone }}" dir="ltr" placeholder="+20 1xx xxx xxxx" required>
+            {% if errors.phone %}<div class="err">{{ errors.phone }}</div>{% else %}<div class="help">{% t 'phone_hint' %}</div>{% endif %}
           </div>
         </div>
 
@@ -48,16 +48,22 @@
         </div>
 
         <div class="field-row">
-          {% if governorates %}
-          <div class="field {% if errors.governorate %}has-error{% endif %}">
-            <label>{% t 'governorate' %} <span class="req">*</span></label>
-            <select name="governorate" required>
+          {% if countries %}
+          <div class="field {% if errors.country %}has-error{% endif %}">
+            <label>{% t 'country' %} <span class="req">*</span></label>
+            <select name="country" required data-country-select data-delivery-label="{% t 'delivery_time' %}">
               <option value="">—</option>
-              {% for gov in governorates %}
-                <option value="{{ gov.id }}" {% if data.governorate == gov.id|stringformat:'s' %}selected{% endif %}>{{ gov.name }}</option>
+              {% for opt in ship_options %}
+                <option value="{{ opt.country.id }}"
+                        data-ship="{% if opt.shipping %}{{ opt.shipping|money }}{% else %}{% t 'free' %}{% endif %}"
+                        data-total="{{ opt.total|money }}"
+                        data-left="{% if opt.remaining_for_free != None %}{{ opt.remaining_for_free|money }}{% endif %}"
+                        data-delivery="{{ opt.country.delivery }}"
+                        {% if data.country == opt.country.id|stringformat:'s' %}selected{% endif %}>{{ opt.country.name }}</option>
               {% endfor %}
             </select>
-            {% if errors.governorate %}<div class="err">{{ errors.governorate }}</div>{% endif %}
+            {% if errors.country %}<div class="err">{{ errors.country }}</div>{% endif %}
+            <div class="help" data-country-delivery {% if not selected.delivery %}hidden{% endif %}>{% if selected.delivery %}{% t 'delivery_time' %}: {{ selected.delivery }}{% endif %}</div>
           </div>
           {% endif %}
           <div class="field">
@@ -121,7 +127,7 @@
         </div>
         <button class="btn btn-lg btn-block" type="submit" style="margin-top:18px" data-checkout-submit
                 data-label-paypal="{% t 'continue_to_payment' %}" data-label-cod="{% t 'place_order' %}">
-          <span data-submit-label>{% if data.payment_method == 'paypal' %}{% t 'continue_to_payment' %}{% else %}{% t 'place_order' %}{% endif %}</span> — {% price totals.total %}
+          <span data-submit-label>{% if data.payment_method == 'paypal' %}{% t 'continue_to_payment' %}{% else %}{% t 'place_order' %}{% endif %}</span> — <span data-sum-total>{% price totals.total %}</span>
         </button>
       </div>
     </form>

@@ -59,8 +59,8 @@
     <div>
       <div class="card">
         <div class="card-head"><h3>الشحن والعملة</h3></div>
-        <div class="field"><label>سعر الشحن الثابت</label>{{ form.shipping_fee }}</div>
-        <div class="field"><label>شحن مجاني فوق</label>{{ form.free_shipping_threshold }}<div class="help">0 = إلغاء ميزة الشحن المجاني</div></div>
+        <div class="field"><label>سعر الشحن العام</label>{{ form.shipping_fee }}<div class="help">بيتطبق على أي دولة مالهاش سعر خاص في «الدول والشحن»</div></div>
+        <div class="field"><label>شحن مجاني فوق</label>{{ form.free_shipping_threshold }}<div class="help">0 = إلغاء ميزة الشحن المجاني · وتقدر تغيّره لكل دولة</div></div>
         <div class="grid g2">
           <div class="field"><label>العملة <span class="lang-tag ar">عربي</span></label>{{ form.currency_ar }}<div class="help">مثلاً ج.م</div></div>
           <div class="field"><label>العملة <span class="lang-tag en">English</span></label>{{ form.currency_en }}<div class="help">مثلاً EGP</div></div>

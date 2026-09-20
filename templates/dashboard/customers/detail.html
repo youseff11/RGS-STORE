@@ -69,7 +69,7 @@
         <tr><th>الموبايل</th><td dir="ltr" style="text-align:start">{% if profile.phone %}<a href="tel:{{ profile.phone }}">{{ profile.phone }}</a>{% else %}—{% endif %}</td></tr>
         {% if profile.phone_alt %}<tr><th>موبايل آخر</th><td dir="ltr" style="text-align:start">{{ profile.phone_alt }}</td></tr>{% endif %}
         <tr><th>الإيميل</th><td dir="ltr" style="text-align:start">{% if customer.email %}<a href="mailto:{{ customer.email }}">{{ customer.email }}</a>{% else %}—{% endif %}</td></tr>
-        <tr><th>المحافظة</th><td>{{ profile.governorate.name_ar|default:'—' }}</td></tr>
+        <tr><th>الدولة</th><td>{{ profile.country.name_ar|default:'—' }}</td></tr>
         <tr><th>المدينة</th><td>{{ profile.city|default:'—' }}</td></tr>
         <tr><th>العنوان</th><td>{{ profile.address|default:'—'|linebreaksbr }}</td></tr>
       </table>

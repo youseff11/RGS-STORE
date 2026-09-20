@@ -48,7 +48,7 @@
       <h4>بيانات العميل</h4>
       <div><b>{{ order.full_name }}</b></div>
       <div dir="ltr">{{ order.phone }}{% if order.phone_alt %} / {{ order.phone_alt }}{% endif %}</div>
-      <div>{% if order.governorate %}{{ order.governorate.name }} — {% endif %}{{ order.city }}</div>
+      <div>{% if order.country %}{{ order.country.name }} — {% endif %}{{ order.city }}</div>
       <div>{{ order.address }}</div>
       {% if order.notes %}<div><i>ملاحظات: {{ order.notes }}</i></div>{% endif %}
     </div>

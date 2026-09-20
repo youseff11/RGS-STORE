@@ -118,7 +118,7 @@
         <tr><th>الموبايل</th><td dir="ltr"><a href="tel:{{ order.phone }}">{{ order.phone }}</a></td></tr>
         {% if order.phone_alt %}<tr><th>موبايل آخر</th><td dir="ltr">{{ order.phone_alt }}</td></tr>{% endif %}
         {% if order.email %}<tr><th>الإيميل</th><td dir="ltr">{{ order.email }}</td></tr>{% endif %}
-        <tr><th>المحافظة</th><td>{{ order.governorate.name|default:'—' }}</td></tr>
+        <tr><th>الدولة</th><td>{{ order.country.name|default:'—' }}</td></tr>
         <tr><th>المدينة</th><td>{{ order.city|default:'—' }}</td></tr>
         <tr><th>العنوان</th><td>{{ order.address }}</td></tr>
         {% if order.notes %}<tr><th>ملاحظات العميل</th><td>{{ order.notes }}</td></tr>{% endif %}

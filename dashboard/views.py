@@ -22,7 +22,7 @@ from .i18n import t
 from .middleware import COOKIE as LANG_COOKIE, COOKIE_AGE as LANG_COOKIE_AGE
 from .i18n import LANGS
 from .models import (
-    Banner, Category, ContactMessage, Coupon, CustomerProfile, Governorate, HomeSection,
+    Banner, Category, ContactMessage, Country, Coupon, CustomerProfile, HomeSection,
     Order, OrderItem, Policy, Product, ProductVariant, Review, SiteSettings, Size, Work,
     WorkCategory, reviewable_orders,
 )
@@ -58,6 +58,40 @@ def normalize_phone(value):
     elif digits.startswith('20') and len(digits) == 12:
         digits = '0' + digits[2:]
     return digits
+
+
+def valid_phone(phone):
+    """International numbers: 8–15 digits (E.164). Egyptian +20 numbers are kept as 01…"""
+    return 8 <= len(phone or '') <= 15
+
+
+def _sort_name(text):
+    text = (text or '').strip().lower()
+    for a in 'أإآ':
+        text = text.replace(a, 'ا')
+    return text
+
+
+def shipping_countries(include=None):
+    """Countries open for shipping, in the order the owner set, then by name.
+
+    `include` keeps a customer's saved country in the list even if it was switched off.
+    """
+    countries = list(Country.objects.filter(is_active=True))
+    if include is not None and include.pk not in {c.pk for c in countries}:
+        countries.append(include)
+    countries.sort(key=lambda c: (c.ordering, _sort_name(c.name)))
+    return countries
+
+
+def _saved_country(request):
+    """The shopper's saved country while it is still open for shipping."""
+    user = request.user
+    if not user.is_authenticated:
+        return None
+    profile = getattr(user, 'customer', None)
+    country = profile.country if profile else None
+    return country if country is not None and country.is_active else None
 
 
 def _base_products():
@@ -284,7 +318,7 @@ def cart_view(request):
     cart = Cart(request)
     context = {
         'cart': cart,
-        'totals': cart.totals(),
+        'totals': cart.totals(_saved_country(request)),
         'page_title': t('cart'),
     }
     return render(request, 'pages/cart.html', context)
@@ -439,7 +473,7 @@ def account_register(request):
             Q(email__iexact=data['email']) | Q(username__iexact=data['email'])
         ).exists():
             errors['email'] = t('email_taken')
-        if len(phone) < 10:
+        if not valid_phone(phone):
             errors['phone'] = t('invalid_phone')
         elif CustomerProfile.objects.filter(phone=phone).exists():
             errors['phone'] = t('phone_taken')
@@ -506,7 +540,7 @@ def account(request):
                 errors['email'] = t('invalid_email')
             if 'email' not in errors and User.objects.filter(email__iexact=email).exclude(pk=user.pk).exists():
                 errors['email'] = t('email_taken')
-            if len(phone) < 10:
+            if not valid_phone(phone):
                 errors['phone'] = t('invalid_phone')
             elif CustomerProfile.objects.filter(phone=phone).exclude(pk=profile.pk).exists():
                 errors['phone'] = t('phone_taken')
@@ -515,10 +549,10 @@ def account(request):
                 user.first_name, user.last_name = first[:150], last[:150]
                 user.email = email.lower()
                 user.save(update_fields=['first_name', 'last_name', 'email'])
-                gov = request.POST.get('governorate') or ''
+                country_id = request.POST.get('country') or ''
                 profile.phone = phone
                 profile.phone_alt = normalize_phone(request.POST.get('phone_alt'))
-                profile.governorate = Governorate.objects.filter(pk=gov).first() if gov.isdigit() else None
+                profile.country = Country.objects.filter(pk=country_id).first() if country_id.isdigit() else None
                 profile.city = (request.POST.get('city') or '').strip()[:120]
                 profile.address = (request.POST.get('address') or '').strip()
                 profile.save()
@@ -545,7 +579,7 @@ def account(request):
         'orders': orders,
         'tab': tab,
         'errors': errors,
-        'governorates': Governorate.objects.filter(is_active=True),
+        'countries': shipping_countries(include=profile.country),
         'can_review': reviewable_orders(user).exists(),
         'page_title': t('account'),
     })
@@ -553,7 +587,7 @@ def account(request):
 
 def _owned_order_or_404(request, number):
     order = get_object_or_404(
-        Order.objects.prefetch_related('items').select_related('governorate', 'user'),
+        Order.objects.prefetch_related('items').select_related('country', 'user'),
         order_number=number,
     )
     user = request.user
@@ -582,7 +616,7 @@ def _checkout_defaults(user, profile):
         'phone': profile.phone,
         'phone_alt': profile.phone_alt,
         'email': user.email,
-        'governorate': str(profile.governorate_id or ''),
+        'country': str(profile.country_id or ''),
         'city': profile.city,
         'address': profile.address,
         'notes': '',
@@ -592,7 +626,7 @@ def _checkout_defaults(user, profile):
 def checkout(request):
     cart = Cart(request)
     site = SiteSettings.load()
-    governorates = Governorate.objects.filter(is_active=True)
+    countries = shipping_countries()
 
     if cart.is_empty:
         messages.info(request, t('checkout_empty'))
@@ -616,6 +650,8 @@ def checkout(request):
     errors = {}
     data = _checkout_defaults(user, profile)
     data['payment_method'] = methods[0]
+    if len(countries) == 1 and not data['country']:
+        data['country'] = str(countries[0].pk)
 
     if request.method == 'POST':
         for key in data:
@@ -626,7 +662,7 @@ def checkout(request):
         phone = normalize_phone(data['phone'])
         if not data['full_name']:
             errors['full_name'] = t('required_field')
-        if len(phone) < 10:
+        if not valid_phone(phone):
             errors['phone'] = t('invalid_phone')
         if not data['address']:
             errors['address'] = t('required_field')
@@ -636,14 +672,12 @@ def checkout(request):
             except ValidationError:
                 errors['email'] = t('invalid_email')
 
-        governorate = None
-        if data['governorate'].isdigit():
-            governorate = governorates.filter(id=int(data['governorate'])).first()
-        if governorates.exists() and governorate is None:
-            errors['governorate'] = t('required_field')
+        country = next((c for c in countries if str(c.pk) == data['country']), None)
+        if countries and country is None:
+            errors['country'] = t('choose_country')
 
         if not errors:
-            totals = cart.totals(governorate)
+            totals = cart.totals(country)
             method = data['payment_method']
             with transaction.atomic():
                 order = Order.objects.create(
@@ -652,7 +686,7 @@ def checkout(request):
                     phone=phone,
                     phone_alt=normalize_phone(data['phone_alt']),
                     email=data['email'] or user.email,
-                    governorate=governorate,
+                    country=country,
                     city=data['city'],
                     address=data['address'],
                     notes=data['notes'],
@@ -694,7 +728,7 @@ def checkout(request):
                 if not CustomerProfile.objects.filter(phone=phone).exclude(pk=profile.pk).exists():
                     profile.phone = phone
                 profile.phone_alt = normalize_phone(data['phone_alt']) or profile.phone_alt
-                profile.governorate = governorate or profile.governorate
+                profile.country = country or profile.country
                 profile.city = data['city'] or profile.city
                 profile.address = data['address']
                 profile.save()
@@ -709,10 +743,12 @@ def checkout(request):
                 return redirect('order_pay', number=order.order_number)
             return redirect('order_success', number=order.order_number)
 
+    selected = next((c for c in countries if str(c.pk) == data['country']), None)
     context = {
         'cart': cart,
-        'totals': cart.totals(),
-        'governorates': governorates,
+        'totals': cart.totals(selected),
+        'countries': countries,
+        'ship_options': cart.shipping_options(countries),
         'data': data,
         'errors': errors,
         'methods': methods,
@@ -838,7 +874,7 @@ def track_order(request):
     if number and phone:
         order = (
             Order.objects.prefetch_related('items')
-            .select_related('governorate')
+            .select_related('country')
             .filter(order_number=number, phone__endswith=phone[-8:])
             .first()
         )

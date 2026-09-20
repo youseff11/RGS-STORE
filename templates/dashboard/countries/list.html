@@ -1,0 +1,97 @@
+{% extends 'base/dashboard_base.html' %}
+{% load store_tags %}
+{% block page_name %}الدول والشحن{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2>الدول والشحن</h2>
+    <p>العميل بيختار دولته وهو بيطلب، وبيتحسب سعر الشحن بتاعها. الدول المقفولة ما بتظهرش له.</p>
+  </div>
+  <div class="flex">
+    {% if 'settings' in DASH_PERMS %}<a class="btn btn-ghost" href="{% url 'dash_settings' %}">{% include 'partials/icon.html' with name='truck' %} الشحن العام</a>{% endif %}
+    <a class="btn" href="{% url 'dash_country_new' %}">{% include 'partials/icon.html' with name='plus' %} دولة</a>
+  </div>
+</div>
+
+<div class="ship-defaults">
+  <span class="ico">{% include 'partials/icon.html' with name='truck' %}</span>
+  <div>
+    <b>السعر العام: {% price site.shipping_fee %}</b>
+    {% if site.free_shipping_threshold %} · شحن مجاني فوق {% price site.free_shipping_threshold %}{% else %} · مفيش شحن مجاني{% endif %}
+    <div class="small muted">بيتطبق على أي دولة مالهاش سعر خاص. تقدر تحدد لكل دولة سعرها وحد الشحن المجاني ومدة التوصيل.</div>
+  </div>
+</div>
+
+<div class="country-tools">
+  <nav class="seg" aria-label="عرض">
+    <a href="?show=all" class="{% if show == 'all' %}is-active{% endif %}">الكل <span class="n">{{ counts.all }}</span></a>
+    <a href="?show=active" class="{% if show == 'active' %}is-active{% endif %}">متاحة <span class="n">{{ counts.active }}</span></a>
+    <a href="?show=inactive" class="{% if show == 'inactive' %}is-active{% endif %}">مقفولة <span class="n">{{ counts.inactive }}</span></a>
+  </nav>
+  <label class="search">
+    {% include 'partials/icon.html' with name='search' %}
+    <input class="inp" type="search" placeholder="دوّر على دولة… (عربي أو English)" data-country-search autocomplete="off" aria-label="بحث عن دولة">
+  </label>
+  <label class="check-visible"><input type="checkbox" data-check-visible> تحديد الظاهر</label>
+</div>
+
+<form id="bulk-form" class="bulk-bar" method="post" action="{% url 'dash_country_bulk' %}" data-bulk-bar>
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+  <b class="bulk-count"><span data-bulk-count>0</span> محددة</b>
+  <button class="btn btn-sm" type="submit" name="action" value="activate">{% include 'partials/icon.html' with name='check' %} افتح الشحن</button>
+  <button class="btn btn-sm btn-soft" type="submit" name="action" value="deactivate">{% include 'partials/icon.html' with name='lock' %} اقفل</button>
+  <span class="bulk-fee">
+    <input class="inp" type="text" name="fee" inputmode="decimal" placeholder="سعر الشحن" data-bulk-fee aria-label="سعر الشحن للمحدد">
+    <button class="btn btn-sm btn-ghost" type="submit" name="action" value="fee" data-bulk-fee-btn>حط السعر</button>
+  </span>
+  <button class="btn btn-sm btn-danger" type="submit" name="action" value="delete" data-confirm-click="حذف الدول المحددة؟">{% include 'partials/icon.html' with name='trash' %}</button>
+  <button class="btn btn-sm btn-soft bulk-x" type="button" data-bulk-clear aria-label="إلغاء التحديد">{% include 'partials/icon.html' with name='x' %}</button>
+</form>
+
+{% if countries %}
+<div class="country-list" data-country-list>
+  {% for c in countries %}
+  <div class="country-row {% if not c.is_active %}is-off{% endif %}" data-country data-search="{{ c.name_ar }} {{ c.name_en }} {{ c.code }}">
+    <label class="country-check"><input type="checkbox" name="ids" value="{{ c.pk }}" form="bulk-form" data-country-check aria-label="تحديد {{ c.name_ar }}"></label>
+
+    <div class="country-info">
+      <div class="country-name">
+        <b>{{ c.name_ar }}</b>
+        {% if c.name_en %}<span class="en" dir="ltr">{{ c.name_en }}</span>{% endif %}
+        {% if c.code %}<span class="code-chip" dir="ltr">{{ c.code }}</span>{% endif %}
+      </div>
+      {% if c.delivery_ar or c.free_shipping_over != None %}
+      <div class="country-meta">
+        {% if c.delivery_ar %}<span>{% include 'partials/icon.html' with name='truck' %} {{ c.delivery_ar }}</span>{% endif %}
+        {% if c.free_shipping_over != None %}<span>{% if c.free_shipping_over %}مجاني فوق {% price c.free_shipping_over %}{% else %}بدون شحن مجاني{% endif %}</span>{% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    <form class="country-toggle" method="post" action="{% url 'dash_country_toggle' c.pk %}">
+      {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <button type="submit" class="toggle-pill {% if c.is_active %}is-on{% endif %}" title="{% if c.is_active %}اقفل الشحن للدولة دي{% else %}افتح الشحن للدولة دي{% endif %}"><span></span>{% if c.is_active %}متاحة{% else %}مقفولة{% endif %}</button>
+    </form>
+
+    <form class="country-fee" method="post" action="{% url 'dash_country_fee' c.pk %}">
+      {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <input class="inp" type="text" name="shipping_fee" inputmode="decimal" dir="ltr"
+             value="{% if c.shipping_fee != None %}{{ c.shipping_fee|money }}{% endif %}"
+             placeholder="{{ site.shipping_fee|money }} (العام)" aria-label="سعر الشحن لـ {{ c.name_ar }}">
+      <span class="cur">{{ CURRENCY }}</span>
+      <button class="btn btn-sm btn-soft" type="submit">حفظ</button>
+    </form>
+
+    <a class="icon-btn country-edit" href="{% url 'dash_country_edit' c.pk %}" title="كل الإعدادات" aria-label="تعديل {{ c.name_ar }}">{% include 'partials/icon.html' with name='edit' %}</a>
+  </div>
+  {% endfor %}
+</div>
+<div class="card" data-country-empty hidden><div class="empty"><div class="ico ico-badge">{% include 'partials/icon.html' with name='search' %}</div>مفيش دولة بالاسم ده — تقدر تضيفها من «+ دولة»</div></div>
+{% else %}
+<div class="card"><div class="empty"><div class="ico ico-badge">{% include 'partials/icon.html' with name='globe' %}</div>
+  {% if show == 'active' %}مفيش دول متاحة للشحن لسه — افتح الشحن من «الكل»{% elif show == 'inactive' %}كل الدول متاحة{% else %}مفيش دول — أضفها من «+ دولة»{% endif %}
+</div></div>
+{% endif %}
+{% endblock %}

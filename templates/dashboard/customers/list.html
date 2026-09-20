@@ -31,7 +31,7 @@
 {% if page_obj.object_list %}
 <div class="table-wrap">
   <table class="t">
-    <thead><tr><th>العميل</th><th>الموبايل</th><th>البريد الإلكتروني</th><th>المحافظة</th><th>الطلبات</th><th>المدفوع</th><th>التسجيل</th><th></th></tr></thead>
+    <thead><tr><th>العميل</th><th>الموبايل</th><th>البريد الإلكتروني</th><th>الدولة</th><th>الطلبات</th><th>المدفوع</th><th>التسجيل</th><th></th></tr></thead>
     <tbody>
       {% for c in page_obj %}
       <tr>
@@ -46,7 +46,7 @@
         </td>
         <td dir="ltr" style="text-align:start">{% if c.customer.phone %}<a href="tel:{{ c.customer.phone }}">{{ c.customer.phone }}</a>{% else %}<span class="muted">—</span>{% endif %}</td>
         <td dir="ltr" style="text-align:start" class="small">{{ c.email|default:'—' }}</td>
-        <td class="small">{{ c.customer.governorate.name_ar|default:'—' }}{% if c.customer.city %}<div class="muted">{{ c.customer.city }}</div>{% endif %}</td>
+        <td class="small">{{ c.customer.country.name_ar|default:'—' }}{% if c.customer.city %}<div class="muted">{{ c.customer.city }}</div>{% endif %}</td>
         <td><span class="chip chip-muted">{{ c.n_orders }}</span></td>
         <td><b>{% price c.spent|default:0 %}</b></td>
         <td class="small muted">{{ c.date_joined|date:"Y/m/d" }}{% if c.last_order %}<div>آخر طلب {{ c.last_order|date:"Y/m/d" }}</div>{% endif %}</td>

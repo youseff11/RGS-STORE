@@ -613,3 +613,131 @@ a.stat { color: inherit; }
   .section-row { flex-wrap: wrap; }
   .section-info { flex-basis: calc(100% - 90px); }
 }
+
+/* countries & shipping */
+.ship-defaults {
+  display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; margin-bottom: 14px;
+  border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line);
+}
+.ship-defaults .ico {
+  width: 36px; height: 36px; flex: none; border-radius: 10px; display: grid; place-items: center;
+  background: var(--accent-soft); color: var(--accent-text);
+}
+.ship-defaults .ico svg { width: 18px; height: 18px; }
+.seg {
+  display: inline-flex; gap: 3px; padding: 4px; border-radius: 12px; flex: none;
+  background: var(--surface); border: 1px solid var(--line);
+}
+.seg a {
+  display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 9px;
+  font-size: 13px; font-weight: 700; color: var(--muted); transition: background .18s, color .18s;
+}
+.seg a:hover { color: var(--text); }
+.seg a.is-active { background: var(--accent); color: #fff; }
+.seg .n { font-size: 11px; font-weight: 800; opacity: .75; font-family: 'Jost', sans-serif; }
+.country-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.country-tools .search { position: relative; flex: 1 1 240px; min-width: 0; }
+.country-tools .search svg {
+  position: absolute; top: 50%; inset-inline-start: 12px; transform: translateY(-50%);
+  width: 17px; height: 17px; color: var(--muted); pointer-events: none;
+}
+.country-tools .search .inp { padding-inline-start: 38px; }
+.check-visible { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; color: var(--text-2); cursor: pointer; white-space: nowrap; }
+.check-visible input, .country-check input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; margin: 0; }
+
+.bulk-bar {
+  display: none; align-items: center; gap: 8px; flex-wrap: wrap;
+  position: sticky; top: 74px; z-index: 30; margin-bottom: 12px; padding: 10px 12px;
+  border-radius: 14px; background: var(--surface-2); box-shadow: var(--shadow-md);
+  border: 1px solid color-mix(in srgb, var(--accent) 50%, var(--line));
+}
+.bulk-bar.is-on { display: flex; }
+.bulk-count { font-size: 13px; margin-inline-end: 4px; }
+.bulk-fee { display: inline-flex; align-items: center; gap: 6px; }
+.bulk-fee .inp { width: 110px; padding: 7px 10px; }
+.bulk-x { margin-inline-start: auto; }
+
+.country-list { display: grid; gap: 8px; }
+.country-row {
+  display: grid; align-items: center; gap: 12px; padding: 10px 14px;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+  grid-template-areas: "check info toggle fee edit";
+  border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line);
+  transition: border-color .18s, background .18s;
+}
+.country-row[hidden] { display: none; }
+.country-row.is-off { background: var(--bg-2); }
+.country-row.is-off .country-name b { color: var(--text-2); }
+.country-row:has(.country-check input:checked) { border-color: var(--accent); }
+.country-check { grid-area: check; display: grid; place-items: center; }
+.country-info { grid-area: info; min-width: 0; }
+.country-toggle { grid-area: toggle; }
+.country-fee { grid-area: fee; display: flex; align-items: center; gap: 6px; }
+.country-edit { grid-area: edit; }
+.country-name { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.country-name b { font-size: 14px; }
+.country-name .en { font-size: 12px; color: var(--muted); font-family: 'Jost', 'Cairo', sans-serif; }
+.code-chip {
+  font-family: 'Jost', sans-serif; font-size: 10.5px; font-weight: 700; letter-spacing: .06em;
+  padding: 1px 6px; border-radius: 6px; background: var(--surface-2); color: var(--muted);
+}
+.country-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 2px; font-size: 12px; color: var(--muted); }
+.country-meta span { display: inline-flex; align-items: center; gap: 4px; }
+.country-meta svg { width: 14px; height: 14px; }
+.country-fee .inp { width: 108px; padding: 7px 10px; }
+.country-fee .cur { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.country-toggle .toggle-pill { cursor: pointer; }
+
+/* ------------------------------------------------------- responsive fixes --
+   أزرار رأس الصفحة كانت في صف واحد من غير wrap، فعلى الموبايل بتطلع برّه
+   الشاشة وتعمل سكرول أفقي. دلوقتي بتنزل سطر جديد وتملأ العرض. */
+.page-head > .flex { flex-wrap: wrap; }
+/* بدون min-width:0 عناصر الجريد بتتمدد على قد أعرض جدول جواها بدل ما الجدول
+   يعمل سكرول لوحده — وده اللي كان بيمدد الصفحة على الموبايل */
+.grid > *, .split > * { min-width: 0; }
+.table-wrap { max-width: 100%; }
+/* أمان: أي عنصر عريض جوه المحتوى ما يعملش سكرول أفقي للصفحة كلها
+   (الجداول ليها سكرول خاص بيها جوه .table-wrap) */
+.content { min-width: 0; overflow-x: clip; }
+
+@media (max-width: 640px) {
+  .page-head { align-items: stretch; gap: 12px; margin-bottom: 16px; }
+  .page-head > div:first-child { min-width: 0; }
+  .page-head h2 { font-size: 19px; }
+  .page-head > .flex { width: 100%; gap: 8px; }
+  .page-head > .flex > .btn,
+  .page-head > .flex > form { flex: 1 1 auto; }
+  .page-head > .flex > form .btn { width: 100%; }
+  .page-head > .btn { flex: 1 1 100%; }
+  .page-head .btn { padding: 10px 12px; }
+
+  /* كروت الأرقام: اتنين جنب بعض بدل كارت كبير في كل سطر */
+  .grid:has(> .stat) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .grid:has(> .stat) > .stat:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .stat { flex-direction: column; gap: 10px; padding: 14px; min-width: 0; }
+  .stat .ico { width: 36px; height: 36px; border-radius: 10px; }
+  .stat .ico svg { width: 18px; height: 18px; }
+  .stat .v { font-size: 20px; overflow-wrap: anywhere; }
+  .stat .l { font-size: 11.5px; line-height: 1.5; }
+
+  .card { padding: 16px; }
+  .card-head { flex-wrap: wrap; }
+  .filters-bar .inp { min-width: 0; flex: 1 1 140px; }
+  .toasts { inset-inline: 12px; top: 70px; }
+  .toast { min-width: 0; max-width: none; }
+
+  .seg { width: 100%; }
+  .seg a { flex: 1; justify-content: center; padding: 7px 8px; }
+  .country-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "check info toggle" "fee fee edit";
+    gap: 10px; padding: 12px;
+  }
+  .country-fee .inp { flex: 1; width: auto; min-width: 0; }
+  .bulk-bar { top: 66px; }
+  .bulk-fee { flex: 1 1 100%; order: 5; }
+  .bulk-fee .inp { flex: 1; width: auto; min-width: 0; }
+}
+@media (max-width: 340px) {
+  .grid:has(> .stat) { grid-template-columns: 1fr; }
+}

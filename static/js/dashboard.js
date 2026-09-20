@@ -150,6 +150,70 @@
     sync();
   }
 
+  /* buttons that need a confirmation (a form can hold several actions) */
+  document.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-confirm-click]');
+    if (btn && !window.confirm(btn.dataset.confirmClick)) event.preventDefault();
+  });
+
+  /* countries & shipping: instant search + bulk selection */
+  const countryList = $('[data-country-list]');
+  if (countryList) {
+    const rows = $$('[data-country]', countryList);
+    const search = $('[data-country-search]');
+    const empty = $('[data-country-empty]');
+    const bar = $('[data-bulk-bar]');
+    const count = $('[data-bulk-count]');
+    const allBox = $('[data-check-visible]');
+    const boxOf = (row) => $('[data-country-check]', row);
+    const norm = (text) => (text || '').toLowerCase()
+      .replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/\s+/g, ' ').trim();
+    rows.forEach((row) => { row.dataset.norm = norm(row.dataset.search); });
+    const visible = () => rows.filter((row) => !row.hidden);
+    const sync = () => {
+      const picked = rows.filter((row) => boxOf(row).checked).length;
+      if (bar) bar.classList.toggle('is-on', picked > 0);
+      if (count) count.textContent = picked;
+      if (allBox) {
+        const shown = visible();
+        allBox.checked = shown.length > 0 && shown.every((row) => boxOf(row).checked);
+      }
+    };
+    if (search) {
+      search.addEventListener('input', () => {
+        const q = norm(search.value);
+        let shown = 0;
+        rows.forEach((row) => {
+          const on = !q || row.dataset.norm.includes(q);
+          row.hidden = !on;
+          if (on) shown += 1;
+        });
+        if (empty) empty.hidden = shown > 0;
+        sync();
+      });
+    }
+    countryList.addEventListener('change', (event) => {
+      if (event.target.matches('[data-country-check]')) sync();
+    });
+    if (allBox) {
+      allBox.addEventListener('change', () => {
+        visible().forEach((row) => { boxOf(row).checked = allBox.checked; });
+        sync();
+      });
+    }
+    const clear = $('[data-bulk-clear]');
+    if (clear) clear.addEventListener('click', () => { rows.forEach((row) => { boxOf(row).checked = false; }); sync(); });
+    /* Enter in the price box = "set price", not the first button of the bar */
+    const feeInput = $('[data-bulk-fee]');
+    const feeBtn = $('[data-bulk-fee-btn]');
+    if (feeInput && feeBtn) {
+      feeInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') { event.preventDefault(); feeBtn.click(); }
+      });
+    }
+    sync();
+  }
+
   /* select / clear every permission */
   $$('[data-check-all]').forEach((btn) => {
     btn.addEventListener('click', () => {

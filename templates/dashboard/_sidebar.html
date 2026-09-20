@@ -34,8 +34,8 @@
   </a>
   {% endif %}
   {% if 'shipping' in DASH_PERMS %}
-  <a class="sb-link {% if active_page == 'governorates' %}is-active{% endif %}" href="{% url 'dash_governorates' %}">
-    {% include 'partials/icon.html' with name='truck' %} المحافظات والشحن
+  <a class="sb-link {% if active_page == 'countries' %}is-active{% endif %}" href="{% url 'dash_countries' %}">
+    {% include 'partials/icon.html' with name='globe' %} الدول والشحن
   </a>
   {% endif %}
   {% endif %}

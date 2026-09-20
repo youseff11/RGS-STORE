@@ -24,8 +24,8 @@
         </div>
         <div class="field {% if errors.phone %}has-error{% endif %}">
           <label for="r-phone">{% t 'phone' %} <span class="req">*</span></label>
-          <input id="r-phone" type="tel" name="phone" value="{{ data.phone }}" autocomplete="tel" dir="ltr" placeholder="01xxxxxxxxx" required>
-          {% if errors.phone %}<div class="err">{{ errors.phone }}</div>{% endif %}
+          <input id="r-phone" type="tel" name="phone" value="{{ data.phone }}" autocomplete="tel" dir="ltr" placeholder="+20 1xx xxx xxxx" required>
+          {% if errors.phone %}<div class="err">{{ errors.phone }}</div>{% else %}<div class="help">{% t 'phone_hint' %}</div>{% endif %}
         </div>
       </div>
       <div class="field-row">

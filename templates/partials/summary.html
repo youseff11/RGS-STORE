@@ -2,20 +2,23 @@
 <aside class="summary">
   <h3>{% t 'order_summary' %}</h3>
 
-  {% if totals.free_shipping_threshold %}
-    {% if totals.remaining_for_free > 0 %}
-      {% with remaining=totals.remaining_for_free|money %}
-        <div class="ship-hint">
-          {% t 'free_shipping_left' amount=remaining %} {{ CURRENCY }}
-          <div class="ship-bar">
-            <span style="width:{% widthratio totals.subtotal totals.free_shipping_threshold 100 %}%"></span>
-          </div>
-        </div>
-      {% endwith %}
-    {% else %}
-      <div class="ship-hint">{% include 'partials/icon.html' with name='check' %} {% t 'free_shipping_earned' %}</div>
+  <div class="ship-hint" data-ship-hint
+       data-hint-left="{% t 'free_shipping_left' amount='__A__' %} {{ CURRENCY }}"
+       data-hint-earned="{% t 'free_shipping_earned' %}"
+       {% if not totals.free_shipping_threshold %}hidden{% endif %}>
+    <span data-hint-text>
+      {% if totals.remaining_for_free > 0 %}
+        {% with remaining=totals.remaining_for_free|money %}{% t 'free_shipping_left' amount=remaining %} {{ CURRENCY }}{% endwith %}
+      {% else %}
+        {% include 'partials/icon.html' with name='check' %} {% t 'free_shipping_earned' %}
+      {% endif %}
+    </span>
+    {% if totals.free_shipping_threshold and totals.remaining_for_free > 0 %}
+      <div class="ship-bar" data-ship-bar>
+        <span style="width:{% widthratio totals.subtotal totals.free_shipping_threshold 100 %}%"></span>
+      </div>
     {% endif %}
-  {% endif %}
+  </div>
 
   <div class="sum-row"><span>{% t 'subtotal' %}</span><b>{% price totals.subtotal %}</b></div>
 
@@ -28,10 +31,10 @@
 
   <div class="sum-row muted">
     <span>{% t 'shipping' %}</span>
-    <b>{% if totals.shipping %}{% price totals.shipping %}{% else %}{% t 'free' %}{% endif %}</b>
+    <b data-sum-shipping data-currency="{{ CURRENCY }}" data-free-label="{% t 'free' %}">{% if totals.shipping %}{% price totals.shipping %}{% else %}{% t 'free' %}{% endif %}</b>
   </div>
 
-  <div class="sum-total"><span>{% t 'total' %}</span><span>{% price totals.total %}</span></div>
+  <div class="sum-total"><span>{% t 'total' %}</span><span data-sum-total>{% price totals.total %}</span></div>
 
   {% if totals.coupon %}
     <div class="coupon-chip">

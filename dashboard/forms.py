@@ -11,7 +11,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 
 from .models import (
-    Announcement, Banner, Category, Coupon, Governorate, HomeSection, NavLink, Policy,
+    Announcement, Banner, Category, Country, Coupon, HomeSection, NavLink, Policy,
     Product, ProductColor, Promotion, Review, STAFF_PERMISSIONS, SiteSettings, Size,
     Work, WorkCategory,
 )
@@ -191,14 +191,41 @@ class BannerForm(StyledForm):
         }
 
 
-class GovernorateForm(StyledForm):
+class CountryForm(StyledForm):
     class Meta:
-        model = Governorate
-        fields = ['name_ar', 'name_en', 'shipping_fee', 'is_active', 'ordering']
-        labels = {
-            'name_ar': 'اسم المحافظة', 'name_en': 'اسم المحافظة',
-            'shipping_fee': 'سعر شحن خاص (اختياري)', 'is_active': 'متاحة', 'ordering': 'الترتيب',
+        model = Country
+        fields = [
+            'name_ar', 'name_en', 'code', 'shipping_fee', 'free_shipping_over',
+            'delivery_ar', 'delivery_en', 'is_active', 'ordering',
+        ]
+        widgets = {
+            'code': forms.TextInput(attrs={'dir': 'ltr', 'maxlength': 2, 'placeholder': 'SA'}),
+            'delivery_ar': forms.TextInput(attrs={'placeholder': 'مثلاً: من 7 لـ 10 أيام عمل'}),
+            'delivery_en': forms.TextInput(attrs={'placeholder': 'e.g. 7–10 business days'}),
         }
+        labels = {
+            'name_ar': 'اسم الدولة', 'name_en': 'اسم الدولة',
+            'code': 'كود الدولة (اختياري)',
+            'shipping_fee': 'سعر الشحن للدولة دي',
+            'free_shipping_over': 'شحن مجاني فوق مبلغ (للدولة دي)',
+            'delivery_ar': 'مدة التوصيل', 'delivery_en': 'مدة التوصيل',
+            'is_active': 'متاحة للشحن', 'ordering': 'الترتيب',
+        }
+        help_texts = {
+            'code': 'حرفين زي EG أو SA — اختياري',
+            'shipping_fee': 'فاضي = سعر الشحن العام من الإعدادات',
+            'free_shipping_over': 'فاضي = حد الشحن المجاني العام · 0 = مفيش شحن مجاني للدولة دي',
+            'delivery_ar': 'اختياري — بيظهر للعميل تحت اختيار الدولة',
+            'ordering': 'الرقم الأصغر يظهر الأول (الافتراضي 100)',
+        }
+
+    def clean_code(self):
+        code = (self.cleaned_data.get('code') or '').strip().upper()
+        if code and (len(code) != 2 or not code.isalpha()):
+            raise forms.ValidationError('الكود لازم يكون حرفين إنجليزي زي EG')
+        if code and Country.objects.filter(code=code).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError('الكود ده مستخدم لدولة تانية')
+        return code
 
 
 # =================================================================== settings
@@ -229,7 +256,7 @@ class SiteSettingsForm(StyledForm):
             'address_ar': 'العنوان', 'address_en': 'العنوان',
             'facebook_url': 'فيسبوك', 'instagram_url': 'إنستجرام', 'tiktok_url': 'تيك توك',
             'youtube_url': 'يوتيوب', 'currency_ar': 'العملة', 'currency_en': 'العملة',
-            'shipping_fee': 'سعر الشحن', 'free_shipping_threshold': 'شحن مجاني فوق مبلغ',
+            'shipping_fee': 'سعر الشحن العام', 'free_shipping_threshold': 'شحن مجاني فوق مبلغ (عام)',
             'low_stock_threshold': 'تنبيه المخزون القليل عند', 'orders_enabled': 'استقبال الطلبات',
             'reviews_auto_publish': 'نشر تقييمات العملاء تلقائيًا من غير مراجعة',
         }

@@ -167,26 +167,44 @@ class Cart:
             return ZERO
         return money(coupon.amount_for(self.subtotal))
 
-    def totals(self, governorate=None):
+    def totals(self, country=None):
         settings_obj = SiteSettings.load()
         subtotal = self.subtotal
         discount = self.coupon_discount
         after_discount = max(ZERO, subtotal - discount)
         coupon = self.coupon
-        if coupon and coupon.free_shipping:
+        free_coupon = bool(coupon and coupon.free_shipping)
+        if free_coupon:
             shipping = ZERO
         else:
-            shipping = money(settings_obj.shipping_for(after_discount, governorate))
+            shipping = money(settings_obj.shipping_for(after_discount, country))
+        threshold = ZERO if free_coupon else settings_obj.free_threshold_for(country)
         return {
             'subtotal': subtotal,
             'discount': discount,
             'shipping': shipping,
             'total': money(after_discount + shipping),
             'coupon': coupon,
+            'country': country,
             'settings': settings_obj,
-            'free_shipping_threshold': settings_obj.free_shipping_threshold,
-            'remaining_for_free': max(
-                ZERO,
-                (settings_obj.free_shipping_threshold or ZERO) - after_discount,
-            ),
+            'free_shipping_threshold': threshold,
+            'remaining_for_free': max(ZERO, threshold - after_discount),
         }
+
+    def shipping_options(self, countries):
+        """Shipping + total for each country — lets checkout update the summary live."""
+        base = self.totals()
+        after_discount = max(ZERO, base['subtotal'] - base['discount'])
+        free_coupon = bool(base['coupon'] and base['coupon'].free_shipping)
+        site = base['settings']
+        options = []
+        for country in countries:
+            shipping = ZERO if free_coupon else money(site.shipping_for(after_discount, country))
+            threshold = ZERO if free_coupon else site.free_threshold_for(country)
+            options.append({
+                'country': country,
+                'shipping': shipping,
+                'total': money(after_discount + shipping),
+                'remaining_for_free': max(ZERO, threshold - after_discount) if threshold > ZERO else None,
+            })
+        return options

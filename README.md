@@ -13,7 +13,7 @@ pip install -r requirements.txt
 
 python manage.py migrate             # بيطبّق 0002 و 0003 (الحسابات، الدفع، أعمالنا، التقييمات...)
 
-python manage.py seed_store          # أول مرة بس: محافظات + مقاسات + أقسام + أقسام الرئيسية + القائمة + السياسات
+python manage.py seed_store          # أول مرة بس: دول الشحن + مقاسات + أقسام + أقسام الرئيسية + القائمة + السياسات
 python manage.py createsuperuser     # أول مرة بس: حساب المدير الأساسي
 
 python manage.py runserver

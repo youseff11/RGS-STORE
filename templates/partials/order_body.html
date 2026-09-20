@@ -65,7 +65,7 @@
   <table class="info-table" style="margin-top:14px">
     <tr><th>{% t 'full_name' %}</th><td>{{ order.full_name }}</td></tr>
     <tr><th>{% t 'phone' %}</th><td dir="ltr" style="text-align:end">{{ order.phone }}</td></tr>
-    <tr><th>{% t 'address' %}</th><td>{% if order.governorate %}{{ order.governorate.name }} — {% endif %}{{ order.city }} {{ order.address }}</td></tr>
+    <tr><th>{% t 'address' %}</th><td>{% if order.country %}{{ order.country.name }} — {% endif %}{{ order.city }} {{ order.address }}</td></tr>
     <tr><th>{% t 'payment_method' %}</th><td>{{ order.payment_method_label }}</td></tr>
   </table>
 </div>

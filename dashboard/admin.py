@@ -3,7 +3,7 @@
 from django.contrib import admin
 
 from .models import (
-    Announcement, Banner, Category, ContactMessage, Coupon, CustomerProfile, Governorate,
+    Announcement, Banner, Category, ContactMessage, Coupon, Country, CustomerProfile,
     HomeSection, NavLink, Order, OrderItem, Policy, Product, ProductColor, ProductImage,
     ProductVariant, Promotion, Review, SiteSettings, Size, StaffProfile, Work, WorkCategory,
     WorkMedia,
@@ -84,14 +84,22 @@ class ReviewAdmin(admin.ModelAdmin):
 
 @admin.register(CustomerProfile)
 class CustomerProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'phone', 'governorate', 'city', 'created_at')
+    list_display = ('user', 'phone', 'country', 'city', 'created_at')
     search_fields = ('user__first_name', 'user__last_name', 'user__email', 'phone')
 
 
 admin.site.register([
-    Announcement, Banner, Size, Governorate, SiteSettings, ContactMessage,
+    Announcement, Banner, Size, SiteSettings, ContactMessage,
     WorkCategory, HomeSection, NavLink, Policy, StaffProfile,
 ])
+
+@admin.register(Country)
+class CountryAdmin(admin.ModelAdmin):
+    list_display = ('name_ar', 'name_en', 'code', 'shipping_fee', 'free_shipping_over', 'is_active', 'ordering')
+    list_editable = ('shipping_fee', 'is_active', 'ordering')
+    list_filter = ('is_active',)
+    search_fields = ('name_ar', 'name_en', 'code')
+
 
 admin.site.site_header = 'RGS TOWER'
 admin.site.site_title = 'RGS TOWER'

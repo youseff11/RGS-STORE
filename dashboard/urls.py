@@ -1,6 +1,7 @@
 """All routes for RGS TOWER — storefront + admin dashboard."""
 
 from django.urls import path
+from django.views.generic import RedirectView
 
 from . import dashboard_views as dv
 from . import views
@@ -104,11 +105,15 @@ urlpatterns = [
     path('dashboard/banners/<int:pk>/edit/', dv.banner_form, name='dash_banner_edit'),
     path('dashboard/banners/<int:pk>/delete/', dv.banner_delete, name='dash_banner_delete'),
 
-    # governorates
-    path('dashboard/governorates/', dv.governorate_list, name='dash_governorates'),
-    path('dashboard/governorates/new/', dv.governorate_form, name='dash_governorate_new'),
-    path('dashboard/governorates/<int:pk>/edit/', dv.governorate_form, name='dash_governorate_edit'),
-    path('dashboard/governorates/<int:pk>/delete/', dv.governorate_delete, name='dash_governorate_delete'),
+    # countries & shipping (used to be governorates)
+    path('dashboard/countries/', dv.country_list, name='dash_countries'),
+    path('dashboard/countries/new/', dv.country_form, name='dash_country_new'),
+    path('dashboard/countries/bulk/', dv.country_bulk, name='dash_country_bulk'),
+    path('dashboard/countries/<int:pk>/edit/', dv.country_form, name='dash_country_edit'),
+    path('dashboard/countries/<int:pk>/toggle/', dv.country_toggle, name='dash_country_toggle'),
+    path('dashboard/countries/<int:pk>/fee/', dv.country_fee, name='dash_country_fee'),
+    path('dashboard/countries/<int:pk>/delete/', dv.country_delete, name='dash_country_delete'),
+    path('dashboard/governorates/', RedirectView.as_view(pattern_name='dash_countries', permanent=False)),
 
     # messages
     path('dashboard/messages/', dv.message_list, name='dash_messages'),

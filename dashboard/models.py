@@ -150,12 +150,18 @@ class SiteSettings(models.Model):
             rate = Decimal('1')
         return (Decimal(amount_egp or 0) / rate).quantize(Decimal('0.01'), rounding=ROUND_UP)
 
-    def shipping_for(self, subtotal, governorate=None):
-        """Flat fee, free above the threshold, optional per-governorate override."""
+    def free_threshold_for(self, country=None):
+        """Free-shipping threshold for a country (its own value, else the general one). 0 = never free."""
+        if country is not None and country.free_shipping_over is not None:
+            return country.free_shipping_over
+        return self.free_shipping_threshold or ZERO
+
+    def shipping_for(self, subtotal, country=None):
+        """Flat fee, free above the threshold — each country can override both."""
         fee = self.shipping_fee
-        if governorate is not None and governorate.shipping_fee is not None:
-            fee = governorate.shipping_fee
-        threshold = self.free_shipping_threshold or ZERO
+        if country is not None and country.shipping_fee is not None:
+            fee = country.shipping_fee
+        threshold = self.free_threshold_for(country)
         if threshold > ZERO and Decimal(subtotal) >= threshold:
             return ZERO
         return fee
@@ -620,18 +626,36 @@ class Coupon(models.Model):
 
 
 # ===================================================================== orders
-class Governorate(models.Model):
+class Country(models.Model):
+    """A country the store ships to — managed from «الدول والشحن» in the dashboard.
+
+    (It used to be `Governorate` — Egyptian governorates — until the store started
+    exporting; migration 0004 renamed it and loaded the list of countries.)
+    """
+
+    code = models.CharField(
+        max_length=2, blank=True, default='', db_index=True,
+        help_text='ISO code, e.g. EG, SA, AE',
+    )
     name_ar = models.CharField(max_length=80)
     name_en = models.CharField(max_length=80, blank=True, default='')
     shipping_fee = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True,
         help_text='اتركه فارغًا لاستخدام سعر الشحن العام / blank = default fee',
     )
+    free_shipping_over = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        help_text='فارغ = حد الشحن المجاني العام · 0 = مفيش شحن مجاني للدولة دي',
+    )
+    delivery_ar = models.CharField(max_length=80, blank=True, default='')
+    delivery_en = models.CharField(max_length=80, blank=True, default='')
     is_active = models.BooleanField(default=True)
-    ordering = models.PositiveIntegerField(default=0)
+    ordering = models.PositiveIntegerField(default=100)
 
     class Meta:
         ordering = ['ordering', 'name_ar']
+        verbose_name = 'دولة'
+        verbose_name_plural = 'الدول'
 
     def __str__(self):
         return self.name_ar or self.name_en
@@ -639,6 +663,10 @@ class Governorate(models.Model):
     @property
     def name(self):
         return pick(self.name_ar, self.name_en)
+
+    @property
+    def delivery(self):
+        return pick(self.delivery_ar, self.delivery_en)
 
 
 PAYMENT_METHODS = [
@@ -686,8 +714,8 @@ class Order(models.Model):
     phone = models.CharField(max_length=30)
     phone_alt = models.CharField(max_length=30, blank=True, default='')
     email = models.EmailField(blank=True, default='')
-    governorate = models.ForeignKey(
-        Governorate, on_delete=models.SET_NULL, null=True, blank=True, related_name='orders'
+    country = models.ForeignKey(
+        Country, on_delete=models.SET_NULL, null=True, blank=True, related_name='orders'
     )
     city = models.CharField(max_length=120, blank=True, default='')
     address = models.TextField()
@@ -861,8 +889,8 @@ class CustomerProfile(models.Model):
     )
     phone = models.CharField(max_length=30, blank=True, default='')
     phone_alt = models.CharField(max_length=30, blank=True, default='')
-    governorate = models.ForeignKey(
-        Governorate, on_delete=models.SET_NULL, null=True, blank=True, related_name='customers'
+    country = models.ForeignKey(
+        Country, on_delete=models.SET_NULL, null=True, blank=True, related_name='customers'
     )
     city = models.CharField(max_length=120, blank=True, default='')
     address = models.TextField(blank=True, default='')
@@ -896,7 +924,7 @@ STAFF_PERMISSIONS = [
     ('reviews', 'تقييمات العملاء'),
     ('content', 'الصفحة الرئيسية والقائمة والسياسات والبانرات'),
     ('messages', 'الرسائل'),
-    ('shipping', 'المحافظات والشحن'),
+    ('shipping', 'الدول والشحن'),
     ('settings', 'إعدادات المتجر والدفع'),
     ('staff', 'الإدارة (إضافة وتعديل الإداريين)'),
 ]

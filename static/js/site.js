@@ -341,6 +341,48 @@
     });
   }
 
+  /* --------------------------------- checkout: shipping per country ---- */
+  const countrySelect = $('[data-country-select]');
+  if (countrySelect) {
+    const shipCell = $('[data-sum-shipping]');
+    const totalCells = $$('[data-sum-total]');
+    const hint = $('[data-ship-hint]');
+    const hintText = hint && $('[data-hint-text]', hint);
+    const bar = $('[data-ship-bar]');
+    const delivery = $('[data-country-delivery]');
+    const deliveryLabel = countrySelect.dataset.deliveryLabel || '';
+    const currency = (shipCell && shipCell.dataset.currency) || '';
+    const withCurrency = (amount) => amount + ' <span class="cur">' + currency + '</span>';
+
+    countrySelect.addEventListener('change', () => {
+      const option = countrySelect.selectedOptions[0];
+      const ship = option ? option.dataset.ship : '';
+      const total = option ? option.dataset.total : '';
+      const freeLabel = shipCell ? shipCell.dataset.freeLabel : '';
+      if (shipCell && ship) shipCell.innerHTML = ship === freeLabel ? freeLabel : withCurrency(ship);
+      if (total) totalCells.forEach((cell) => { cell.innerHTML = withCurrency(total); });
+
+      if (hint && hintText) {
+        const left = option ? (option.dataset.left || '') : '';
+        if (left === '') {
+          hint.hidden = true;
+        } else {
+          hint.hidden = false;
+          if (bar) bar.hidden = true;
+          hintText.textContent = left === '0'
+            ? hint.dataset.hintEarned
+            : (hint.dataset.hintLeft || '').replace('__A__', left);
+        }
+      }
+
+      if (delivery) {
+        const note = option ? (option.dataset.delivery || '') : '';
+        delivery.textContent = note ? deliveryLabel + ': ' + note : '';
+        delivery.hidden = !note;
+      }
+    });
+  }
+
   /* -------------------------------------------------- work lightbox ----- */
   const gallery = $('[data-gallery]');
   const box = $('[data-lightbox]');

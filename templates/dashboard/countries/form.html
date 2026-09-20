@@ -1,0 +1,31 @@
+{% extends 'base/dashboard_base.html' %}
+{% load store_tags %}
+{% block page_name %}دولة{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2>{% if object %}{{ object.name_ar }}{% else %}دولة جديدة{% endif %}</h2>
+    <p>السعر العام {% price site.shipping_fee %}{% if site.free_shipping_threshold %} · شحن مجاني فوق {% price site.free_shipping_threshold %}{% endif %} — سيب الخانة فاضية علشان تاخد العام</p>
+  </div>
+  <div class="flex">
+    <a class="btn btn-ghost" href="{% url 'dash_countries' %}">رجوع</a>
+  </div>
+</div>
+
+<form method="post" style="max-width:720px">
+  {% csrf_token %}
+  <div class="card">
+    {% include 'dashboard/_form_fields.html' %}
+    <button class="btn" type="submit">حفظ</button>
+  </div>
+</form>
+
+{% if object %}
+<form method="post" action="{% url 'dash_country_delete' object.pk %}" data-confirm="حذف {{ object.name_ar }}؟ الطلبات القديمة هتفضل موجودة من غير دولة." style="max-width:720px;margin-top:14px">
+  {% csrf_token %}
+  <button class="btn btn-danger" type="submit">{% include 'partials/icon.html' with name='trash' %} حذف الدولة</button>
+  <span class="small muted" style="margin-inline-start:8px">لو مش عايز تشحن لها، الأفضل تقفلها بدل ما تحذفها.</span>
+</form>
+{% endif %}
+{% endblock %}
