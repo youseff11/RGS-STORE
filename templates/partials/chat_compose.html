@@ -1,0 +1,55 @@
+{% load store_tags %}
+{% comment %}
+The message box at the bottom of a conversation — one line that grows, a clip
+for files, a mic for a voice note and a round send button.
+
+Must sit inside a <form method="post" enctype="multipart/form-data">, and the
+page needs: max_files, max_mb. `attach.js` reads the data-* hooks (they are the
+same ones `partials/attach_box.html` uses, so recording keeps working).
+{% endcomment %}
+<div class="chat-compose" data-attach data-chat-compose>
+
+  {# what is about to be sent — only shows once something is picked #}
+  <div class="compose-previews">
+    <div class="attach-list" data-attach-list hidden></div>
+    <div class="attach-voice" data-voice-box hidden>
+      <audio controls data-voice-player></audio>
+      <button type="button" class="attach-x" data-voice-clear aria-label="{% t 'delete_recording' %}">
+        {% include 'partials/icon.html' with name='trash' %}
+      </button>
+    </div>
+    <p class="attach-warn" data-record-error hidden>{% t 'record_unsupported' %}</p>
+  </div>
+
+  <div class="compose-row">
+    <div class="compose-pill">
+      <label class="compose-btn" title="{% t 'add_files' %}">
+        {% include 'partials/icon.html' with name='paperclip' %}
+        <span class="sr-only">{% t 'add_files' %}</span>
+        <span class="compose-badge" data-attach-count hidden></span>
+        <input type="file" name="files" multiple hidden data-attach-input
+               accept="image/*,audio/*,video/mp4,.pdf,.doc,.docx,.txt,.xlsx,.csv,.zip">
+      </label>
+
+      <textarea class="compose-input" name="body" rows="1" maxlength="4000"
+                placeholder="{% t 'ticket_reply_hint' %}" data-chat-input></textarea>
+
+      <button type="button" class="compose-btn" data-record-start title="{% t 'record_voice' %}">
+        {% include 'partials/icon.html' with name='mic' %}
+        <span class="sr-only">{% t 'record_voice' %}</span>
+      </button>
+
+      <button type="button" class="compose-btn is-recording" data-record-stop hidden title="{% t 'stop_recording' %}">
+        <span class="rec-dot" aria-hidden="true"></span>
+        <span class="rec-time" data-record-time>0:00</span>
+      </button>
+    </div>
+
+    <button class="compose-send" type="submit" title="{% t 'send' %}">
+      {% include 'partials/icon.html' with name='send' %}
+      <span class="sr-only">{% t 'send' %}</span>
+    </button>
+  </div>
+
+  <p class="compose-hint">{% t 'files_hint' count=max_files size=max_mb %}</p>
+</div>

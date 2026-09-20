@@ -5,7 +5,7 @@
 {% block content %}
 <div class="page-head">
   <div>
-    <h2>{{ ticket.subject }}</h2>
+    <h2 dir="auto">{{ ticket.subject }}</h2>
     <p>
       <span dir="ltr">{{ ticket.number }}</span> · {{ ticket.topic_label }} · {{ ticket.created_at|date:"Y/m/d — H:i" }}
       · <span class="chip {% if ticket.status == 'open' %}chip-warn{% elif ticket.status == 'answered' %}chip-ok{% else %}chip-muted{% endif %}">{{ ticket.status_label }}</span>
@@ -18,27 +18,39 @@
 
 <div class="split">
   <div>
-    <div class="card">
-      {% include 'partials/ticket_thread.html' with staff_view=1 %}
-    </div>
-
-    <div class="card">
-      <div class="card-head"><h3>{% include 'partials/icon.html' with name='reply' %} ردّك على العميل</h3></div>
-      {% if ticket.is_closed %}
-        <p class="muted small">التذكرة مقفولة — افتحها تاني من «الحالة» علشان تقدر ترد.</p>
-      {% else %}
-      <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="reply">
-        <div class="field">
-          <textarea class="inp area" name="body" rows="4" maxlength="4000" placeholder="اكتب ردك هنا…"></textarea>
+    <div class="chat-shell is-boxed" data-chat>
+      <header class="chat-top">
+        <span class="chat-av" aria-hidden="true">{{ ticket.customer_name|slice:":1"|upper }}</span>
+        <div class="chat-id">
+          <h1 dir="auto">{{ ticket.customer_name }}</h1>
+          <p>{{ ticket.topic_label }} · آخر رسالة {{ ticket.last_message_at|date:"Y/m/d — H:i" }}</p>
         </div>
-        {% include 'partials/attach_box.html' %}
-        <button class="btn" type="submit" style="margin-top:14px">إرسال الرد</button>
-        {% if not SITE.mail_ready %}<span class="small muted" style="margin-inline-start:8px">الإيميلات مقفولة — العميل هيشوف الرد في حسابه بس</span>{% endif %}
-      </form>
+        <a class="btn btn-sm btn-soft" href="{% url 'support_detail' ticket.number %}" target="_blank">
+          {% include 'partials/icon.html' with name='external' %} في المتجر
+        </a>
+      </header>
+
+      <div class="chat-body" data-chat-scroll>
+        {% include 'partials/ticket_thread.html' with staff_view=True %}
+      </div>
+
+      {% if ticket.is_closed %}
+        <div class="chat-closed">
+          {% include 'partials/icon.html' with name='lock' %}
+          <span>التذكرة مقفولة — افتحها تاني من «حالة التذكرة» علشان تقدر ترد.</span>
+        </div>
+      {% else %}
+        <form class="chat-form" method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="reply">
+          {% include 'partials/chat_compose.html' %}
+        </form>
       {% endif %}
     </div>
+
+    {% if not SITE.mail_ready and not ticket.is_closed %}
+      <p class="small muted" style="margin:10px 2px 0">الإيميلات مقفولة — العميل هيشوف الرد في حسابه بس</p>
+    {% endif %}
   </div>
 
   <div>

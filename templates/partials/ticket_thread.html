@@ -1,41 +1,57 @@
 {% load store_tags %}
-{% comment %}The conversation itself — shared by the customer page and the dashboard.
-Needs: ticket, ticket_messages. Set `staff_view=1` from the dashboard.{% endcomment %}
-<div class="thread">
+{% comment %}
+The conversation itself — shared by the customer page and the dashboard.
+Needs: ticket, ticket_messages. Pass `staff_view=True` from the store side.
+
+A message sits on the «mine» side when its author is the person reading it,
+exactly like a messaging app: the customer sees their own on the end side,
+and the store sees the store's replies there instead.
+{% endcomment %}
+<div class="chat-thread">
   {% for message in ticket_messages %}
-  <article class="bubble {% if message.is_staff %}is-store{% else %}is-customer{% endif %}">
-    <header class="bubble-head">
-      <span class="bubble-who">
-        {% if message.is_staff %}
-          {% if staff_view %}{{ message.author_name|default:'المتجر' }}{% else %}{% t 'ticket_from_store' %}{% endif %}
-        {% else %}
-          {% if staff_view %}{{ ticket.customer_name }}{% else %}{% t 'ticket_from_you' %}{% endif %}
-        {% endif %}
-      </span>
-      <time datetime="{{ message.created_at|date:'c' }}">{{ message.created_at|date:"Y/m/d — H:i" }}</time>
-    </header>
+    {% ifchanged message.created_at|date:"Y-m-d" %}
+      <div class="chat-day"><span>{{ message.created_at|date:"Y/m/d" }}</span></div>
+    {% endifchanged %}
 
-    {% if message.body %}<p class="bubble-body">{{ message.body|linebreaksbr }}</p>{% endif %}
+    <article class="msg {% if message.is_staff == staff_view %}is-mine{% else %}is-them{% endif %}{% ifchanged message.is_staff %} starts-group{% endifchanged %}">
+      <div class="msg-bubble">
+        {% ifchanged message.is_staff %}
+          <span class="msg-who">
+            {% if message.is_staff %}
+              {% if staff_view %}{{ message.author_name|default:'المتجر' }}{% else %}{% t 'ticket_from_store' %}{% endif %}
+            {% else %}
+              {% if staff_view %}{{ ticket.customer_name }}{% else %}{% t 'ticket_from_you' %}{% endif %}
+            {% endif %}
+          </span>
+        {% endifchanged %}
 
-    {% if message.attachments.all %}
-    <div class="bubble-files">
-      {% for file in message.attachments.all %}
-        {% if file.kind == 'image' %}
-          <a class="file-img" href="{{ file.file.url }}" target="_blank" rel="noopener">
-            <img src="{{ file.file.url }}" alt="{{ file.name }}" loading="lazy">
-          </a>
-        {% elif file.kind == 'audio' %}
-          <audio class="file-audio" controls preload="none" src="{{ file.file.url }}"></audio>
-        {% else %}
-          <a class="file-doc" href="{{ file.file.url }}" target="_blank" rel="noopener">
-            {% include 'partials/icon.html' with name='file' %}
-            <span class="file-name">{{ file.name }}</span>
-            <span class="file-size" dir="ltr">{{ file.size_label }}</span>
-          </a>
+        {% if message.body %}<p class="msg-text" dir="auto">{{ message.body|linebreaksbr }}</p>{% endif %}
+
+        {% if message.attachments.all %}
+        <div class="msg-files">
+          {% for file in message.attachments.all %}
+            {% if file.kind == 'image' %}
+              <a class="file-img" href="{{ file.file.url }}" target="_blank" rel="noopener" title="{{ file.name }}">
+                <img src="{{ file.file.url }}" alt="{{ file.name }}" loading="lazy">
+              </a>
+            {% elif file.kind == 'audio' %}
+              <audio class="file-audio" controls preload="none" src="{{ file.file.url }}"></audio>
+            {% else %}
+              <a class="file-doc" href="{{ file.file.url }}" target="_blank" rel="noopener" download>
+                <span class="file-ico">{% include 'partials/icon.html' with name='file' %}</span>
+                <span class="file-meta">
+                  <span class="file-name" dir="auto">{{ file.name }}</span>
+                  <span class="file-size" dir="ltr">{{ file.size_label }}</span>
+                </span>
+                <span class="file-get">{% include 'partials/icon.html' with name='download' %}</span>
+              </a>
+            {% endif %}
+          {% endfor %}
+        </div>
         {% endif %}
-      {% endfor %}
-    </div>
-    {% endif %}
-  </article>
+
+        <span class="msg-time"><time datetime="{{ message.created_at|date:'c' }}">{{ message.created_at|date:"H:i" }}</time></span>
+      </div>
+    </article>
   {% endfor %}
 </div>

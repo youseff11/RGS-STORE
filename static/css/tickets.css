@@ -1,40 +1,274 @@
 /* ==========================================================================
-   RGS TOWER — support tickets: the conversation + the attachment box.
-   Loaded by BOTH the storefront (site.css) and the dashboard (dashboard.css),
-   so it only uses tokens both of them define: --surface, --line, --accent…
+   RGS TOWER — support conversations.
+
+   Loaded by BOTH the storefront (next to site.css) and the dashboard
+   (next to dashboard.css), so it only uses tokens both of them define:
+   --surface, --surface-2, --line, --bg, --bg-2, --accent, --muted…
+
+   Layout, in one line: a chat is a column — header, scrolling messages,
+   message box — that fills the screen on the storefront (`.chat-screen`)
+   and sits inside a card in the dashboard (`.chat-shell.is-boxed`).
    ========================================================================== */
+
 /* `display:` on an element beats the plain `hidden` attribute — say it again
    (both stylesheets need this, that's why it lives here) */
 [hidden] { display: none !important; }
 
-/* the conversation */
-.thread { display: grid; gap: 12px; }
-.bubble {
-  padding: 14px 16px; border-radius: var(--radius); border: 1px solid var(--line);
-  background: var(--surface); max-width: 92%;
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
 }
-.bubble.is-customer { margin-inline-start: auto; background: var(--surface-2); }
-.bubble.is-store { border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
-.bubble-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
-.bubble-who { font-size: 12.5px; font-weight: 800; color: var(--accent-text); }
-.bubble.is-customer .bubble-who { color: var(--text-2); }
-.bubble-head time { font-size: 11.5px; color: var(--muted); }
-.bubble-body { margin: 0; font-size: 14px; line-height: 1.9; color: var(--text); overflow-wrap: anywhere; }
-.bubble-files { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-.bubble-files .file-img { width: 92px; height: 92px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
-.bubble-files .file-img img { width: 100%; height: 100%; object-fit: cover; }
-.bubble-files .file-audio { width: 100%; max-width: 320px; height: 40px; }
-.bubble-files .file-doc {
-  display: inline-flex; align-items: center; gap: 8px; padding: 9px 12px; max-width: 100%;
-  border-radius: 10px; background: var(--bg-2); border: 1px solid var(--line); font-size: 12.5px; font-weight: 600;
-}
-.bubble-files .file-doc:hover { border-color: var(--accent); color: var(--accent-text); }
-.bubble-files .file-doc svg { width: 16px; height: 16px; flex: none; }
-.bubble-files .file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; }
-.bubble-files .file-size { color: var(--muted); font-size: 11px; }
-.reply-card { margin-top: 18px; }
 
-/* attachments + voice note */
+:root {
+  /* the two bubble colours — outgoing carries the brand, incoming stays neutral */
+  --chat-out: color-mix(in srgb, var(--accent) 46%, var(--surface));
+  --chat-in: var(--surface-2);
+  --chat-radius: 16px;
+}
+
+/* ------------------------------------------------------- 1. the chat shell */
+.chat-shell {
+  display: flex; flex-direction: column; min-height: 0; min-width: 0;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+/* storefront: the conversation takes the screen, like a messaging app */
+body.is-chat .announce,
+body.is-chat .footer,
+body.is-chat .wa-float { display: none !important; }
+body.is-chat main { padding: 0; }
+
+.chat-screen { padding: 14px 14px 16px; }
+.chat-screen .chat-shell {
+  width: 100%; max-width: 880px; margin-inline: auto;
+  height: calc(100dvh - var(--header-h, 72px) - 30px);
+  box-shadow: var(--shadow-md);
+}
+
+/* dashboard: same chat, inside the page */
+.chat-shell.is-boxed { height: clamp(420px, calc(100dvh - 230px), 760px); }
+
+/* ---------------------------------------------------------- 2. the header */
+.chat-top {
+  flex: none; display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px; min-height: 62px;
+  background: var(--surface); border-bottom: 1px solid var(--line);
+}
+.chat-back {
+  flex: none; display: grid; place-items: center; width: 38px; height: 38px;
+  border-radius: 50%; color: var(--text-2); transition: background .18s, color .18s;
+}
+.chat-back:hover { background: var(--surface-2); color: var(--accent-text); }
+.chat-back svg { width: 20px; height: 20px; }
+.chat-av {
+  flex: none; display: grid; place-items: center; width: 42px; height: 42px;
+  border-radius: 50%; background: var(--accent); color: var(--on-accent, #fff);
+  font-weight: 800; font-size: 16px;
+}
+.chat-av svg { width: 21px; height: 21px; }
+.chat-id { flex: 1; min-width: 0; }
+.chat-id h1 {
+  margin: 0; font-size: 15.5px; font-weight: 800; line-height: 1.35;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.chat-id p {
+  margin: 1px 0 0; font-size: 12px; color: var(--muted); line-height: 1.5;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.chat-id a { text-decoration: underline; }
+.chat-state { flex: none; }
+
+/* the store's status buttons, right under the header */
+.chat-tools {
+  flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 7px;
+  padding: 9px 14px; background: var(--bg-2); border-bottom: 1px solid var(--line-soft);
+}
+.chat-tools-label { font-size: 12px; font-weight: 700; color: var(--muted); margin-inline-end: 2px; }
+
+/* --------------------------------------------------------- 3. the messages */
+.chat-body {
+  flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  padding: 16px 14px 20px;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(circle at 60% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 62%),
+    radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--accent-2) 5%, transparent) 0 1.1px, transparent 1.6px),
+    radial-gradient(circle at 70% 70%, color-mix(in srgb, var(--accent) 7%, transparent) 0 1.1px, transparent 1.6px);
+  background-size: 100% 260px, 28px 28px, 28px 28px;
+  background-repeat: no-repeat, repeat, repeat;
+  scrollbar-width: thin;
+}
+.chat-body::-webkit-scrollbar { width: 8px; }
+.chat-body::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; }
+
+.chat-thread { display: flex; flex-direction: column; gap: 3px; }
+
+.chat-day { display: flex; justify-content: center; margin: 12px 0 10px; position: sticky; top: -4px; z-index: 2; }
+.chat-day:first-child { margin-top: 0; }
+.chat-day span {
+  padding: 4px 12px; border-radius: 100px; font-size: 11.5px; font-weight: 700;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border: 1px solid var(--line-soft); color: var(--muted);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+
+/* Sides stay physical, exactly like a messaging app: what you sent is always
+   on the right and what the other side sent on the left, in Arabic too. */
+.msg { display: flex; max-width: 100%; }
+.msg.starts-group { margin-top: 10px; }
+.msg.is-mine { justify-content: flex-end; }
+.msg.is-them { justify-content: flex-start; }
+html[dir="rtl"] .msg.is-mine { justify-content: flex-start; }
+html[dir="rtl"] .msg.is-them { justify-content: flex-end; }
+
+.msg-bubble {
+  position: relative; max-width: min(78%, 560px);
+  padding: 8px 12px 6px; border-radius: var(--chat-radius);
+  background: var(--chat-in); color: var(--text);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .35);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.msg.is-mine .msg-bubble { background: var(--chat-out); }
+
+/* the little tail on the first bubble of a run — physical, like the sides */
+.msg.starts-group .msg-bubble::before {
+  content: ''; position: absolute; top: 0; width: 9px; height: 13px;
+  background: var(--chat-in);
+}
+.msg.is-mine.starts-group .msg-bubble { border-top-right-radius: 5px; }
+.msg.is-mine.starts-group .msg-bubble::before {
+  right: -8px; background: var(--chat-out);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+.msg.is-them.starts-group .msg-bubble { border-top-left-radius: 5px; }
+.msg.is-them.starts-group .msg-bubble::before {
+  left: -8px;
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+}
+
+.msg-who { font-size: 12px; font-weight: 800; color: var(--accent-text); line-height: 1.4; }
+.msg.is-mine .msg-who { display: none; }   /* no need to tell you who you are */
+.msg-text {
+  margin: 0; font-size: 14px; line-height: 1.75; color: var(--text);
+  overflow-wrap: anywhere; white-space: normal; text-align: start;
+}
+.msg-time {
+  align-self: flex-end; font-size: 10.5px; color: var(--muted);
+  font-family: 'Jost', system-ui, sans-serif; line-height: 1; margin-top: 1px;
+  direction: ltr;
+}
+.msg.is-mine .msg-time { color: color-mix(in srgb, var(--accent-2) 65%, transparent); }
+
+/* attachments inside a bubble */
+.msg-files { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.msg-files .file-img {
+  width: 132px; height: 132px; border-radius: 10px; overflow: hidden;
+  border: 1px solid color-mix(in srgb, #000 30%, transparent); background: var(--bg-2);
+}
+.msg-files .file-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s var(--ease, ease); }
+.msg-files .file-img:hover img { transform: scale(1.05); }
+.msg-files .file-audio { width: min(280px, 100%); height: 40px; }
+.msg-files .file-doc {
+  display: flex; align-items: center; gap: 10px; padding: 9px 11px; max-width: 100%;
+  border-radius: 10px; background: color-mix(in srgb, #000 22%, transparent);
+  border: 1px solid color-mix(in srgb, #fff 8%, transparent);
+  font-size: 12.5px; font-weight: 600; transition: border-color .18s;
+}
+.msg-files .file-doc:hover { border-color: var(--accent-text); }
+.msg-files .file-ico { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: 8px; background: color-mix(in srgb, #fff 8%, transparent); }
+.msg-files .file-ico svg { width: 16px; height: 16px; }
+.msg-files .file-meta { display: grid; min-width: 0; }
+.msg-files .file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 190px; }
+.msg-files .file-size { color: var(--muted); font-size: 11px; font-weight: 500; }
+.msg-files .file-get { flex: none; color: var(--muted); }
+.msg-files .file-get svg { width: 16px; height: 16px; }
+
+/* ------------------------------------------------------ 4. the message box */
+.chat-form { flex: none; }
+.chat-compose {
+  padding: 10px 12px 12px;
+  background: var(--surface); border-top: 1px solid var(--line);
+}
+.compose-previews:not(:empty) { margin-bottom: 8px; }
+.compose-row { display: flex; align-items: flex-end; gap: 9px; }
+.compose-pill {
+  flex: 1; min-width: 0; display: flex; align-items: flex-end; gap: 2px;
+  padding: 4px; border-radius: 22px;
+  background: var(--bg-2); border: 1px solid var(--line);
+  transition: border-color .18s;
+}
+.compose-pill:focus-within { border-color: color-mix(in srgb, var(--accent) 60%, var(--line)); }
+
+.compose-btn {
+  position: relative; flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-width: 38px; height: 38px; padding: 0 9px; border-radius: 50px; cursor: pointer;
+  color: var(--muted); background: transparent; border: 0;
+  transition: background .18s, color .18s;
+}
+.compose-btn:hover { background: var(--surface-2); color: var(--accent-text); }
+.compose-btn svg { width: 19px; height: 19px; }
+.compose-btn.is-recording { color: var(--bad); background: color-mix(in srgb, var(--bad) 14%, transparent); }
+.compose-badge {
+  position: absolute; top: 3px; inset-inline-end: 3px; min-width: 16px; height: 16px;
+  padding: 0 4px; border-radius: 9px; background: var(--accent); color: #fff;
+  font-size: 10px; font-weight: 800; display: grid; place-items: center;
+}
+.rec-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bad); animation: recPulse 1s infinite; }
+@keyframes recPulse { 50% { opacity: .25; } }
+.rec-time { font-family: 'Jost', system-ui, sans-serif; font-size: 12.5px; font-weight: 700; }
+
+.compose-input {
+  flex: 1; min-width: 0; resize: none; border: 0; background: transparent;
+  color: var(--text); font: inherit; font-size: 14px; line-height: 1.6;
+  padding: 9px 6px; max-height: 140px; overflow-y: auto;
+}
+.compose-input:focus { outline: none; }
+.compose-input::placeholder { color: var(--muted); }
+
+.compose-send {
+  flex: none; width: 46px; height: 46px; border-radius: 50%; cursor: pointer;
+  display: grid; place-items: center; border: 0;
+  background: var(--accent); color: var(--on-accent, #fff);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 35%, transparent);
+  transition: background .18s, transform .18s;
+}
+.compose-send:hover { background: var(--accent-hover); transform: scale(1.06); }
+.compose-send svg { width: 20px; height: 20px; }
+html[dir="rtl"] .compose-send svg { transform: scaleX(-1); }
+
+.compose-hint { margin: 7px 2px 0; font-size: 11px; color: var(--muted); text-align: center; }
+
+/* what is queued for sending */
+.attach-list { display: flex; flex-wrap: wrap; gap: 7px; }
+.attach-chip {
+  display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px 5px 6px;
+  border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line);
+  font-size: 12px; font-weight: 600; max-width: 100%;
+}
+html[dir="rtl"] .attach-chip { padding: 5px 6px 5px 10px; }
+.attach-chip img { width: 28px; height: 28px; border-radius: 7px; object-fit: cover; flex: none; }
+.attach-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
+.attach-voice { display: flex; align-items: center; gap: 9px; margin-top: 7px; }
+.attach-voice audio { flex: 1; min-width: 0; height: 38px; }
+.attach-x {
+  flex: none; display: inline-grid; place-items: center; width: 34px; height: 34px;
+  border-radius: 9px; color: var(--bad); background: var(--surface-2); cursor: pointer; border: 0;
+}
+.attach-x svg { width: 16px; height: 16px; }
+.attach-warn { margin: 8px 0 0; font-size: 12px; color: var(--warn); }
+
+/* a closed conversation: no box, just why */
+.chat-closed {
+  flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px;
+  padding: 16px 14px; background: var(--surface); border-top: 1px solid var(--line);
+  font-size: 13px; color: var(--muted); text-align: center;
+}
+.chat-closed svg { width: 17px; height: 17px; flex: none; }
+
+/* ------------------------------ 5. the plain attachment box (new ticket) -- */
 .attach-box { margin-top: 6px; }
 .attach-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .attach-btn {
@@ -45,25 +279,39 @@
 .attach-btn:hover { border-color: var(--accent); color: var(--accent-text); }
 .attach-btn svg { width: 16px; height: 16px; }
 .attach-btn.is-recording { border-style: solid; border-color: var(--bad); color: var(--bad); }
-.rec-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bad); animation: recPulse 1s infinite; }
-@keyframes recPulse { 50% { opacity: .25; } }
-.rec-time { font-family: 'Jost', sans-serif; font-size: 12px; }
 .attach-hint { font-size: 11.5px; color: var(--muted); }
-.attach-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.attach-chip {
-  display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border-radius: 9px;
-  background: var(--surface-2); font-size: 12px; font-weight: 600; max-width: 100%;
+.attach-box .attach-list { margin-top: 10px; }
+
+/* ----------------------------------------------------------- 6. narrow --- */
+@media (max-width: 900px) {
+  .chat-shell.is-boxed { height: clamp(420px, calc(100dvh - 190px), 680px); }
 }
-.attach-chip img { width: 26px; height: 26px; border-radius: 6px; object-fit: cover; }
-.attach-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
-.attach-voice { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
-.attach-voice audio { flex: 1; min-width: 0; height: 40px; }
-.attach-x { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; color: var(--bad); background: var(--surface-2); }
-.attach-x svg { width: 16px; height: 16px; }
-.attach-warn { margin: 10px 0 0; font-size: 12px; color: var(--warn); }
 
 @media (max-width: 640px) {
-  .bubble { max-width: 100%; }
-  .attach-hint { flex-basis: 100%; }
+  /* full-bleed conversation: no rounded card, no page padding */
+  .chat-screen { padding: 0; }
+  .chat-screen .chat-shell {
+    height: calc(100dvh - var(--header-h, 72px));
+    max-width: none; border: 0; border-radius: 0; box-shadow: none;
+  }
+  .chat-top { padding: 9px 10px; gap: 9px; min-height: 58px; }
+  .chat-back { width: 34px; height: 34px; margin-inline-start: -4px; }
+  .chat-av { width: 38px; height: 38px; font-size: 15px; }
+  .chat-id h1 { font-size: 14.5px; }
+  .chat-id p { font-size: 11px; }
+  .chat-state { display: none; }          /* the status lives in the list page */
+  .chat-body { padding: 12px 10px 16px; }
+  .msg-bubble { max-width: 86%; font-size: 14px; }
+  .msg-files .file-img { width: 116px; height: 116px; }
+  .msg-files .file-name { max-width: 130px; }
+  .chat-compose { padding: 8px 8px 10px; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+  .compose-send { width: 44px; height: 44px; }
+  .compose-hint { display: none; }
+  .chat-tools { padding: 8px 10px; }
+  .chat-tools-label { flex-basis: 100%; }
 }
 
+@media (max-width: 380px) {
+  .msg-bubble { max-width: 92%; }
+  .compose-btn { min-width: 34px; padding: 0 6px; }
+}

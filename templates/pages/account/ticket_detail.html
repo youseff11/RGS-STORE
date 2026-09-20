@@ -1,66 +1,72 @@
 {% extends 'base/base.html' %}
 {% load store_tags %}
 
+{% comment %}
+One conversation, as a chat screen: a fixed header, the messages scrolling on
+their own, and the message box pinned at the bottom. `is-chat` on <body> makes
+it fill the screen (the marquee, the footer and the floating WhatsApp button
+step aside so nothing covers the message box).
+{% endcomment %}
+
+{% block body_class %}is-chat{% endblock %}
+
 {% block content %}
-<section class="page-hero">
-  <div class="wrap">
-    <div class="crumbs">
-      {% if support_staff %}
-        <a href="{% url 'support' %}">{% t 'customer_tickets' %}</a> <span>/</span> <span dir="ltr">{{ ticket.number }}</span>
-      {% else %}
-        <a href="{% url 'account' %}">{% t 'account' %}</a> <span>/</span>
-        <a href="{% url 'support' %}">{% t 'support' %}</a> <span>/</span> <span dir="ltr">{{ ticket.number }}</span>
-      {% endif %}
-    </div>
-    <h1>{{ ticket.subject }}</h1>
-    <p>
-      {% if support_staff %}{{ ticket.customer_name }} · {% endif %}
-      {{ ticket.topic_label }}
-      {% if ticket.order %} · {% if support_staff %}{{ ticket.order.order_number }}{% else %}<a href="{% url 'account_order' ticket.order.order_number %}" style="color:inherit;text-decoration:underline">{{ ticket.order.order_number }}</a>{% endif %}{% endif %}
-      · {{ ticket.created_at|date:"Y/m/d" }}
-      · <span class="chip {% if ticket.status == 'open' %}chip-warn{% elif ticket.status == 'answered' %}chip-ok{% else %}chip-muted{% endif %}">{{ ticket.status_label }}</span>
-    </p>
-  </div>
-</section>
+<div class="chat-screen" data-chat>
+  <div class="chat-shell">
 
-<section class="section-sm">
-  <div class="wrap" style="max-width:820px">
-    {% include 'partials/ticket_thread.html' with staff_view=support_staff %}
+    <header class="chat-top">
+      <a class="chat-back" href="{% url 'support' %}"
+         aria-label="{% if support_staff %}{% t 'customer_tickets' %}{% else %}{% t 'my_tickets' %}{% endif %}">
+        {% include 'partials/icon.html' with name='arrow-back' %}
+      </a>
 
-    {% if ticket.is_closed and not support_staff %}
-      <div class="form-card" style="margin-top:18px;text-align:center">
-        <p class="muted" style="margin:0 0 14px">{% t 'ticket_closed_note' %}</p>
-        <a class="btn" href="{% url 'support_new' %}">{% t 'new_ticket' %}</a>
+      <span class="chat-av" aria-hidden="true">
+        {% if support_staff %}{{ ticket.customer_name|slice:":1"|upper }}{% else %}{% include 'partials/icon.html' with name='chat' %}{% endif %}
+      </span>
+
+      <div class="chat-id">
+        <h1 dir="auto">{{ ticket.subject }}</h1>
+        <p>
+          {% if support_staff %}{{ ticket.customer_name }} · {% endif %}{{ ticket.topic_label }}
+          · <span dir="ltr">{{ ticket.number }}</span>
+          {% if ticket.order %} · {% if support_staff %}<span dir="ltr">{{ ticket.order.order_number }}</span>{% else %}<a dir="ltr" href="{% url 'account_order' ticket.order.order_number %}">{{ ticket.order.order_number }}</a>{% endif %}{% endif %}
+        </p>
       </div>
-    {% elif not ticket.is_closed %}
-      <form class="form-card reply-card" method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="field">
-          <label>{% if support_staff %}{% t 'reply_as_store' %}{% else %}{% t 'ticket_reply_hint' %}{% endif %}</label>
-          <textarea name="body" rows="4" maxlength="4000" placeholder="{% t 'ticket_reply_hint' %}"></textarea>
-        </div>
-        {% include 'partials/attach_box.html' %}
-        <button class="btn" type="submit" style="margin-top:16px">{% include 'partials/icon.html' with name='reply' %} {% t 'send' %}</button>
-      </form>
-    {% endif %}
+
+      <span class="chip {% if ticket.status == 'open' %}chip-warn{% elif ticket.status == 'answered' %}chip-ok{% else %}chip-muted{% endif %} chat-state">{{ ticket.status_label }}</span>
+    </header>
 
     {% if support_staff %}
-      <form class="form-card" method="post" style="margin-top:14px">
+    <form class="chat-tools" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="status">
+      <span class="chat-tools-label">{% t 'ticket_status' %}</span>
+      {% for key, label in statuses %}
+        <button class="btn btn-sm {% if ticket.status != key %}btn-ghost{% endif %}" type="submit" name="status" value="{{ key }}">{{ label }}</button>
+      {% endfor %}
+      <a class="btn btn-sm btn-soft" href="{% url 'dash_ticket_detail' ticket.pk %}">
+        {% include 'partials/icon.html' with name='layout' %} {% t 'open_in_dashboard' %}
+      </a>
+    </form>
+    {% endif %}
+
+    <div class="chat-body" data-chat-scroll>
+      {% include 'partials/ticket_thread.html' with staff_view=support_staff %}
+    </div>
+
+    {% if ticket.is_closed %}
+      <div class="chat-closed">
+        {% include 'partials/icon.html' with name='lock' %}
+        <span>{% t 'ticket_closed_note' %}</span>
+        {% if not support_staff %}<a class="btn btn-sm" href="{% url 'support_new' %}">{% t 'new_ticket' %}</a>{% endif %}
+      </div>
+    {% else %}
+      <form class="chat-form" method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        <input type="hidden" name="action" value="status">
-        <label style="display:block;margin-bottom:10px;font-size:13px;font-weight:700">{% t 'ticket_status' %}</label>
-        <div class="status-row">
-          {% for key, label in statuses %}
-            <button class="btn btn-sm {% if ticket.status != key %}btn-ghost{% endif %}" type="submit" name="status" value="{{ key }}">{{ label }}</button>
-          {% endfor %}
-          <a class="btn btn-sm btn-soft" href="{% url 'dash_ticket_detail' ticket.pk %}">{% include 'partials/icon.html' with name='layout' %} {% t 'open_in_dashboard' %}</a>
-        </div>
+        {% include 'partials/chat_compose.html' %}
       </form>
     {% endif %}
 
-    <p style="margin-top:16px">
-      <a class="btn btn-ghost" href="{% url 'support' %}">{% if support_staff %}{% t 'customer_tickets' %}{% else %}{% t 'my_tickets' %}{% endif %}</a>
-    </p>
   </div>
-</section>
+</div>
 {% endblock %}

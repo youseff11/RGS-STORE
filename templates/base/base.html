@@ -40,7 +40,7 @@
   <link rel="stylesheet" href="{% static 'css/tickets.css' %}">
   {% block head %}{% endblock %}
 </head>
-<body id="top">
+<body id="top" class="{% block body_class %}{% endblock %}">
 
 {% include 'partials/announcement.html' %}
 {% include 'partials/header.html' %}
