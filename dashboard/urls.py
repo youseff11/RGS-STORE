@@ -34,6 +34,9 @@ urlpatterns = [
     path('account/login/', views.account_login, name='account_login'),
     path('account/register/', views.account_register, name='account_register'),
     path('account/logout/', views.account_logout, name='account_logout'),
+    # sign in with Google — the callback URL is what Google Cloud must know
+    path('account/google/', views.google_login, name='google_login'),
+    path('account/google/callback/', views.google_callback, name='google_callback'),
     path('account/orders/<str:number>/', views.account_order, name='account_order'),
 
     # support tickets (signed-in customers)
@@ -186,4 +189,5 @@ urlpatterns = [
     # settings
     path('dashboard/settings/', dv.settings_view, name='dash_settings'),
     path('dashboard/settings/payments/', dv.payment_settings, name='dash_payments'),
+    path('dashboard/settings/google/', dv.google_settings, name='dash_google'),
 ]

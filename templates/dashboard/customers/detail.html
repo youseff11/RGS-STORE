@@ -7,7 +7,7 @@
   <div class="flex">
     <span class="mini-av is-lg">{{ customer.first_name|default:customer.username|slice:":1"|upper }}</span>
     <div>
-      <h2>{{ customer.get_full_name|default:customer.username }} {% if not customer.is_active %}<span class="chip chip-bad">موقوف</span>{% endif %}</h2>
+      <h2>{{ customer.get_full_name|default:customer.username }} {% if not customer.is_active %}<span class="chip chip-bad">موقوف</span>{% endif %}{% if profile.google_id %} <span class="chip chip-muted">دخل بجوجل</span>{% endif %}</h2>
       <p>عميل من {{ customer.date_joined|date:"Y/m/d" }}{% if customer.last_login %} · آخر دخول {{ customer.last_login|date:"Y/m/d H:i" }}{% endif %}</p>
     </div>
   </div>

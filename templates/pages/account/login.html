@@ -10,6 +10,8 @@
 
     {% if error %}<div class="auth-alert">{{ error }}</div>{% endif %}
 
+    {% include 'partials/google_button.html' %}
+
     <form method="post" novalidate>
       {% csrf_token %}
       <input type="hidden" name="next" value="{{ next }}">

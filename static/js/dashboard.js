@@ -222,4 +222,27 @@
       boxes.forEach((b) => { b.checked = !allOn; });
     });
   });
+
+  /* copy to clipboard: <button data-copy="#field">نسخ</button> */
+  $$('[data-copy]').forEach((btn) => {
+    const label = btn.textContent;
+    btn.addEventListener('click', () => {
+      const source = $(btn.dataset.copy);
+      if (!source) return;
+      const text = source.value !== undefined ? source.value : (source.textContent || '').trim();
+      const done = () => {
+        btn.textContent = 'اتنسخ ✓';
+        setTimeout(() => { btn.textContent = label; }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, () => {});
+        return;
+      }
+      /* an http:// page has no clipboard API — select the text instead */
+      if (source.select) {
+        source.select();
+        try { document.execCommand('copy'); done(); } catch (e) {}
+      }
+    });
+  });
 })();

@@ -1,0 +1,111 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}الدخول بجوجل{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2>الدخول بحساب جوجل</h2>
+    <p>خلّي العميل يعمل حساب ويسجّل دخول بضغطة واحدة من جيميله</p>
+  </div>
+  <div class="flex">
+    <span class="mail-state {% if site.google_ready %}is-on{% endif %}">
+      <span class="dot"></span>{% if site.google_ready %}شغال{% else %}متوقف{% endif %}
+    </span>
+  </div>
+</div>
+
+<div class="split">
+  <form method="post" autocomplete="off">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="alert">{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div>{% endif %}
+
+    <div class="card">
+      <div class="card-head"><h3>{% include 'partials/icon.html' with name='user' %} تشغيل الخدمة</h3></div>
+      <div class="switch">{{ form.google_login_enabled }}<label for="{{ form.google_login_enabled.id_for_label }}">{{ form.google_login_enabled.label }}</label></div>
+      <div class="help" style="margin:-4px 0 0">لما تشغّلها بيظهر زرار «الدخول بحساب جوجل» في صفحتي التسجيل وتسجيل الدخول.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>{% include 'partials/icon.html' with name='lock' %} مفاتيح Google Cloud</h3></div>
+      <div class="field">
+        <label for="{{ form.google_client_id.id_for_label }}">{{ form.google_client_id.label }}</label>
+        {{ form.google_client_id }}
+        <div class="help">{{ form.google_client_id.help_text }}</div>
+        {% for e in form.google_client_id.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.google_client_secret.id_for_label }}">{{ form.google_client_secret.label }}</label>
+        {{ form.google_client_secret }}
+        <div class="help">{{ form.google_client_secret.help_text }}</div>
+        {% for e in form.google_client_secret.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}
+      </div>
+      <button class="btn" type="submit" style="margin-top:6px">حفظ الإعدادات</button>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>{% include 'partials/icon.html' with name='link' %} اللينكات اللي جوجل هتطلبها</h3></div>
+      <p class="small muted" style="margin-top:0">الصقهم في شاشة الـ Credentials زي ما هم بالظبط — أي حرف زيادة أو ناقص وجوجل هترفض.</p>
+
+      <div class="field">
+        <label for="g-origin">Authorized JavaScript origins</label>
+        <div class="copy-row">
+          <input class="inp" id="g-origin" type="text" dir="ltr" value="{{ origin }}" readonly>
+          <button class="btn btn-soft btn-sm" type="button" data-copy="#g-origin">نسخ</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="g-redirect">Authorized redirect URIs</label>
+        <div class="copy-row">
+          <input class="inp" id="g-redirect" type="text" dir="ltr" value="{{ redirect_uri }}" readonly>
+          <button class="btn btn-soft btn-sm" type="button" data-copy="#g-redirect">نسخ</button>
+        </div>
+        <div class="help">ده اللينك اللي جوجل بترجّع العميل عليه بعد ما يختار حسابه.</div>
+      </div>
+
+      <p class="small muted" style="margin-bottom:0">
+        اللينكات دي متولّدة من اللينك اللي انت فيه دلوقتي. لما ترفع الموقع على الدومين بتاعه،
+        افتح الصفحة دي من الدومين (أو اكتب لينك المتجر في «الإشعارات والإيميل») وضيف النسخة الجديدة
+        في جوجل كمان — جوجل بتقبل أكتر من لينك في نفس الوقت، فالمحلي والدومين يشتغلوا مع بعض.
+      </p>
+    </div>
+  </form>
+
+  <div>
+    <div class="card">
+      <div class="card-head"><h3>خطوة بخطوة</h3></div>
+      <ol class="mail-steps">
+        <li>افتح <b dir="ltr">console.cloud.google.com</b> بحسابك واعمل مشروع جديد باسم RGS TOWER.</li>
+        <li>من القايمة: APIs &amp; Services ← OAuth consent screen ← اختار External واكتب اسم المتجر وإيميلك.</li>
+        <li>في Data access ضيف الصلاحيات الثلاثة دي وبس: <b dir="ltr" style="white-space:nowrap">openid · email · profile</b></li>
+        <li>Credentials ← Create credentials ← OAuth client ID ← النوع Web application.</li>
+        <li>الصق الـ origin والـ redirect URI اللي جنبك، واضغط Create.</li>
+        <li>انسخ الـ Client ID والـ Client secret وحطهم فوق واحفظ، وشغّل السويتش.</li>
+        <li>وانت لسه في وضع Testing ضيف نفسك في Test users، ولما تخلص اضغط Publish app علشان أي عميل يقدر يدخل.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>إزاي بيشتغل</h3></div>
+      <ol class="small" style="line-height:2;margin:0;padding-inline-start:18px;color:var(--text-2)">
+        <li>العميل يضغط الزرار ← يختار جيميله ← يرجع للمتجر مسجّل دخول.</li>
+        <li>الاسم والإيميل بيتسجلوا في «العملاء» أوتوماتيك، والموبايل والعنوان بيتطلبوا منه وقت الطلب.</li>
+        <li>لو الإيميل ده كان عامل حساب قبل كده بكلمة مرور، الحسابين بيتربطوا — مفيش حساب مكرر.</li>
+        <li>حساب جوجل مالوش كلمة مرور عندنا؛ العميل يقدر يضيف واحدة من «حسابي ← كلمة المرور» لو حب.</li>
+      </ol>
+      <p class="small muted" style="margin:12px 0 0">
+        عملاء داخلين بجوجل دلوقتي: <b>{{ google_users }}</b>
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>لو الزرار مش ظاهر</h3></div>
+      <ul class="small muted" style="line-height:2;margin:0;padding-inline-start:18px">
+        <li>السويتش لازم يكون مفتوح والـ Client ID والـ secret الاتنين محفوظين.</li>
+        <li>رسالة <b dir="ltr">redirect_uri_mismatch</b> من جوجل معناها إن اللينك المسجّل عندها مش مطابق للي جنبك.</li>
+        <li>الـ secret بيتحفظ عندنا ومش بيتعرض تاني — لو ضاع منك اعمل واحد جديد من جوجل والصقه هنا.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

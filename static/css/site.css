@@ -1433,6 +1433,17 @@ html[dir="rtl"] .gal-item .work-play { transform: translate(50%, -50%); }
 }
 .auth-switch { text-align: center; margin-top: 18px; font-size: 13.5px; color: var(--muted); }
 .auth-switch a { color: var(--accent-text); font-weight: 700; }
+
+/* «الدخول بحساب جوجل» — زرار فاتح علشان يبان على الخلفية الغامقة */
+.btn-google { --btn-bg: #FFFFFF; --btn-fg: #1F1F1F; --btn-bd: #FFFFFF; gap: 11px; }
+.btn-google:hover { --btn-bg: #EDE7E1; --btn-bd: #EDE7E1; }
+.btn-google .g-logo { width: 18px; height: 18px; flex: none; }
+.auth-or {
+  display: flex; align-items: center; gap: 12px;
+  margin: 18px 0; color: var(--muted); font-size: 12.5px;
+}
+.auth-or::before, .auth-or::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
 .pass-wrap { position: relative; }
 .pass-wrap input { padding-inline-end: 46px; }
 .pass-eye {

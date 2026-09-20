@@ -83,6 +83,17 @@ class SiteSettings(models.Model):
         help_text='كام جنيه = 1 دولار',
     )
 
+    # ---- Google sign-in (OAuth 2.0 / OpenID Connect) ----
+    google_login_enabled = models.BooleanField(default=False)
+    google_client_id = models.CharField(
+        max_length=255, blank=True, default='',
+        help_text='من Google Cloud Console — بينتهي بـ .apps.googleusercontent.com',
+    )
+    google_client_secret = models.CharField(
+        max_length=255, blank=True, default='',
+        help_text='الـ Client secret من نفس الشاشة — بيتحفظ عندنا ومش بيظهر تاني',
+    )
+
     # reviews + sharing
     reviews_auto_publish = models.BooleanField(default=False)
     share_image = models.ImageField(upload_to='site/', blank=True, null=True)
@@ -169,6 +180,14 @@ class SiteSettings(models.Model):
     @property
     def currency(self):
         return pick(self.currency_ar, self.currency_en)
+
+    # -- sign in with Google
+    @property
+    def google_ready(self):
+        """The «Continue with Google» button only shows with both keys saved."""
+        return bool(
+            self.google_login_enabled and self.google_client_id and self.google_client_secret
+        )
 
     # -- payments
     @property
@@ -940,6 +959,10 @@ class CustomerProfile(models.Model):
     city = models.CharField(max_length=120, blank=True, default='')
     address = models.TextField(blank=True, default='')
     admin_note = models.TextField(blank=True, default='')
+    # Google sign-in: `sub` never changes, even when the customer renames their
+    # Gmail address, so it — not the email — is what identifies the account.
+    google_id = models.CharField(max_length=64, blank=True, default='', db_index=True)
+    google_picture = models.URLField(max_length=500, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -952,6 +975,10 @@ class CustomerProfile(models.Model):
     @property
     def full_name(self):
         return self.user.get_full_name() or self.user.first_name or ''
+
+    @property
+    def uses_google(self):
+        return bool(self.google_id)
 
     @classmethod
     def for_user(cls, user):

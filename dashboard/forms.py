@@ -275,6 +275,57 @@ class NotificationSettingsForm(StyledForm):
     def clean_smtp_password(self):
         return (self.cleaned_data.get('smtp_password') or '').replace(' ', '')
 
+
+class GoogleLoginForm(StyledForm):
+    """«الدخول بجوجل» — مفاتيح OAuth من Google Cloud Console."""
+
+    google_client_secret = forms.CharField(
+        label='Client secret', required=False,
+        widget=forms.PasswordInput(render_value=False, attrs={'autocomplete': 'new-password', 'dir': 'ltr'}),
+        help_text='سيبه فاضي علشان يفضل المحفوظ زي ما هو',
+    )
+
+    class Meta:
+        model = SiteSettings
+        fields = ['google_login_enabled', 'google_client_id', 'google_client_secret']
+        labels = {
+            'google_login_enabled': 'تفعيل الدخول بحساب جوجل',
+            'google_client_id': 'Client ID',
+        }
+        help_texts = {
+            'google_client_id': 'بينتهي بـ .apps.googleusercontent.com',
+        }
+        widgets = {
+            'google_client_id': forms.TextInput(attrs={
+                'dir': 'ltr', 'autocomplete': 'off',
+                'placeholder': '1234567890-xxxxxxxx.apps.googleusercontent.com',
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.google_client_secret:
+            self.fields['google_client_secret'].widget.attrs['placeholder'] = '•••••••• (محفوظ)'
+
+    def clean_google_client_id(self):
+        return (self.cleaned_data.get('google_client_id') or '').strip()
+
+    def clean_google_client_secret(self):
+        """Blank means «keep the saved one» — the field never shows it back."""
+        value = (self.cleaned_data.get('google_client_secret') or '').strip()
+        return value or self.instance.google_client_secret
+
+    def clean(self):
+        data = super().clean()
+        if data.get('google_login_enabled') and not (
+            data.get('google_client_id') and data.get('google_client_secret')
+        ):
+            raise forms.ValidationError(
+                'علشان تشغّل الدخول بجوجل لازم تحط الـ Client ID والـ Client secret الأول'
+            )
+        return data
+
+
 # =================================================================== settings
 class SiteSettingsForm(StyledForm):
     REQUIRED = ('brand_name_ar',)

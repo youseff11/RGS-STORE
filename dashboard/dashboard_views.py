@@ -19,11 +19,11 @@ from django.views.decorators.http import require_POST
 
 from .forms import (
     AnnouncementForm, BannerForm, CategoryForm, ColorForm, CouponForm,
-    CountryForm, HomeSectionForm, NavLinkForm, NotificationSettingsForm, PaymentSettingsForm,
-    PolicyForm, ProductForm, PromotionForm, ReviewForm, SiteSettingsForm, SizeForm, StaffForm,
-    WorkCategoryForm, WorkForm,
+    CountryForm, GoogleLoginForm, HomeSectionForm, NavLinkForm, NotificationSettingsForm,
+    PaymentSettingsForm, PolicyForm, ProductForm, PromotionForm, ReviewForm, SiteSettingsForm,
+    SizeForm, StaffForm, WorkCategoryForm, WorkForm,
 )
-from . import mailer
+from . import google_oauth, mailer
 from .models import (
     Announcement, Banner, Category, ContactMessage, Country, Coupon, CustomerProfile,
     HomeSection, NavLink, Order, Policy, Product, ProductColor, ProductImage, ProductVariant,
@@ -942,6 +942,27 @@ def payment_settings(request):
         return redirect('dash_payments')
     return render(request, 'dashboard/payments.html', {
         'form': form, 'site': site, 'active_page': 'payments', **_pending_counts(),
+    })
+
+
+@perm_required('settings')
+def google_settings(request):
+    """«الدخول بجوجل» — المفاتيح + اللينكات اللي Google Cloud محتاجها."""
+    site = SiteSettings.load()
+    form = GoogleLoginForm(request.POST or None, instance=site)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'تم حفظ إعدادات الدخول بجوجل')
+        return redirect('dash_google')
+
+    redirect_uri = google_oauth.redirect_uri(request, site)
+    origin = redirect_uri.split('/account/')[0]
+    return render(request, 'dashboard/google.html', {
+        'form': form, 'site': site,
+        'redirect_uri': redirect_uri,
+        'origin': origin,
+        'google_users': CustomerProfile.objects.exclude(google_id='').count(),
+        'active_page': 'google', **_pending_counts(),
     })
 
 

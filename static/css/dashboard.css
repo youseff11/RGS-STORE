@@ -711,6 +711,11 @@ a.stat { color: inherit; }
 .mail-state .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bad); }
 .mail-state.is-on .dot { background: var(--ok); }
 
+/* لينك جاهز للنسخ (الـ Redirect URI بتاع جوجل مثلًا) */
+.copy-row { display: flex; gap: 8px; align-items: center; }
+.copy-row .inp { flex: 1; min-width: 0; font-size: 12.5px; }
+.copy-row .btn { flex: none; white-space: nowrap; }
+
 /* ------------------------------------------------------- responsive fixes --
    أزرار رأس الصفحة كانت في صف واحد من غير wrap، فعلى الموبايل بتطلع برّه
    الشاشة وتعمل سكرول أفقي. دلوقتي بتنزل سطر جديد وتملأ العرض. */

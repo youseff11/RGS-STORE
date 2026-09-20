@@ -68,12 +68,16 @@
         <form class="form-card" method="post" novalidate style="max-width:520px">
           {% csrf_token %}
           <input type="hidden" name="action" value="password">
-          <h3>{% t 'change_password' %}</h3>
+          <h3>{% if has_password %}{% t 'change_password' %}{% else %}{% t 'set_password' %}{% endif %}</h3>
+          {% if has_password %}
           <div class="field {% if errors.current_password %}has-error{% endif %}">
             <label>{% t 'current_password' %}</label>
             <input type="password" name="current_password" autocomplete="current-password" dir="ltr" required>
             {% if errors.current_password %}<div class="err">{{ errors.current_password }}</div>{% endif %}
           </div>
+          {% else %}
+          <p class="help" style="margin-top:-6px">{% t 'set_password_hint' %}</p>
+          {% endif %}
           <div class="field {% if errors.new_password %}has-error{% endif %}">
             <label>{% t 'new_password' %}</label>
             <input type="password" name="new_password" autocomplete="new-password" dir="ltr" minlength="8" required>

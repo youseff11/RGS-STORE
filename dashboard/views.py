@@ -2,7 +2,7 @@
 
 import re
 from decimal import Decimal, InvalidOperation
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout, update_session_auth_hash
@@ -18,7 +18,7 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
-from . import mailer, paypal
+from . import google_oauth, mailer, paypal
 from .i18n import pick, t
 from .middleware import COOKIE as LANG_COOKIE, COOKIE_AGE as LANG_COOKIE_AGE
 from .i18n import LANGS
@@ -445,6 +445,9 @@ def account_login(request):
             return redirect(_safe_next(request, 'account'))
         if user is not None and not user.is_active and user.check_password(password):
             error = t('account_disabled')
+        elif user is not None and not user.has_usable_password() and _has_google(user):
+            # signed up with the Google button — there is no password to type
+            error = t('use_google_login')
         else:
             error = t('login_failed')
     return render(request, 'pages/account/login.html', {
@@ -511,6 +514,138 @@ def account_logout(request):
     return redirect('home')
 
 
+# ------------------------------------------------------- sign in with Google
+GOOGLE_SESSION_KEY = 'google_oauth'
+
+
+def _has_google(user):
+    profile = getattr(user, 'customer', None)
+    return bool(profile and profile.google_id)
+
+
+def _free_username(email):
+    """Usernames are emails here; add a counter in the (rare) clash."""
+    base = (email or '').lower()[:150] or 'customer'
+    username = base
+    counter = 2
+    while User.objects.filter(username__iexact=username).exists():
+        suffix = f'-{counter}'
+        username = base[:150 - len(suffix)] + suffix
+        counter += 1
+    return username
+
+
+def _google_account(info):
+    """The shopper behind a verified Google profile — found, linked or created.
+
+    Google has already proven the email belongs to whoever is signing in, so an
+    account registered earlier with the same email is linked instead of
+    duplicated; `sub` is stored because it survives a Gmail rename.
+    """
+    profile = CustomerProfile.objects.select_related('user').filter(google_id=info['sub']).first()
+    created = False
+
+    if profile is not None:
+        user = profile.user
+    else:
+        user = User.objects.filter(
+            Q(email__iexact=info['email']) | Q(username__iexact=info['email'])
+        ).order_by('-is_active', 'id').first()
+        if user is None:
+            created = True
+            first = info['given_name'] or info['name'].partition(' ')[0]
+            last = info['family_name'] or info['name'].partition(' ')[2]
+            with transaction.atomic():
+                # no password at all — the Google button is the way in, and
+                # «حسابي ← كلمة المرور» can add one later
+                user = User.objects.create_user(
+                    username=_free_username(info['email']), email=info['email'],
+                    first_name=first[:150], last_name=last[:150],
+                )
+                profile = CustomerProfile.objects.create(user=user)
+        else:
+            profile = CustomerProfile.for_user(user)
+
+    profile.google_id = info['sub']
+    if info['picture']:
+        profile.google_picture = info['picture']
+    profile.save(update_fields=['google_id', 'google_picture', 'updated_at'])
+
+    fields = []
+    if not user.email:
+        user.email = info['email']
+        fields.append('email')
+    if not user.first_name and (info['given_name'] or info['name']):
+        user.first_name = (info['given_name'] or info['name'].partition(' ')[0])[:150]
+        fields.append('first_name')
+    if fields:
+        user.save(update_fields=fields)
+    return user, created
+
+
+def google_login(request):
+    """Step 1 — hand the customer over to Google's account chooser."""
+    site = SiteSettings.load()
+    target = _safe_next(request, 'account')
+    if request.user.is_authenticated:
+        return redirect(target)
+    if not site.google_ready:
+        messages.error(request, t('google_unavailable'))
+        return redirect('account_login')
+
+    state = google_oauth.random_token()
+    nonce = google_oauth.random_token()
+    request.session[GOOGLE_SESSION_KEY] = {'state': state, 'nonce': nonce, 'next': target}
+    return redirect(google_oauth.auth_url(
+        site, google_oauth.redirect_uri(request, site), state, nonce,
+    ))
+
+
+def google_callback(request):
+    """Step 2 — Google sends the customer back with a one-time code."""
+    site = SiteSettings.load()
+    saved = request.session.pop(GOOGLE_SESSION_KEY, None) or {}
+    target = saved.get('next') or reverse('account')
+    back = f"{reverse('account_login')}?next={quote(target)}"
+
+    if request.user.is_authenticated:
+        return redirect(target)
+    if not site.google_ready:
+        messages.error(request, t('google_unavailable'))
+        return redirect('account_login')
+
+    if request.GET.get('error'):
+        # «إلغاء» on Google's screen — not an error worth alarming anyone with
+        messages.info(request, t('google_cancelled'))
+        return redirect(back)
+
+    code = request.GET.get('code') or ''
+    state = request.GET.get('state') or ''
+    if not code or not state or not saved.get('state') or state != saved['state']:
+        messages.error(request, t('google_failed'))
+        return redirect(back)
+
+    try:
+        info = google_oauth.fetch_profile(
+            site, code, google_oauth.redirect_uri(request, site), saved.get('nonce', ''),
+        )
+    except google_oauth.GoogleError:
+        messages.error(request, t('google_failed'))
+        return redirect(back)
+
+    user, created = _google_account(info)
+    if not user.is_active:
+        messages.error(request, t('account_disabled'))
+        return redirect('account_login')
+
+    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+    if created:
+        messages.success(request, t('account_created'))
+    else:
+        messages.success(request, t('welcome_user', name=user.first_name or user.get_username()))
+    return redirect(target)
+
+
 def _public_name(user, fallback=''):
     """«أحمد م.» — first name + initial, so full names aren't published."""
     first = (user.first_name or '').strip()
@@ -565,7 +700,8 @@ def account(request):
             tab = 'password'
             current = request.POST.get('current_password') or ''
             new = request.POST.get('new_password') or ''
-            if not user.check_password(current):
+            # a Google account has no password yet, so there is none to confirm
+            if user.has_usable_password() and not user.check_password(current):
                 errors['current_password'] = t('wrong_password')
             elif len(new) < 8:
                 errors['new_password'] = t('password_short')
@@ -582,6 +718,7 @@ def account(request):
         'orders': orders,
         'tab': tab,
         'errors': errors,
+        'has_password': user.has_usable_password(),
         'countries': shipping_countries(include=profile.country),
         'can_review': reviewable_orders(user).exists(),
         'page_title': t('account'),
