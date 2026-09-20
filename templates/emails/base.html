@@ -1,0 +1,54 @@
+{% load store_tags %}<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>{{ subject }}</title>
+</head>
+<body style="margin:0;padding:0;background:#F4F0EC;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">{% block preview %}{{ subject }}{% endblock %}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F4F0EC;padding:26px 14px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl"
+               style="max-width:600px;background:#FFFFFF;border-radius:16px;overflow:hidden;border:1px solid #E7DED6;font-family:'Segoe UI',Tahoma,Arial,sans-serif;">
+
+          <tr>
+            <td style="background:#14110F;padding:22px 26px;" align="right">
+              <span dir="ltr" style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:bold;color:#FFFFFF;letter-spacing:.5px;unicode-bidi:isolate;">MR<span style="color:#D9732F;">.</span></span>
+              <span style="display:inline-block;margin-inline-start:10px;padding-inline-start:10px;border-inline-start:1px solid rgba(255,255,255,.22);font-size:13px;color:#C9BDB3;vertical-align:6px;">{{ site.brand_name_ar|default:site.brand_name_en }}</span>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:28px 26px 8px;" align="right">
+              <h1 style="margin:0 0 6px;font-size:20px;color:#14110F;font-weight:700;">{% block heading %}{{ subject }}{% endblock %}</h1>
+              <p style="margin:0;font-size:13.5px;color:#7A6E66;line-height:1.7;">{% block lead %}{% endblock %}</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:16px 26px 26px;" align="right">
+              {% block content %}{% endblock %}
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background:#FAF7F4;border-top:1px solid #EFE7E0;padding:18px 26px;" align="right">
+              <p style="margin:0 0 6px;font-size:12px;color:#8A7D74;line-height:1.8;">
+                {% if site.phone %}<span dir="ltr">{{ site.phone }}</span>{% endif %}
+                {% if site.email %}{% if site.phone %} · {% endif %}<span dir="ltr">{{ site.email }}</span>{% endif %}
+              </p>
+              <p style="margin:0;font-size:11.5px;color:#A79A90;">
+                الإيميل ده اتبعت أوتوماتيك من متجر {{ site.brand_name_ar|default:site.brand_name_en }}.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

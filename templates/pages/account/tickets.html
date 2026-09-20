@@ -1,0 +1,51 @@
+{% extends 'base/base.html' %}
+{% load store_tags %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="wrap">
+    <div class="crumbs"><a href="{% url 'account' %}">{% t 'account' %}</a> <span>/</span> <span>{% t 'support' %}</span></div>
+    <h1>{% t 'support' %}</h1>
+    <p>{% t 'support_sub' %}</p>
+  </div>
+</section>
+
+<section class="section-sm">
+  <div class="wrap account-layout">
+    {% include 'partials/account_nav.html' with active='support' %}
+
+    <div>
+      <div class="tickets-head">
+        <h3>{% t 'my_tickets' %}</h3>
+        <a class="btn" href="{% url 'support_new' %}">{% include 'partials/icon.html' with name='plus' %} {% t 'new_ticket' %}</a>
+      </div>
+
+      {% if tickets %}
+      <div class="ticket-list">
+        {% for ticket in tickets %}
+        <a class="ticket-row" href="{% url 'support_detail' ticket.number %}">
+          <span class="ticket-ico">{% include 'partials/icon.html' with name='chat' %}</span>
+          <span class="ticket-main">
+            <b>{{ ticket.subject }}</b>
+            <span class="ticket-meta">
+              <span dir="ltr">{{ ticket.number }}</span> · {{ ticket.topic_label }}
+              {% if ticket.order %} · {{ ticket.order.order_number }}{% endif %}
+              · {{ ticket.last_message_at|date:"Y/m/d" }}
+            </span>
+          </span>
+          {% if ticket.user_unread %}<span class="chip chip-accent">{% t 'ticket_new_badge' %}</span>{% endif %}
+          <span class="chip {% if ticket.status == 'open' %}chip-warn{% elif ticket.status == 'answered' %}chip-ok{% else %}chip-muted{% endif %}">{{ ticket.status_label }}</span>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="form-card empty-box">
+        <span class="empty-ico">{% include 'partials/icon.html' with name='chat' %}</span>
+        <p>{% t 'no_tickets' %}</p>
+        <a class="btn" href="{% url 'support_new' %}">{% t 'open_ticket' %}</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

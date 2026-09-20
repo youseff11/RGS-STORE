@@ -1,0 +1,52 @@
+{% extends 'base/dashboard_base.html' %}
+{% load store_tags %}
+{% block page_name %}تذاكر الدعم{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2>تذاكر الدعم</h2>
+    <p>استفسارات العملاء المسجّلين — بمرفقات وصور وتسجيلات صوتية</p>
+  </div>
+  <div class="flex">
+    {% if 'settings' in DASH_PERMS %}<a class="btn btn-ghost" href="{% url 'dash_notifications' %}">{% include 'partials/icon.html' with name='mail' %} إشعارات الإيميل</a>{% endif %}
+  </div>
+</div>
+
+<div class="country-tools">
+  <nav class="seg" aria-label="عرض">
+    <a href="?" class="{% if not status %}is-active{% endif %}">الكل <span class="n">{{ counts.all }}</span></a>
+    <a href="?status=open" class="{% if status == 'open' %}is-active{% endif %}">مفتوحة <span class="n">{{ counts.open }}</span></a>
+    <a href="?status=answered" class="{% if status == 'answered' %}is-active{% endif %}">تم الرد <span class="n">{{ counts.answered }}</span></a>
+    <a href="?status=closed" class="{% if status == 'closed' %}is-active{% endif %}">مقفولة <span class="n">{{ counts.closed }}</span></a>
+  </nav>
+  <form class="search" method="get">
+    {% include 'partials/icon.html' with name='search' %}
+    <input class="inp" type="search" name="q" value="{{ q }}" placeholder="رقم التذكرة أو الموضوع أو العميل…">
+    {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
+  </form>
+</div>
+
+{% if page_obj %}
+<div class="country-list">
+  {% for ticket in page_obj %}
+  <a class="ticket-admin {% if ticket.admin_unread %}is-new{% endif %}" href="{% url 'dash_ticket_detail' ticket.pk %}">
+    <span class="mini-av">{{ ticket.customer_name|slice:":1"|upper }}</span>
+    <span class="ticket-admin-main">
+      <b>{{ ticket.subject }}</b>
+      <span class="small muted">
+        <span dir="ltr">{{ ticket.number }}</span> · {{ ticket.customer_name }} · {{ ticket.topic_label }}
+        {% if ticket.order %} · {{ ticket.order.order_number }}{% endif %}
+        · {{ ticket.n }} رسالة · {{ ticket.last_message_at|date:"Y/m/d — H:i" }}
+      </span>
+    </span>
+    {% if ticket.admin_unread %}<span class="chip chip-accent">جديد</span>{% endif %}
+    <span class="chip {% if ticket.status == 'open' %}chip-warn{% elif ticket.status == 'answered' %}chip-ok{% else %}chip-muted{% endif %}">{{ ticket.status_label }}</span>
+  </a>
+  {% endfor %}
+</div>
+{% include 'dashboard/_pager.html' %}
+{% else %}
+<div class="card"><div class="empty"><div class="ico ico-badge">{% include 'partials/icon.html' with name='chat' %}</div>مفيش تذاكر هنا</div></div>
+{% endif %}
+{% endblock %}

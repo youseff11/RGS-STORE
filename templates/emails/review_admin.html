@@ -1,0 +1,13 @@
+{% extends 'emails/base.html' %}
+{% block heading %}تقييم جديد {{ review.rating }}/5{% endblock %}
+{% block preview %}{{ review.name }} — {{ review.rating }}/5{% endblock %}
+{% block lead %}{{ review.name }} ساب تقييم جديد{% if not review.is_approved %} ومستني موافقتك علشان يظهر في المتجر{% endif %}.{% endblock %}
+{% block content %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+  {% include 'emails/_parts.html' with part='row' label='العميل' value=review.name %}
+  {% include 'emails/_parts.html' with part='row' label='التقييم' value=review.rating %}
+  {% if review.order %}{% include 'emails/_parts.html' with part='row' label='الطلب' value=review.order.order_number %}{% endif %}
+</table>
+{% include 'emails/_parts.html' with part='note' value=review.comment %}
+{% include 'emails/_parts.html' with part='button' label='مراجعة التقييمات' url=url %}
+{% endblock %}

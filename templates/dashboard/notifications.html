@@ -1,0 +1,119 @@
+{% extends 'base/dashboard_base.html' %}
+{% load store_tags %}
+{% block page_name %}الإشعارات والإيميل{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2>الإشعارات والإيميل</h2>
+    <p>حط جيميلك هنا علشان يوصلك إشعار بكل طلب جديد وكل تذكرة دعم</p>
+  </div>
+  <div class="flex">
+    <span class="mail-state {% if site.mail_ready %}is-on{% endif %}">
+      <span class="dot"></span>{% if site.mail_ready %}الإيميلات شغالة{% else %}الإيميلات مقفولة{% endif %}
+    </span>
+  </div>
+</div>
+
+<div class="split">
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="card">
+      <div class="card-head"><h3>{% include 'partials/icon.html' with name='mail' %} الإيميل بتاعك</h3></div>
+      <div class="switch">{{ form.emails_enabled }}<label for="{{ form.emails_enabled.id_for_label }}">{{ form.emails_enabled.label }}</label></div>
+      <div class="help" style="margin:-4px 0 14px">من غيرها مش هيتبعت أي إيميل — لا لك ولا للعملاء</div>
+
+      <div class="field">
+        <label for="{{ form.notify_email.id_for_label }}">{{ form.notify_email.label }}</label>
+        {{ form.notify_email }}
+        <div class="help">{{ form.notify_email.help_text }}</div>
+        {% for e in form.notify_email.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}
+      </div>
+
+      <div class="field">
+        <label for="{{ form.site_url.id_for_label }}">{{ form.site_url.label }}</label>
+        {{ form.site_url }}
+        <div class="help">{{ form.site_url.help_text }}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>{% include 'partials/icon.html' with name='chat' %} يوصلك إيميل لما…</h3></div>
+      <div class="notify-grid">
+        <div class="switch">{{ form.notify_new_order }}<label for="{{ form.notify_new_order.id_for_label }}">{{ form.notify_new_order.label }}</label></div>
+        <div class="switch">{{ form.notify_new_ticket }}<label for="{{ form.notify_new_ticket.id_for_label }}">{{ form.notify_new_ticket.label }}</label></div>
+        <div class="switch">{{ form.notify_new_message }}<label for="{{ form.notify_new_message.id_for_label }}">{{ form.notify_new_message.label }}</label></div>
+        <div class="switch">{{ form.notify_new_review }}<label for="{{ form.notify_new_review.id_for_label }}">{{ form.notify_new_review.label }}</label></div>
+      </div>
+
+      <div class="card-head" style="margin-top:18px"><h3>{% include 'partials/icon.html' with name='users' %} ويوصل العميل إيميل لما…</h3></div>
+      <div class="notify-grid">
+        <div class="switch">{{ form.notify_customer_order }}<label for="{{ form.notify_customer_order.id_for_label }}">{{ form.notify_customer_order.label }}</label></div>
+        <div class="switch">{{ form.notify_customer_ticket }}<label for="{{ form.notify_customer_ticket.id_for_label }}">{{ form.notify_customer_ticket.label }}</label></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>{% include 'partials/icon.html' with name='lock' %} حساب الإرسال (SMTP)</h3></div>
+      <div class="lang-pair">
+        <div class="field">
+          <label for="{{ form.smtp_user.id_for_label }}">{{ form.smtp_user.label }}</label>
+          {{ form.smtp_user }}
+        </div>
+        <div class="field">
+          <label for="{{ form.smtp_password.id_for_label }}">{{ form.smtp_password.label }}</label>
+          {{ form.smtp_password }}
+          <div class="help">{{ form.smtp_password.help_text }}</div>
+        </div>
+      </div>
+      <div class="lang-pair">
+        <div class="field">
+          <label for="{{ form.smtp_host.id_for_label }}">{{ form.smtp_host.label }}</label>
+          {{ form.smtp_host }}
+        </div>
+        <div class="field">
+          <label for="{{ form.smtp_port.id_for_label }}">{{ form.smtp_port.label }}</label>
+          {{ form.smtp_port }}
+        </div>
+      </div>
+      <div class="switch">{{ form.smtp_use_tls }}<label for="{{ form.smtp_use_tls.id_for_label }}">{{ form.smtp_use_tls.label }}</label></div>
+      <div class="help" style="margin:-4px 0 6px">{{ form.smtp_use_tls.help_text }}</div>
+      {% if form.non_field_errors %}<div class="alert">{{ form.non_field_errors }}</div>{% endif %}
+      <button class="btn" type="submit" style="margin-top:12px">حفظ الإعدادات</button>
+    </div>
+  </form>
+
+  <div>
+    <div class="card">
+      <div class="card-head"><h3>جرّب الإرسال</h3></div>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="test">
+        <div class="field">
+          <label for="test-email">ابعت إيميل تجربة لـ</label>
+          <input class="inp" id="test-email" type="email" name="test_email" dir="ltr"
+                 value="{{ site.notify_email|default:site.smtp_user }}" placeholder="you@gmail.com">
+        </div>
+        <button class="btn btn-soft btn-block" type="submit">ابعت دلوقتي</button>
+      </form>
+      <p class="small muted" style="margin-top:10px">احفظ الإعدادات الأول، بعدين جرّب.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>إزاي تجيب App password من جوجل</h3></div>
+      <ol class="mail-steps">
+        <li>افتح حساب جوجل ← «الأمان» وفعّل «التحقق بخطوتين».</li>
+        <li>من نفس الصفحة دوّر على «App passwords» (كلمات مرور التطبيقات).</li>
+        <li>اعمل واحدة جديدة باسم RGS TOWER، هتطلع 16 حرف.</li>
+        <li>الصقها في خانة App password فوق (من غير مسافات) واحفظ.</li>
+        <li>اضغط «ابعت دلوقتي» وشوف الإنبوكس.</li>
+      </ol>
+      <p class="small muted" style="margin-top:12px">
+        باسورد الجيميل العادي مش هينفع — جوجل بترفضه. ولو المتجر على استضافة مجانية زي PythonAnywhere
+        المجاني، الاستضافة نفسها بتمنع إرسال الإيميل (لازم خطة مدفوعة).
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

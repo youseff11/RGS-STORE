@@ -228,6 +228,53 @@ class CountryForm(StyledForm):
         return code
 
 
+
+class NotificationSettingsForm(StyledForm):
+    """«الإشعارات والإيميل» — Gmail (or any SMTP) + what deserves an email."""
+
+    class Meta:
+        model = SiteSettings
+        fields = [
+            'emails_enabled', 'notify_email', 'site_url',
+            'notify_new_order', 'notify_new_ticket', 'notify_new_message', 'notify_new_review',
+            'notify_customer_order', 'notify_customer_ticket',
+            'smtp_host', 'smtp_port', 'smtp_user', 'smtp_password', 'smtp_use_tls',
+        ]
+        widgets = {
+            'notify_email': forms.EmailInput(attrs={'dir': 'ltr', 'placeholder': 'you@gmail.com'}),
+            'site_url': forms.TextInput(attrs={'dir': 'ltr', 'placeholder': 'https://rgstower.com'}),
+            'smtp_host': forms.TextInput(attrs={'dir': 'ltr'}),
+            'smtp_port': forms.NumberInput(attrs={'dir': 'ltr'}),
+            'smtp_user': forms.TextInput(attrs={'dir': 'ltr', 'placeholder': 'you@gmail.com', 'autocomplete': 'off'}),
+            'smtp_password': forms.PasswordInput(
+                attrs={'dir': 'ltr', 'autocomplete': 'new-password', 'placeholder': '••••••••••••••••'},
+                render_value=True,
+            ),
+        }
+        labels = {
+            'emails_enabled': 'تشغيل الإيميلات',
+            'notify_email': 'إيميل استقبال الإشعارات',
+            'site_url': 'لينك المتجر',
+            'notify_new_order': 'إشعار بكل طلب جديد',
+            'notify_new_ticket': 'إشعار بالتذاكر وردود العملاء',
+            'notify_new_message': 'إشعار برسايل «اتصل بنا»',
+            'notify_new_review': 'إشعار بالتقييمات الجديدة',
+            'notify_customer_order': 'إرسال تأكيد الطلب للعميل',
+            'notify_customer_ticket': 'إبلاغ العميل لما ترد على تذكرته',
+            'smtp_host': 'SMTP host', 'smtp_port': 'SMTP port',
+            'smtp_user': 'الإيميل اللي هيبعت', 'smtp_password': 'App password',
+            'smtp_use_tls': 'TLS (بورت 587)',
+        }
+        help_texts = {
+            'notify_email': 'ممكن يكون نفس الجيميل اللي بيبعت',
+            'site_url': 'علشان اللينكات اللي جوه الإيميل تشتغل صح',
+            'smtp_password': 'من حساب جوجل: الأمان ← التحقق بخطوتين ← App passwords (16 حرف من غير مسافات)',
+            'smtp_use_tls': 'سيبها مفتوحة مع بورت 587 · اقفلها لو بتستخدم 465 (SSL)',
+        }
+
+    def clean_smtp_password(self):
+        return (self.cleaned_data.get('smtp_password') or '').replace(' ', '')
+
 # =================================================================== settings
 class SiteSettingsForm(StyledForm):
     REQUIRED = ('brand_name_ar',)

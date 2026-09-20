@@ -688,6 +688,29 @@ a.stat { color: inherit; }
 .country-fee .cur { font-size: 12px; color: var(--muted); white-space: nowrap; }
 .country-toggle .toggle-pill { cursor: pointer; }
 
+/* support tickets (list rows) */
+.ticket-admin {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 14px;
+  border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line);
+  transition: border-color .18s;
+}
+.ticket-admin:hover { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); }
+.ticket-admin.is-new { border-inline-start: 3px solid var(--accent); }
+.ticket-admin-main { flex: 1 1 220px; min-width: 0; display: grid; gap: 2px; }
+.ticket-admin-main b { font-size: 14px; }
+.notify-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+.mail-steps { counter-reset: step; display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.mail-steps li { display: flex; gap: 10px; font-size: 13px; color: var(--text-2); line-height: 1.8; }
+.mail-steps li::before {
+  counter-increment: step; content: counter(step);
+  width: 22px; height: 22px; flex: none; margin-top: 3px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-text);
+  font-size: 11px; font-weight: 800;
+}
+.mail-state { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; }
+.mail-state .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bad); }
+.mail-state.is-on .dot { background: var(--ok); }
+
 /* ------------------------------------------------------- responsive fixes --
    أزرار رأس الصفحة كانت في صف واحد من غير wrap، فعلى الموبايل بتطلع برّه
    الشاشة وتعمل سكرول أفقي. دلوقتي بتنزل سطر جديد وتملأ العرض. */
@@ -734,6 +757,7 @@ a.stat { color: inherit; }
     gap: 10px; padding: 12px;
   }
   .country-fee .inp { flex: 1; width: auto; min-width: 0; }
+  .notify-grid { grid-template-columns: 1fr; }
   .bulk-bar { top: 66px; }
   .bulk-fee { flex: 1 1 100%; order: 5; }
   .bulk-fee .inp { flex: 1; width: auto; min-width: 0; }

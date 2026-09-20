@@ -1,0 +1,41 @@
+{% load store_tags %}
+{% comment %}The conversation itself — shared by the customer page and the dashboard.
+Needs: ticket, ticket_messages. Set `staff_view=1` from the dashboard.{% endcomment %}
+<div class="thread">
+  {% for message in ticket_messages %}
+  <article class="bubble {% if message.is_staff %}is-store{% else %}is-customer{% endif %}">
+    <header class="bubble-head">
+      <span class="bubble-who">
+        {% if message.is_staff %}
+          {% if staff_view %}{{ message.author_name|default:'المتجر' }}{% else %}{% t 'ticket_from_store' %}{% endif %}
+        {% else %}
+          {% if staff_view %}{{ ticket.customer_name }}{% else %}{% t 'ticket_from_you' %}{% endif %}
+        {% endif %}
+      </span>
+      <time datetime="{{ message.created_at|date:'c' }}">{{ message.created_at|date:"Y/m/d — H:i" }}</time>
+    </header>
+
+    {% if message.body %}<p class="bubble-body">{{ message.body|linebreaksbr }}</p>{% endif %}
+
+    {% if message.attachments.all %}
+    <div class="bubble-files">
+      {% for file in message.attachments.all %}
+        {% if file.kind == 'image' %}
+          <a class="file-img" href="{{ file.file.url }}" target="_blank" rel="noopener">
+            <img src="{{ file.file.url }}" alt="{{ file.name }}" loading="lazy">
+          </a>
+        {% elif file.kind == 'audio' %}
+          <audio class="file-audio" controls preload="none" src="{{ file.file.url }}"></audio>
+        {% else %}
+          <a class="file-doc" href="{{ file.file.url }}" target="_blank" rel="noopener">
+            {% include 'partials/icon.html' with name='file' %}
+            <span class="file-name">{{ file.name }}</span>
+            <span class="file-size" dir="ltr">{{ file.size_label }}</span>
+          </a>
+        {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+  </article>
+  {% endfor %}
+</div>

@@ -1,0 +1,69 @@
+/* ==========================================================================
+   RGS TOWER — support tickets: the conversation + the attachment box.
+   Loaded by BOTH the storefront (site.css) and the dashboard (dashboard.css),
+   so it only uses tokens both of them define: --surface, --line, --accent…
+   ========================================================================== */
+/* `display:` on an element beats the plain `hidden` attribute — say it again
+   (both stylesheets need this, that's why it lives here) */
+[hidden] { display: none !important; }
+
+/* the conversation */
+.thread { display: grid; gap: 12px; }
+.bubble {
+  padding: 14px 16px; border-radius: var(--radius); border: 1px solid var(--line);
+  background: var(--surface); max-width: 92%;
+}
+.bubble.is-customer { margin-inline-start: auto; background: var(--surface-2); }
+.bubble.is-store { border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+.bubble-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.bubble-who { font-size: 12.5px; font-weight: 800; color: var(--accent-text); }
+.bubble.is-customer .bubble-who { color: var(--text-2); }
+.bubble-head time { font-size: 11.5px; color: var(--muted); }
+.bubble-body { margin: 0; font-size: 14px; line-height: 1.9; color: var(--text); overflow-wrap: anywhere; }
+.bubble-files { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.bubble-files .file-img { width: 92px; height: 92px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+.bubble-files .file-img img { width: 100%; height: 100%; object-fit: cover; }
+.bubble-files .file-audio { width: 100%; max-width: 320px; height: 40px; }
+.bubble-files .file-doc {
+  display: inline-flex; align-items: center; gap: 8px; padding: 9px 12px; max-width: 100%;
+  border-radius: 10px; background: var(--bg-2); border: 1px solid var(--line); font-size: 12.5px; font-weight: 600;
+}
+.bubble-files .file-doc:hover { border-color: var(--accent); color: var(--accent-text); }
+.bubble-files .file-doc svg { width: 16px; height: 16px; flex: none; }
+.bubble-files .file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; }
+.bubble-files .file-size { color: var(--muted); font-size: 11px; }
+.reply-card { margin-top: 18px; }
+
+/* attachments + voice note */
+.attach-box { margin-top: 6px; }
+.attach-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.attach-btn {
+  display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; cursor: pointer;
+  border-radius: 10px; border: 1px dashed var(--line); background: var(--bg-2);
+  font-size: 13px; font-weight: 700; color: var(--text-2); transition: .18s;
+}
+.attach-btn:hover { border-color: var(--accent); color: var(--accent-text); }
+.attach-btn svg { width: 16px; height: 16px; }
+.attach-btn.is-recording { border-style: solid; border-color: var(--bad); color: var(--bad); }
+.rec-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bad); animation: recPulse 1s infinite; }
+@keyframes recPulse { 50% { opacity: .25; } }
+.rec-time { font-family: 'Jost', sans-serif; font-size: 12px; }
+.attach-hint { font-size: 11.5px; color: var(--muted); }
+.attach-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.attach-chip {
+  display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border-radius: 9px;
+  background: var(--surface-2); font-size: 12px; font-weight: 600; max-width: 100%;
+}
+.attach-chip img { width: 26px; height: 26px; border-radius: 6px; object-fit: cover; }
+.attach-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
+.attach-voice { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.attach-voice audio { flex: 1; min-width: 0; height: 40px; }
+.attach-x { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; color: var(--bad); background: var(--surface-2); }
+.attach-x svg { width: 16px; height: 16px; }
+.attach-warn { margin: 10px 0 0; font-size: 12px; color: var(--warn); }
+
+@media (max-width: 640px) {
+  .bubble { max-width: 100%; }
+  .attach-hint { flex-basis: 100%; }
+}
+

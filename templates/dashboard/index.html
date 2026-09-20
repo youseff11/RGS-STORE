@@ -62,6 +62,12 @@
     <div><div class="v">{% if stats.reviews %}{{ stats.rating }} <span style="font-size:14px;color:var(--muted)">/ 5</span>{% else %}—{% endif %}</div><div class="l">{{ stats.reviews }} تقييم منشور · {{ pending_reviews }} بانتظار المراجعة</div></div>
   </a>
   {% endif %}
+  {% if 'messages' in perms %}
+  <a class="stat warn" href="{% url 'dash_tickets' %}">
+    <span class="ico">{% include 'partials/icon.html' with name='chat' %}</span>
+    <div><div class="v">{{ open_tickets }}</div><div class="l">تذكرة دعم مفتوحة{% if new_tickets %} · {{ new_tickets }} محتاجة ردك{% endif %}</div></div>
+  </a>
+  {% endif %}
   {% if 'portfolio' in perms %}
   <a class="stat info" href="{% url 'dash_works' %}">
     <span class="ico">{% include 'partials/icon.html' with name='camera' %}</span>

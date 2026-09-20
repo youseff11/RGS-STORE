@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout, update_session_auth_hash
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
@@ -17,16 +18,17 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
-from . import paypal
-from .i18n import t
+from . import mailer, paypal
+from .i18n import pick, t
 from .middleware import COOKIE as LANG_COOKIE, COOKIE_AGE as LANG_COOKIE_AGE
 from .i18n import LANGS
 from .models import (
     Banner, Category, ContactMessage, Country, Coupon, CustomerProfile, HomeSection,
-    Order, OrderItem, Policy, Product, ProductVariant, Review, SiteSettings, Size, Work,
-    WorkCategory, reviewable_orders,
+    Order, OrderItem, Policy, Product, ProductVariant, Review, SiteSettings, Size,
+    TICKET_EXTS, TICKET_MAX_FILES, TICKET_MAX_FILE_MB, TICKET_TOPICS, Ticket,
+    TicketAttachment, TicketMessage, Work, WorkCategory, reviewable_orders,
 )
-from .utils import Cart, money
+from .utils import Cart, money, save_ticket_attachments, ticket_uploads
 
 PAGE_SIZE = 12
 User = get_user_model()
@@ -738,6 +740,7 @@ def checkout(request):
                     user.save(update_fields=['first_name', 'last_name'])
 
             cart.clear()
+            mailer.order_placed(order)
             request.session['last_order'] = order.order_number
             if method == 'paypal':
                 return redirect('order_pay', number=order.order_number)
@@ -994,15 +997,117 @@ def review_submit(request):
         messages.error(request, t('review_write_more'))
         return redirect(f"{reverse('reviews')}#write")
     site = SiteSettings.load()
-    Review.objects.create(
+    review = Review.objects.create(
         user=user, order=order,
         name=_public_name(user, order.full_name)[:120],
         rating=rating, comment=comment[:2000],
         is_approved=site.reviews_auto_publish,
     )
+    mailer.review_added(review)
     note = t('review_thanks') if site.reviews_auto_publish else f"{t('review_thanks')} — {t('review_pending')}"
     messages.success(request, note)
     return redirect('reviews')
+
+
+# =================================================================== support
+def _attachment_warning(request, rejected):
+    if rejected:
+        messages.warning(request, t('files_rejected', names='، '.join(rejected[:3]),
+                                    size=TICKET_MAX_FILE_MB))
+
+
+@login_required
+def support_list(request):
+    tickets = (
+        Ticket.objects.filter(user=request.user)
+        .select_related('order')
+        .annotate(replies=Count('messages'))
+    )
+    return render(request, 'pages/account/tickets.html', {
+        'tickets': tickets,
+        'page_title': t('support'),
+    })
+
+
+@login_required
+def support_new(request):
+    recent_orders = request.user.orders.order_by('-created_at')
+    orders = list(recent_orders[:20])
+    data = {'subject': '', 'topic': 'other', 'order': '', 'body': ''}
+    errors = {}
+    if request.method == 'POST':
+        for key in data:
+            data[key] = (request.POST.get(key) or '').strip()
+        files = ticket_uploads(request)
+        if not data['subject']:
+            errors['subject'] = t('required_field')
+        if not data['body'] and not files:
+            errors['body'] = t('required_field')
+        if data['topic'] not in dict(TICKET_TOPICS):
+            data['topic'] = 'other'
+        order = next((o for o in orders if str(o.pk) == data['order']), None)
+
+        if not errors:
+            with transaction.atomic():
+                ticket = Ticket.objects.create(
+                    user=request.user, subject=data['subject'][:160],
+                    topic=data['topic'], order=order,
+                )
+                message = TicketMessage.objects.create(
+                    ticket=ticket, author=request.user, is_staff=False, body=data['body'][:4000],
+                )
+                rejected = save_ticket_attachments(message, files)
+            _attachment_warning(request, rejected)
+            mailer.ticket_opened(ticket, message)
+            messages.success(request, t('ticket_created', number=ticket.number))
+            return redirect('support_detail', number=ticket.number)
+
+    return render(request, 'pages/account/ticket_new.html', {
+        'data': data, 'errors': errors, 'orders': orders,
+        'topics': [(key, pick(*label)) for key, label in _topic_labels()],
+        'max_files': TICKET_MAX_FILES, 'max_mb': TICKET_MAX_FILE_MB,
+        'page_title': t('new_ticket'),
+    })
+
+
+def _topic_labels():
+    from .models import TICKET_TOPIC_LABELS
+    return [(key, TICKET_TOPIC_LABELS[key]) for key, _ in TICKET_TOPICS]
+
+
+@login_required
+def support_detail(request, number):
+    ticket = get_object_or_404(
+        Ticket.objects.select_related('order', 'user'), number=number, user=request.user
+    )
+    if request.method == 'POST':
+        if ticket.is_closed:
+            messages.info(request, t('ticket_closed_note'))
+            return redirect('support_detail', number=ticket.number)
+        body = (request.POST.get('body') or '').strip()
+        files = ticket_uploads(request)
+        if not body and not files:
+            messages.error(request, t('required_field'))
+            return redirect('support_detail', number=ticket.number)
+        with transaction.atomic():
+            message = TicketMessage.objects.create(
+                ticket=ticket, author=request.user, is_staff=False, body=body[:4000],
+            )
+            rejected = save_ticket_attachments(message, files)
+            ticket.touch(from_staff=False)
+        _attachment_warning(request, rejected)
+        mailer.ticket_customer_replied(ticket, message)
+        messages.success(request, t('reply_sent'))
+        return redirect('support_detail', number=ticket.number)
+
+    if ticket.user_unread:
+        Ticket.objects.filter(pk=ticket.pk).update(user_unread=False)
+    return render(request, 'pages/account/ticket_detail.html', {
+        'ticket': ticket,
+        'ticket_messages': ticket.messages.prefetch_related('attachments').select_related('author'),
+        'max_files': TICKET_MAX_FILES, 'max_mb': TICKET_MAX_FILE_MB,
+        'page_title': f'{t("ticket")} {ticket.number}',
+    })
 
 
 # ===================================================================== pages
@@ -1030,13 +1135,14 @@ def contact(request):
         name = (request.POST.get('name') or '').strip()
         message = (request.POST.get('message') or '').strip()
         if name and message:
-            ContactMessage.objects.create(
+            contact_message = ContactMessage.objects.create(
                 name=name,
                 email=(request.POST.get('email') or '').strip(),
                 phone=(request.POST.get('phone') or '').strip(),
                 subject=(request.POST.get('subject') or '').strip(),
                 message=message,
             )
+            mailer.contact_message(contact_message)
             messages.success(request, t('message_sent'))
             return redirect('contact')
         messages.error(request, t('required_field'))

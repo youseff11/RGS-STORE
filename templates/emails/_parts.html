@@ -1,0 +1,24 @@
+{% comment %}
+Reusable bits for the notification emails. Include with the values you need:
+  {% include 'emails/_parts.html' with part='button' label='افتح الطلب' url=url %}
+  {% include 'emails/_parts.html' with part='row' label='العميل' value=order.full_name %}
+  {% include 'emails/_parts.html' with part='note' value='...' %}
+{% endcomment %}
+{% if part == 'button' %}{% if url %}
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:22px 0 4px;">
+  <tr><td style="background:#B04B00;border-radius:10px;">
+    <a href="{{ url }}" style="display:inline-block;padding:12px 26px;font-size:14px;font-weight:700;color:#FFFFFF;text-decoration:none;">{{ label }}</a>
+  </td></tr>
+</table>
+{% endif %}{% endif %}
+
+{% if part == 'row' %}
+<tr>
+  <td style="padding:9px 0;border-bottom:1px solid #F0E9E3;font-size:13px;color:#8A7D74;width:38%;">{{ label }}</td>
+  <td style="padding:9px 0;border-bottom:1px solid #F0E9E3;font-size:13.5px;color:#14110F;font-weight:600;">{{ value|default:'—' }}</td>
+</tr>
+{% endif %}
+
+{% if part == 'note' %}
+<div style="margin:16px 0 0;padding:14px 16px;background:#FBF6F2;border:1px solid #F0E3D8;border-inline-start:3px solid #B04B00;border-radius:10px;font-size:13.5px;color:#3C3430;line-height:1.9;white-space:pre-line;">{{ value }}</div>
+{% endif %}

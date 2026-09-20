@@ -3,6 +3,7 @@
 import random
 import re
 import string
+import uuid
 from decimal import ROUND_UP, Decimal
 
 from django.conf import settings
@@ -86,6 +87,32 @@ class SiteSettings(models.Model):
     reviews_auto_publish = models.BooleanField(default=False)
     share_image = models.ImageField(upload_to='site/', blank=True, null=True)
 
+    # ---- email notifications (Gmail or any SMTP) ----
+    emails_enabled = models.BooleanField(default=False)
+    notify_email = models.EmailField(
+        blank=True, default='', help_text='الإيميل اللي هتوصلك عليه الإشعارات',
+    )
+    notify_new_order = models.BooleanField(default=True)
+    notify_new_ticket = models.BooleanField(default=True)
+    notify_new_message = models.BooleanField(default=True)
+    notify_new_review = models.BooleanField(default=True)
+    notify_customer_order = models.BooleanField(default=True)
+    notify_customer_ticket = models.BooleanField(default=True)
+    site_url = models.CharField(
+        max_length=200, blank=True, default='',
+        help_text='لينك المتجر — بيتحط في الإيميلات، مثال: https://rgstower.com',
+    )
+    smtp_host = models.CharField(max_length=120, blank=True, default='smtp.gmail.com')
+    smtp_port = models.PositiveIntegerField(default=587)
+    smtp_user = models.CharField(
+        max_length=200, blank=True, default='', help_text='الجيميل اللي هيبعت منه',
+    )
+    smtp_password = models.CharField(
+        max_length=200, blank=True, default='',
+        help_text='App password من جوجل (16 حرف) — مش باسورد الإيميل العادي',
+    )
+    smtp_use_tls = models.BooleanField(default=True)
+
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -103,6 +130,24 @@ class SiteSettings(models.Model):
     def load(cls):
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
+
+    @property
+    def mail_ready(self):
+        """True when the store can actually send an email."""
+        return bool(
+            self.emails_enabled and self.smtp_host and self.smtp_user and self.smtp_password
+        )
+
+    @property
+    def mail_from(self):
+        return f'{self.brand_name_en or "RGS TOWER"} <{self.smtp_user}>' if self.smtp_user else ''
+
+    def absolute_url(self, path=''):
+        base = (self.site_url or '').strip().rstrip('/')
+        path = path or ''
+        if not base:
+            return path
+        return base + path if path.startswith('/') else f'{base}/{path}'
 
     # -- localized helpers
     @property
@@ -914,6 +959,184 @@ class CustomerProfile(models.Model):
         return profile
 
 
+# =================================================================== tickets
+def ticket_upload_to(instance, filename):
+    """media/tickets/<ticket number>/<random>.<ext>"""
+    ext = (filename.rsplit('.', 1)[-1] if '.' in filename else 'dat').lower()[:8]
+    number = getattr(instance.message.ticket, 'number', '') or 'misc'
+    return f'tickets/{number}/{uuid.uuid4().hex}.{ext}'
+
+
+TICKET_TOPICS = [
+    ('order', 'استفسار عن طلب'),
+    ('product', 'سؤال عن منتج'),
+    ('shipping', 'الشحن والتوصيل'),
+    ('payment', 'الدفع'),
+    ('return', 'استبدال أو استرجاع'),
+    ('other', 'موضوع آخر'),
+]
+TICKET_TOPIC_LABELS = {
+    'order': ('استفسار عن طلب', 'About an order'),
+    'product': ('سؤال عن منتج', 'About a product'),
+    'shipping': ('الشحن والتوصيل', 'Shipping & delivery'),
+    'payment': ('الدفع', 'Payment'),
+    'return': ('استبدال أو استرجاع', 'Return or exchange'),
+    'other': ('موضوع آخر', 'Something else'),
+}
+TICKET_STATUSES = [
+    ('open', 'مفتوحة'),
+    ('answered', 'تم الرد'),
+    ('closed', 'مقفولة'),
+]
+TICKET_STATUS_LABELS = {
+    'open': ('مفتوحة', 'Open'),
+    'answered': ('تم الرد', 'Answered'),
+    'closed': ('مقفولة', 'Closed'),
+}
+
+#: what a customer may attach to a ticket message
+TICKET_IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic']
+TICKET_AUDIO_EXTS = ['webm', 'mp3', 'm4a', 'ogg', 'oga', 'wav', 'aac', 'mp4a']
+TICKET_FILE_EXTS = ['pdf', 'doc', 'docx', 'txt', 'xlsx', 'csv', 'zip', 'mp4', 'mov']
+TICKET_EXTS = TICKET_IMAGE_EXTS + TICKET_AUDIO_EXTS + TICKET_FILE_EXTS
+TICKET_MAX_FILE_MB = 10
+TICKET_MAX_FILES = 5
+
+
+class Ticket(models.Model):
+    """A support conversation opened by a signed-in customer."""
+
+    number = models.CharField(max_length=20, unique=True, blank=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='tickets'
+    )
+    subject = models.CharField(max_length=160)
+    topic = models.CharField(max_length=20, choices=TICKET_TOPICS, default='other')
+    order = models.ForeignKey(
+        Order, on_delete=models.SET_NULL, null=True, blank=True, related_name='tickets'
+    )
+    status = models.CharField(max_length=20, choices=TICKET_STATUSES, default='open')
+    admin_unread = models.BooleanField(default=True)
+    user_unread = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    last_message_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-last_message_at']
+
+    def __str__(self):
+        return f'{self.number} — {self.subject}'
+
+    def save(self, *args, **kwargs):
+        if not self.number:
+            self.number = self.generate_number()
+        super().save(*args, **kwargs)
+
+    @staticmethod
+    def generate_number():
+        while True:
+            code = 'TK' + ''.join(random.choices(string.digits, k=6))
+            if not Ticket.objects.filter(number=code).exists():
+                return code
+
+    def get_absolute_url(self):
+        return reverse('support_detail', args=[self.number])
+
+    @property
+    def status_label(self):
+        return pick(*TICKET_STATUS_LABELS.get(self.status, (self.status, self.status)))
+
+    @property
+    def topic_label(self):
+        return pick(*TICKET_TOPIC_LABELS.get(self.topic, (self.topic, self.topic)))
+
+    @property
+    def is_closed(self):
+        return self.status == 'closed'
+
+    @property
+    def customer_name(self):
+        return self.user.get_full_name() or self.user.first_name or self.user.get_username()
+
+    def touch(self, *, from_staff):
+        """Called after a new message: move the status and the unread flags."""
+        self.last_message_at = timezone.now()
+        if from_staff:
+            if self.status != 'closed':
+                self.status = 'answered'
+            self.user_unread = True
+            self.admin_unread = False
+        else:
+            if self.status != 'closed':
+                self.status = 'open'
+            self.admin_unread = True
+            self.user_unread = False
+        self.save(update_fields=['last_message_at', 'status', 'user_unread', 'admin_unread', 'updated_at'])
+
+
+class TicketMessage(models.Model):
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='messages')
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='ticket_messages',
+    )
+    is_staff = models.BooleanField(default=False)
+    body = models.TextField(blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f'{self.ticket.number} — {"المتجر" if self.is_staff else "العميل"}'
+
+    @property
+    def author_name(self):
+        if self.is_staff:
+            return SiteSettings.load().brand_name
+        if self.author is None:
+            return ''
+        return self.author.get_full_name() or self.author.first_name or self.author.get_username()
+
+
+class TicketAttachment(models.Model):
+    KINDS = [('image', 'صورة'), ('audio', 'تسجيل صوتي'), ('file', 'ملف')]
+
+    message = models.ForeignKey(TicketMessage, on_delete=models.CASCADE, related_name='attachments')
+    file = models.FileField(
+        upload_to=ticket_upload_to, validators=[FileExtensionValidator(TICKET_EXTS)],
+    )
+    name = models.CharField(max_length=200, blank=True, default='')
+    kind = models.CharField(max_length=10, choices=KINDS, default='file')
+    size = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['id']
+
+    def __str__(self):
+        return self.name or self.file.name
+
+    @staticmethod
+    def kind_for(filename):
+        ext = (filename.rsplit('.', 1)[-1] if '.' in filename else '').lower()
+        if ext in TICKET_IMAGE_EXTS:
+            return 'image'
+        if ext in TICKET_AUDIO_EXTS:
+            return 'audio'
+        return 'file'
+
+    @property
+    def size_label(self):
+        size = self.size or 0
+        if size >= 1024 * 1024:
+            return f'{size / (1024 * 1024):.1f} MB'
+        if size >= 1024:
+            return f'{size / 1024:.0f} KB'
+        return f'{size} B'
+
+
 # ===================================================================== staff
 STAFF_PERMISSIONS = [
     ('orders', 'الطلبات'),
@@ -923,7 +1146,7 @@ STAFF_PERMISSIONS = [
     ('portfolio', 'أعمالنا'),
     ('reviews', 'تقييمات العملاء'),
     ('content', 'الصفحة الرئيسية والقائمة والسياسات والبانرات'),
-    ('messages', 'الرسائل'),
+    ('messages', 'الرسائل وتذاكر الدعم'),
     ('shipping', 'الدول والشحن'),
     ('settings', 'إعدادات المتجر والدفع'),
     ('staff', 'الإدارة (إضافة وتعديل الإداريين)'),
@@ -1359,6 +1582,7 @@ NAV_TYPES = [
     ('about', 'من نحن'),
     ('contact', 'اتصل بنا'),
     ('track', 'تتبع الطلب'),
+    ('support', 'الدعم والتذاكر'),
     ('category', 'قسم من المتجر'),
     ('policy', 'صفحة سياسة'),
     ('custom', 'رابط مخصص'),
@@ -1375,6 +1599,7 @@ NAV_BUILTINS = {
     'about': ('من نحن', 'About', 'about', ''),
     'contact': ('اتصل بنا', 'Contact', 'contact', ''),
     'track': ('تتبع طلبك', 'Track order', 'track_order', ''),
+    'support': ('الدعم', 'Support', 'support', ''),
 }
 
 

@@ -1,0 +1,24 @@
+{% extends 'emails/base.html' %}
+{% block heading %}{% if is_reply %}رد جديد على تذكرة {{ ticket.number }}{% else %}تذكرة دعم جديدة {{ ticket.number }}{% endif %}{% endblock %}
+{% block preview %}{{ ticket.subject }}{% endblock %}
+{% block lead %}{{ ticket.customer_name }} {% if is_reply %}رد على التذكرة{% else %}فتح تذكرة جديدة{% endif %}.{% endblock %}
+{% block content %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+  {% include 'emails/_parts.html' with part='row' label='الموضوع' value=ticket.subject %}
+  {% include 'emails/_parts.html' with part='row' label='النوع' value=ticket.topic_label %}
+  {% include 'emails/_parts.html' with part='row' label='العميل' value=ticket.customer_name %}
+  {% include 'emails/_parts.html' with part='row' label='الإيميل' value=ticket.user.email %}
+  {% if ticket.order %}{% include 'emails/_parts.html' with part='row' label='الطلب' value=ticket.order.order_number %}{% endif %}
+</table>
+
+{% if message.body %}{% include 'emails/_parts.html' with part='note' value=message.body %}{% endif %}
+
+{% if message.attachments.all %}
+<p style="margin:14px 0 0;font-size:13px;color:#8A7D74;">
+  مرفقات ({{ message.attachments.all|length }}):
+  {% for a in message.attachments.all %}{% if a.kind == 'image' %}صورة{% elif a.kind == 'audio' %}تسجيل صوتي{% else %}ملف{% endif %} {{ a.name }}{% if not forloop.last %} · {% endif %}{% endfor %}
+</p>
+{% endif %}
+
+{% include 'emails/_parts.html' with part='button' label='افتح التذكرة وردّ عليها' url=url %}
+{% endblock %}

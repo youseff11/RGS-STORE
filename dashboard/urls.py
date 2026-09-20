@@ -36,6 +36,11 @@ urlpatterns = [
     path('account/logout/', views.account_logout, name='account_logout'),
     path('account/orders/<str:number>/', views.account_order, name='account_order'),
 
+    # support tickets (signed-in customers)
+    path('support/', views.support_list, name='support'),
+    path('support/new/', views.support_new, name='support_new'),
+    path('support/<str:number>/', views.support_detail, name='support_detail'),
+
     # portfolio + reviews + pages
     path('works/', views.works, name='works'),
     path('works/<str:slug>/', views.work_detail, name='work_detail'),
@@ -114,6 +119,14 @@ urlpatterns = [
     path('dashboard/countries/<int:pk>/fee/', dv.country_fee, name='dash_country_fee'),
     path('dashboard/countries/<int:pk>/delete/', dv.country_delete, name='dash_country_delete'),
     path('dashboard/governorates/', RedirectView.as_view(pattern_name='dash_countries', permanent=False)),
+
+    # support tickets
+    path('dashboard/tickets/', dv.ticket_list, name='dash_tickets'),
+    path('dashboard/tickets/<int:pk>/', dv.ticket_detail, name='dash_ticket_detail'),
+    path('dashboard/tickets/<int:pk>/delete/', dv.ticket_delete, name='dash_ticket_delete'),
+
+    # notifications + email
+    path('dashboard/notifications/', dv.notification_settings, name='dash_notifications'),
 
     # messages
     path('dashboard/messages/', dv.message_list, name='dash_messages'),

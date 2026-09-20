@@ -2,7 +2,10 @@
 
 from decimal import Decimal
 
-from .models import Coupon, ProductVariant, SiteSettings
+from .models import (
+    Coupon, ProductVariant, SiteSettings, TICKET_EXTS, TICKET_MAX_FILES,
+    TICKET_MAX_FILE_MB, TicketAttachment,
+)
 
 CART_KEY = 'rgs_cart'
 COUPON_KEY = 'rgs_coupon'
@@ -208,3 +211,34 @@ class Cart:
                 'remaining_for_free': max(ZERO, threshold - after_discount) if threshold > ZERO else None,
             })
         return options
+
+
+# ------------------------------------------------------- ticket attachments
+def ticket_uploads(request):
+    """The files the visitor picked + the voice note recorded in the browser."""
+    files = request.FILES.getlist('files')
+    voice = request.FILES.get('voice')
+    if voice is not None:
+        if not (voice.name or '').lower().endswith(('.webm', '.ogg', '.mp4', '.m4a', '.wav', '.mp3')):
+            voice.name = 'voice-note.webm'
+        files = files + [voice]
+    return files
+
+
+def save_ticket_attachments(message, files):
+    """Attach images / recordings / files to a ticket message.
+
+    Returns the names we refused (wrong type, or bigger than TICKET_MAX_FILE_MB).
+    """
+    rejected = []
+    for upload in files[:TICKET_MAX_FILES]:
+        name = (upload.name or 'file')[:200]
+        ext = name.rsplit('.', 1)[-1].lower() if '.' in name else ''
+        if ext not in TICKET_EXTS or upload.size > TICKET_MAX_FILE_MB * 1024 * 1024:
+            rejected.append(name)
+            continue
+        TicketAttachment.objects.create(
+            message=message, file=upload, name=name,
+            kind=TicketAttachment.kind_for(name), size=upload.size,
+        )
+    return rejected

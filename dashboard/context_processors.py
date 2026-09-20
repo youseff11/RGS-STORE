@@ -2,7 +2,7 @@
 
 from .i18n import current_lang
 from .models import (
-    Announcement, Category, NavLink, Policy, SiteSettings, staff_permissions,
+    Announcement, Category, NavLink, Policy, SiteSettings, Ticket, staff_permissions,
 )
 from .utils import Cart
 
@@ -47,5 +47,10 @@ def store(request):
             'CART': cart,
             'CART_COUNT': cart.count,
             'IS_CUSTOMER': bool(user and user.is_authenticated and not user.is_staff),
+            # a badge on «الدعم» when the store answered a ticket
+            'TICKETS_UNREAD': (
+                Ticket.objects.filter(user=user, user_unread=True).count()
+                if user is not None and user.is_authenticated else 0
+            ),
         })
     return data

@@ -19,16 +19,20 @@ from django.views.decorators.http import require_POST
 
 from .forms import (
     AnnouncementForm, BannerForm, CategoryForm, ColorForm, CouponForm,
-    CountryForm, HomeSectionForm, NavLinkForm, PaymentSettingsForm, PolicyForm,
-    ProductForm, PromotionForm, ReviewForm, SiteSettingsForm, SizeForm, StaffForm,
+    CountryForm, HomeSectionForm, NavLinkForm, NotificationSettingsForm, PaymentSettingsForm,
+    PolicyForm, ProductForm, PromotionForm, ReviewForm, SiteSettingsForm, SizeForm, StaffForm,
     WorkCategoryForm, WorkForm,
 )
+from . import mailer
 from .models import (
     Announcement, Banner, Category, ContactMessage, Country, Coupon, CustomerProfile,
     HomeSection, NavLink, Order, Policy, Product, ProductColor, ProductImage, ProductVariant,
-    PAYMENT_STATUSES, Promotion, Review, STAFF_PERMISSIONS, SiteSettings, Size, StaffProfile, Work,
+    PAYMENT_STATUSES, Promotion, Review, STAFF_PERMISSIONS, SiteSettings, Size, StaffProfile,
+    TICKET_MAX_FILES, TICKET_MAX_FILE_MB, TICKET_STATUSES, Ticket, TicketMessage, Work,
     WorkCategory, WorkMedia, ensure_policy_defaults, staff_permissions,
 )
+
+from .utils import save_ticket_attachments, ticket_uploads
 
 User = get_user_model()
 
@@ -62,6 +66,8 @@ def _pending_counts():
     return {
         'new_orders': Order.objects.filter(status='pending').count(),
         'unread_messages': ContactMessage.objects.filter(is_read=False).count(),
+        'new_tickets': Ticket.objects.filter(admin_unread=True).exclude(status='closed').count(),
+        'open_tickets': Ticket.objects.exclude(status='closed').count(),
         'pending_reviews': Review.objects.filter(is_approved=False).count(),
         'pending_payments': Order.objects.filter(payment_status='pending').exclude(status='cancelled').count(),
     }
@@ -803,6 +809,113 @@ def message_delete(request, pk):
     get_object_or_404(ContactMessage, pk=pk).delete()
     messages.info(request, 'تم حذف الرسالة')
     return redirect('dash_messages')
+
+
+# =================================================================== tickets
+@perm_required('messages')
+def ticket_list(request):
+    status = request.GET.get('status') or ''
+    query = (request.GET.get('q') or '').strip()
+    tickets = Ticket.objects.select_related('user', 'order').annotate(n=Count('messages'))
+    if status in dict(TICKET_STATUSES):
+        tickets = tickets.filter(status=status)
+    elif status == 'unread':
+        tickets = tickets.filter(admin_unread=True).exclude(status='closed')
+    if query:
+        tickets = tickets.filter(
+            Q(number__icontains=query) | Q(subject__icontains=query)
+            | Q(user__first_name__icontains=query) | Q(user__last_name__icontains=query)
+            | Q(user__email__icontains=query)
+        )
+    counts = {
+        'all': Ticket.objects.count(),
+        'open': Ticket.objects.filter(status='open').count(),
+        'answered': Ticket.objects.filter(status='answered').count(),
+        'closed': Ticket.objects.filter(status='closed').count(),
+    }
+    return render(request, 'dashboard/tickets/list.html', {
+        'page_obj': _paginate(request, tickets), 'status': status, 'q': query, 'counts': counts,
+        'active_page': 'tickets', **_pending_counts(),
+    })
+
+
+@perm_required('messages')
+def ticket_detail(request, pk):
+    ticket = get_object_or_404(Ticket.objects.select_related('user', 'order'), pk=pk)
+
+    if request.method == 'POST':
+        action = request.POST.get('action') or 'reply'
+        if action == 'status':
+            new_status = request.POST.get('status') or ''
+            if new_status in dict(TICKET_STATUSES):
+                ticket.status = new_status
+                ticket.save(update_fields=['status', 'updated_at'])
+                messages.success(request, f'الحالة بقت: {ticket.status_label}')
+            return redirect('dash_ticket_detail', pk=ticket.pk)
+
+        body = (request.POST.get('body') or '').strip()
+        files = ticket_uploads(request)
+        if not body and not files:
+            messages.error(request, 'اكتب ردًا أو ارفع ملف')
+            return redirect('dash_ticket_detail', pk=ticket.pk)
+        with transaction.atomic():
+            message = TicketMessage.objects.create(
+                ticket=ticket, author=request.user, is_staff=True, body=body[:4000],
+            )
+            rejected = save_ticket_attachments(message, files)
+            ticket.touch(from_staff=True)
+        if rejected:
+            messages.warning(request, 'ملفات ما اتبعتش: ' + '، '.join(rejected[:3]))
+        mailer.ticket_staff_replied(ticket, message)
+        messages.success(request, 'تم إرسال الرد للعميل')
+        return redirect('dash_ticket_detail', pk=ticket.pk)
+
+    if ticket.admin_unread:
+        Ticket.objects.filter(pk=ticket.pk).update(admin_unread=False)
+        ticket.admin_unread = False
+    return render(request, 'dashboard/tickets/detail.html', {
+        'ticket': ticket,
+        'ticket_messages': ticket.messages.prefetch_related('attachments').select_related('author'),
+        'statuses': TICKET_STATUSES,
+        'max_files': TICKET_MAX_FILES, 'max_mb': TICKET_MAX_FILE_MB,
+        'orders': ticket.user.orders.order_by('-created_at')[:5],
+        'active_page': 'tickets', **_pending_counts(),
+    })
+
+
+@perm_required('messages')
+@require_POST
+def ticket_delete(request, pk):
+    get_object_or_404(Ticket, pk=pk).delete()
+    messages.info(request, 'تم حذف التذكرة')
+    return redirect('dash_tickets')
+
+
+# ============================================================= notifications
+@perm_required('settings')
+def notification_settings(request):
+    site = SiteSettings.load()
+    form = NotificationSettingsForm(request.POST or None, instance=site)
+    if request.method == 'POST':
+        if request.POST.get('action') == 'test':
+            target = (request.POST.get('test_email') or site.notify_email or site.smtp_user).strip()
+            if not site.mail_ready:
+                messages.error(request, 'شغّل الإيميلات واكتب بيانات SMTP والباسورد الأول')
+            else:
+                ok, error = mailer.send_test(site, target)
+                if ok:
+                    messages.success(request, f'اتبعت إيميل تجربة لـ {target} — شوف الإنبوكس')
+                else:
+                    messages.error(request, f'ما اتبعتش: {error}')
+            return redirect('dash_notifications')
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'تم حفظ إعدادات الإشعارات')
+            return redirect('dash_notifications')
+
+    return render(request, 'dashboard/notifications.html', {
+        'form': form, 'site': site, 'active_page': 'notifications', **_pending_counts(),
+    })
 
 
 # ================================================================== settings

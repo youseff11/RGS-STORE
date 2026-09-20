@@ -1,0 +1,88 @@
+{% extends 'base/dashboard_base.html' %}
+{% load store_tags %}
+{% block page_name %}تذكرة {{ ticket.number }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2>{{ ticket.subject }}</h2>
+    <p>
+      <span dir="ltr">{{ ticket.number }}</span> · {{ ticket.topic_label }} · {{ ticket.created_at|date:"Y/m/d — H:i" }}
+      · <span class="chip {% if ticket.status == 'open' %}chip-warn{% elif ticket.status == 'answered' %}chip-ok{% else %}chip-muted{% endif %}">{{ ticket.status_label }}</span>
+    </p>
+  </div>
+  <div class="flex">
+    <a class="btn btn-ghost" href="{% url 'dash_tickets' %}">رجوع</a>
+  </div>
+</div>
+
+<div class="split">
+  <div>
+    <div class="card">
+      {% include 'partials/ticket_thread.html' with staff_view=1 %}
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>{% include 'partials/icon.html' with name='reply' %} ردّك على العميل</h3></div>
+      {% if ticket.is_closed %}
+        <p class="muted small">التذكرة مقفولة — افتحها تاني من «الحالة» علشان تقدر ترد.</p>
+      {% else %}
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="reply">
+        <div class="field">
+          <textarea class="inp area" name="body" rows="4" maxlength="4000" placeholder="اكتب ردك هنا…"></textarea>
+        </div>
+        {% include 'partials/attach_box.html' %}
+        <button class="btn" type="submit" style="margin-top:14px">إرسال الرد</button>
+        {% if not SITE.mail_ready %}<span class="small muted" style="margin-inline-start:8px">الإيميلات مقفولة — العميل هيشوف الرد في حسابه بس</span>{% endif %}
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="card-head"><h3>{% include 'partials/icon.html' with name='user' %} العميل</h3></div>
+      <div class="flex" style="margin-bottom:12px">
+        <span class="mini-av is-lg">{{ ticket.customer_name|slice:":1"|upper }}</span>
+        <div>
+          <b>{{ ticket.customer_name }}</b>
+          <div class="small muted" dir="ltr">{{ ticket.user.email }}</div>
+        </div>
+      </div>
+      <table class="t" style="min-width:0">
+        <tr><th>الموبايل</th><td dir="ltr">{{ ticket.user.customer.phone|default:'—' }}</td></tr>
+        <tr><th>الدولة</th><td>{{ ticket.user.customer.country.name_ar|default:'—' }}</td></tr>
+        <tr><th>آخر رسالة</th><td>{{ ticket.last_message_at|date:"Y/m/d — H:i" }}</td></tr>
+      </table>
+      <a class="btn btn-sm btn-soft btn-block" style="margin-top:12px" href="{% url 'dash_customer_detail' ticket.user.pk %}">ملف العميل</a>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>حالة التذكرة</h3></div>
+      <form method="post" class="flex" style="flex-wrap:wrap;gap:8px">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="status">
+        {% for key, label in statuses %}
+          <button class="btn btn-sm {% if ticket.status == key %}{% else %}btn-soft{% endif %}" type="submit" name="status" value="{{ key }}">{{ label }}</button>
+        {% endfor %}
+      </form>
+      {% if ticket.order %}
+      <p class="small muted" style="margin:14px 0 6px">الطلب المرتبط</p>
+      <a class="btn btn-sm btn-ghost btn-block" href="{% url 'dash_order_detail' ticket.order.pk %}">{{ ticket.order.order_number }} · {% price ticket.order.total %}</a>
+      {% elif orders %}
+      <p class="small muted" style="margin:14px 0 6px">آخر طلبات العميل</p>
+      {% for order in orders %}
+        <a class="btn btn-sm btn-ghost btn-block" style="margin-bottom:6px" href="{% url 'dash_order_detail' order.pk %}">{{ order.order_number }} · {% price order.total %}</a>
+      {% endfor %}
+      {% endif %}
+
+      <form method="post" action="{% url 'dash_ticket_delete' ticket.pk %}" data-confirm="حذف التذكرة وكل مرفقاتها؟" style="margin-top:14px">
+        {% csrf_token %}
+        <button class="btn btn-sm btn-danger btn-block" type="submit">{% include 'partials/icon.html' with name='trash' %} حذف التذكرة</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

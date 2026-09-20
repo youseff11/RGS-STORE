@@ -15,13 +15,7 @@
 
 <section class="section-sm">
   <div class="wrap account-layout">
-    <nav class="account-tabs" aria-label="{% t 'account' %}">
-      <a href="?tab=orders" class="{% if tab == 'orders' %}is-active{% endif %}">{% include 'partials/icon.html' with name='bag' %} {% t 'my_orders' %} <small>{{ orders|length }}</small></a>
-      <a href="?tab=profile" class="{% if tab == 'profile' %}is-active{% endif %}">{% include 'partials/icon.html' with name='user' %} {% t 'my_profile' %}</a>
-      <a href="?tab=password" class="{% if tab == 'password' %}is-active{% endif %}">{% include 'partials/icon.html' with name='lock' %} {% t 'change_password' %}</a>
-      {% if can_review %}<a href="{% url 'reviews' %}#write" class="tab-cta">{% include 'partials/icon.html' with name='star' %} {% t 'add_review' %}</a>{% endif %}
-      <form method="post" action="{% url 'account_logout' %}">{% csrf_token %}<button type="submit">{% include 'partials/icon.html' with name='logout' %} {% t 'logout' %}</button></form>
-    </nav>
+    {% include 'partials/account_nav.html' with active=tab orders_count=orders|length %}
 
     <div>
       {% if tab == 'profile' %}

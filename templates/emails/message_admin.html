@@ -1,0 +1,14 @@
+{% extends 'emails/base.html' %}
+{% block heading %}رسالة جديدة من {{ contact.name }}{% endblock %}
+{% block preview %}{{ contact.subject|default:'رسالة من صفحة اتصل بنا' }}{% endblock %}
+{% block lead %}وصلت رسالة جديدة من صفحة «اتصل بنا».{% endblock %}
+{% block content %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+  {% include 'emails/_parts.html' with part='row' label='الاسم' value=contact.name %}
+  {% include 'emails/_parts.html' with part='row' label='الإيميل' value=contact.email %}
+  {% include 'emails/_parts.html' with part='row' label='الموبايل' value=contact.phone %}
+  {% include 'emails/_parts.html' with part='row' label='الموضوع' value=contact.subject %}
+</table>
+{% include 'emails/_parts.html' with part='note' value=contact.message %}
+{% include 'emails/_parts.html' with part='button' label='افتح الرسالة' url=url %}
+{% endblock %}

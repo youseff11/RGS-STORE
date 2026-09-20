@@ -1,0 +1,59 @@
+{% extends 'base/base.html' %}
+{% load store_tags %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="wrap">
+    <div class="crumbs">
+      <a href="{% url 'account' %}">{% t 'account' %}</a> <span>/</span>
+      <a href="{% url 'support' %}">{% t 'support' %}</a> <span>/</span> <span>{% t 'new_ticket' %}</span>
+    </div>
+    <h1>{% t 'new_ticket' %}</h1>
+    <p>{% t 'support_sub' %}</p>
+  </div>
+</section>
+
+<section class="section-sm">
+  <div class="wrap" style="max-width:760px">
+    <form class="form-card" method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+
+      <div class="field {% if errors.subject %}has-error{% endif %}">
+        <label>{% t 'ticket_subject' %} <span class="req">*</span></label>
+        <input type="text" name="subject" value="{{ data.subject }}" maxlength="160" required>
+        {% if errors.subject %}<div class="err">{{ errors.subject }}</div>{% endif %}
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>{% t 'ticket_topic' %}</label>
+          <select name="topic">
+            {% for key, label in topics %}
+              <option value="{{ key }}" {% if data.topic == key %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label>{% t 'ticket_order' %}</label>
+          <select name="order">
+            <option value="">—</option>
+            {% for order in orders %}
+              <option value="{{ order.pk }}" {% if data.order == order.pk|stringformat:'s' %}selected{% endif %}>{{ order.order_number }} · {{ order.created_at|date:"Y/m/d" }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="field {% if errors.body %}has-error{% endif %}">
+        <label>{% t 'ticket_body' %} <span class="req">*</span></label>
+        <textarea name="body" rows="6" maxlength="4000">{{ data.body }}</textarea>
+        {% if errors.body %}<div class="err">{{ errors.body }}</div>{% endif %}
+      </div>
+
+      {% include 'partials/attach_box.html' %}
+
+      <button class="btn btn-lg" type="submit" style="margin-top:18px">{% t 'open_ticket' %}</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

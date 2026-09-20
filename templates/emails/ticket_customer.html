@@ -1,0 +1,17 @@
+{% extends 'emails/base.html' %}
+{% block heading %}رد على تذكرتك {{ ticket.number }}{% endblock %}
+{% block preview %}{{ ticket.subject }}{% endblock %}
+{% block lead %}فريق {{ site.brand_name_ar|default:site.brand_name_en }} رد على تذكرتك.{% endblock %}
+{% block content %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+  {% include 'emails/_parts.html' with part='row' label='رقم التذكرة' value=ticket.number %}
+  {% include 'emails/_parts.html' with part='row' label='الموضوع' value=ticket.subject %}
+</table>
+
+{% if message.body %}{% include 'emails/_parts.html' with part='note' value=message.body %}{% endif %}
+{% if message.attachments.all %}
+<p style="margin:14px 0 0;font-size:13px;color:#8A7D74;">فيه {{ message.attachments.all|length }} مرفق مع الرد — تقدر تشوفه من صفحة التذكرة.</p>
+{% endif %}
+
+{% include 'emails/_parts.html' with part='button' label='افتح التذكرة' url=url %}
+{% endblock %}

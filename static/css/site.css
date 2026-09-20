@@ -1625,6 +1625,36 @@ html[dir="rtl"] .pass-eye { inset-inline-end: auto; left: 8px; }
   .footer-brand .mr-logo { height: 34px; }
 }
 
+/* ======================================================= support tickets == */
+.account-tabs .dot-new {
+  margin-inline-start: auto; min-width: 20px; height: 20px; padding: 0 6px; display: grid; place-items: center;
+  border-radius: 100px; background: var(--accent); color: #fff; font-size: 11px; font-weight: 800;
+}
+.tickets-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.tickets-head h3 { margin: 0; font-size: 17px; }
+.ticket-list { display: grid; gap: 10px; }
+.ticket-row {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px; flex-wrap: wrap;
+  border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line);
+  transition: border-color .2s, transform .2s var(--ease);
+}
+.ticket-row:hover { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); transform: translateY(-1px); }
+.ticket-ico {
+  width: 38px; height: 38px; flex: none; border-radius: 11px; display: grid; place-items: center;
+  background: var(--accent-soft); color: var(--accent-text);
+}
+.ticket-ico svg { width: 18px; height: 18px; }
+.ticket-main { flex: 1 1 200px; min-width: 0; display: grid; gap: 2px; }
+.ticket-main b { font-size: 14.5px; }
+.ticket-meta { font-size: 12px; color: var(--muted); }
+.empty-box { text-align: center; display: grid; justify-items: center; gap: 12px; padding: 42px 20px; }
+.empty-box .empty-ico {
+  width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--accent-soft); color: var(--accent-text);
+}
+.empty-box .empty-ico svg { width: 24px; height: 24px; }
+.empty-box p { margin: 0; color: var(--muted); }
+
 @media print {
   .header, .footer, .announce, .wa-float, .toasts, .no-print { display: none !important; }
   body { background: #fff; color: #000; }

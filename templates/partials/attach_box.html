@@ -1,0 +1,37 @@
+{% load store_tags %}
+{% comment %}Attachments + voice note. Used by the ticket form and the ticket reply box.
+Needs: max_files, max_mb — and the form must be enctype="multipart/form-data".{% endcomment %}
+<div class="attach-box" data-attach>
+  <div class="attach-actions">
+    <label class="attach-btn">
+      {% include 'partials/icon.html' with name='paperclip' %}
+      <span>{% t 'add_files' %}</span>
+      <input type="file" name="files" multiple hidden data-attach-input
+             accept="image/*,audio/*,video/mp4,.pdf,.doc,.docx,.txt,.xlsx,.csv,.zip">
+    </label>
+
+    <button type="button" class="attach-btn" data-record-start>
+      {% include 'partials/icon.html' with name='mic' %}
+      <span>{% t 'record_voice' %}</span>
+    </button>
+
+    <button type="button" class="attach-btn is-recording" data-record-stop hidden>
+      <span class="rec-dot" aria-hidden="true"></span>
+      <span>{% t 'stop_recording' %}</span>
+      <span class="rec-time" data-record-time>0:00</span>
+    </button>
+
+    <span class="attach-hint">{% t 'files_hint' count=max_files size=max_mb %}</span>
+  </div>
+
+  <div class="attach-list" data-attach-list hidden></div>
+
+  <div class="attach-voice" data-voice-box hidden>
+    <audio controls data-voice-player></audio>
+    <button type="button" class="attach-x" data-voice-clear aria-label="{% t 'delete_recording' %}">
+      {% include 'partials/icon.html' with name='trash' %}
+    </button>
+  </div>
+
+  <p class="attach-warn" data-record-error hidden>{% t 'record_unsupported' %}</p>
+</div>

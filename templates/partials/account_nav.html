@@ -1,0 +1,10 @@
+{% load store_tags %}
+{# Tabs shared by /account/ and the support pages. Pass `active`: orders | profile | password | support #}
+<nav class="account-tabs" aria-label="{% t 'account' %}">
+  <a href="{% url 'account' %}?tab=orders" class="{% if active == 'orders' %}is-active{% endif %}">{% include 'partials/icon.html' with name='bag' %} {% t 'my_orders' %}{% if orders_count != None %} <small>{{ orders_count }}</small>{% endif %}</a>
+  <a href="{% url 'support' %}" class="{% if active == 'support' %}is-active{% endif %}">{% include 'partials/icon.html' with name='chat' %} {% t 'support' %}{% if TICKETS_UNREAD %} <small class="dot-new">{{ TICKETS_UNREAD }}</small>{% endif %}</a>
+  <a href="{% url 'account' %}?tab=profile" class="{% if active == 'profile' %}is-active{% endif %}">{% include 'partials/icon.html' with name='user' %} {% t 'my_profile' %}</a>
+  <a href="{% url 'account' %}?tab=password" class="{% if active == 'password' %}is-active{% endif %}">{% include 'partials/icon.html' with name='lock' %} {% t 'change_password' %}</a>
+  {% if can_review %}<a href="{% url 'reviews' %}#write" class="tab-cta">{% include 'partials/icon.html' with name='star' %} {% t 'add_review' %}</a>{% endif %}
+  <form method="post" action="{% url 'account_logout' %}">{% csrf_token %}<button type="submit">{% include 'partials/icon.html' with name='logout' %} {% t 'logout' %}</button></form>
+</nav>
