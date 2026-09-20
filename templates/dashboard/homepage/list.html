@@ -1,0 +1,44 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}الصفحة الرئيسية{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>أقسام الصفحة الرئيسية</h2><p>رتّب الأقسام بالأسهم، واظهر/اخفي اللي عايزه، وعدّل عنوان ونص كل قسم</p></div>
+  <a class="btn btn-ghost" href="{% url 'home' %}" target="_blank">معاينة الرئيسية {% include 'partials/icon.html' with name='external' %}</a>
+</div>
+
+<div class="section-list">
+  {% for section in sections %}
+  <div class="section-row{% if not section.is_active %} is-off{% endif %}">
+    <div class="section-move">
+      <form method="post" action="{% url 'dash_home_move' section.pk 'up' %}">{% csrf_token %}<button type="submit" {% if forloop.first %}disabled{% endif %} aria-label="لفوق">{% include 'partials/icon.html' with name='up' %}</button></form>
+      <form method="post" action="{% url 'dash_home_move' section.pk 'down' %}">{% csrf_token %}<button type="submit" {% if forloop.last %}disabled{% endif %} aria-label="لتحت">{% include 'partials/icon.html' with name='down' %}</button></form>
+    </div>
+    <span class="section-num">{{ forloop.counter }}</span>
+    <div class="section-info">
+      <b>{{ section.label }}</b>
+      <span class="small muted">
+        {% if section.key == 'hero' %}<span dir="ltr">{{ section.title_en|default:section.title_ar|linebreaksbr }}</span> · إنجليزي في النسختين{% elif section.title_ar %}{{ section.title_ar|linebreaksbr }}{% elif section.key == 'banners' %}من صفحة «البانرات»{% elif section.key == 'features' %}توصيل · دفع آمن · جودة · دعم{% else %}—{% endif %}
+        {% if section.uses_limit %} · {{ section.items_limit }} عناصر{% endif %}
+      </span>
+    </div>
+    <form method="post" action="{% url 'dash_home_toggle' section.pk %}">{% csrf_token %}
+      <button class="toggle-pill{% if section.is_active %} is-on{% endif %}" type="submit" aria-pressed="{% if section.is_active %}true{% else %}false{% endif %}">
+        <span></span>{% if section.is_active %}ظاهر{% else %}مخفي{% endif %}
+      </button>
+    </form>
+    <a class="btn btn-sm btn-soft" href="{% url 'dash_home_edit' section.pk %}">{% include 'partials/icon.html' with name='edit' %} تعديل</a>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card" style="margin-top:18px">
+  <div class="card-head"><h3>مصادر المحتوى</h3></div>
+  <div class="grid g4" style="gap:8px">
+    <a class="btn btn-soft" href="{% url 'dash_banners' %}">البانرات</a>
+    <a class="btn btn-soft" href="{% url 'dash_works' %}">أعمالنا (علّم «يظهر في الرئيسية»)</a>
+    <a class="btn btn-soft" href="{% url 'dash_reviews' %}?status=featured">التقييمات المميزة</a>
+    <a class="btn btn-soft" href="{% url 'dash_settings' %}">نص «من نحن»</a>
+  </div>
+</div>
+{% endblock %}

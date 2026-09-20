@@ -2,7 +2,7 @@
 <header class="header">
   <div class="wrap header-inner">
 
-    <a class="logo" href="{% url 'home' %}" aria-label="MR — Home">
+    <a class="logo" href="{% url 'home' %}" aria-label="{{ SITE.brand_name|default:'MR' }}">
       {% if SITE.logo %}
         <img src="{{ SITE.logo.url }}" alt="{{ SITE.brand_name }}">
       {% else %}
@@ -10,18 +10,47 @@
       {% endif %}
     </a>
 
-    <nav class="nav">
-      <a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}is-active{% endif %}">{% t 'home' %}</a>
-      <a href="{% url 'shop' %}" class="{% if request.resolver_match.url_name == 'shop' %}is-active{% endif %}">{% t 'shop' %}</a>
-      {% for cat in NAV_CATEGORIES|slice:":3" %}
-        <a class="nav-cat" href="{% url 'category_detail' cat.slug %}">{{ cat.name }}</a>
+    {# links come from «القائمة» in the dashboard #}
+    <nav class="nav" aria-label="{% t 'menu' %}">
+      {% for link in NAV_LINKS %}
+        <a href="{{ link.href }}"{% if link.new_tab %} target="_blank" rel="noopener"{% endif %}
+           class="{% if link.link_type == 'category' %}nav-cat{% endif %}{% if request.get_full_path == link.href %} is-active{% endif %}">{{ link.label }}</a>
       {% endfor %}
-      <a href="{% url 'shop' %}?sale=1">{% t 'sale' %}</a>
-      <a href="{% url 'about' %}" class="{% if request.resolver_match.url_name == 'about' %}is-active{% endif %}">{% t 'about' %}</a>
-      <a href="{% url 'contact' %}" class="{% if request.resolver_match.url_name == 'contact' %}is-active{% endif %}">{% t 'contact' %}</a>
     </nav>
 
     <div class="header-actions">
+      <a class="lang-btn" href="{% lang_switch_url ALT_LANG %}" hreflang="{{ ALT_LANG }}" lang="{{ ALT_LANG }}"
+         aria-label="{% t 'switch_lang' %}" title="{% t 'switch_lang' %}">
+        {% include 'partials/icon.html' with name='globe' %}
+        <span>{% t 'switch_lang_short' %}</span>
+      </a>
+
+      {% if user.is_authenticated %}
+        <div class="acct" data-menu>
+          <button class="icon-btn acct-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="{% t 'account' %}" data-menu-toggle>
+            <span class="acct-av">{{ user.first_name|default:user.get_username|slice:":1"|upper }}</span>
+          </button>
+          <div class="acct-menu" role="menu">
+            <div class="acct-head">
+              <b>{{ user.get_full_name|default:user.get_username }}</b>
+              <span dir="ltr">{{ user.email }}</span>
+            </div>
+            <a role="menuitem" href="{% url 'account' %}">{% include 'partials/icon.html' with name='bag' %} {% t 'my_orders' %}</a>
+            <a role="menuitem" href="{% url 'account' %}?tab=profile">{% include 'partials/icon.html' with name='user' %} {% t 'my_profile' %}</a>
+            <a role="menuitem" href="{% url 'reviews' %}">{% include 'partials/icon.html' with name='star' %} {% t 'reviews' %}</a>
+            {% if user.is_staff %}<a role="menuitem" href="{% url 'dash_index' %}">{% include 'partials/icon.html' with name='layout' %} لوحة التحكم</a>{% endif %}
+            <form method="post" action="{% url 'account_logout' %}">
+              {% csrf_token %}
+              <button type="submit" role="menuitem">{% include 'partials/icon.html' with name='logout' %} {% t 'logout' %}</button>
+            </form>
+          </div>
+        </div>
+      {% else %}
+        <a class="icon-btn" href="{% url 'account_login' %}?next={{ request.get_full_path|urlencode }}" aria-label="{% t 'login' %}" title="{% t 'login' %}">
+          {% include 'partials/icon.html' with name='user' %}
+        </a>
+      {% endif %}
+
       <a class="icon-btn cart-btn" href="{% url 'cart' %}" aria-label="{% t 'cart' %}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
           <path d="M7.2 3h9.6l2.2 3.4v12.1a2.5 2.5 0 01-2.5 2.5H7.5A2.5 2.5 0 015 18.5V6.4L7.2 3z"/>
@@ -30,15 +59,6 @@
         </svg>
         <span class="cart-count" {% if not CART_COUNT %}style="display:none"{% endif %}>{{ CART_COUNT }}</span>
       </a>
-
-      <button class="icon-btn" data-theme-toggle aria-label="{% t 'theme' %}">
-        <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
-          <circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
-        </svg>
-        <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" style="display:none">
-          <path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/>
-        </svg>
-      </button>
 
       <button class="icon-btn burger" data-drawer-open aria-label="{% t 'menu' %}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
@@ -53,7 +73,7 @@
   <div class="drawer-veil" data-drawer-close></div>
   <aside class="drawer-panel">
     <div class="between" style="margin-bottom:18px">
-      <a class="logo logo-drawer" href="{% url 'home' %}" aria-label="MR — Home">{% include 'partials/logo.html' %}</a>
+      <a class="logo logo-drawer" href="{% url 'home' %}" aria-label="{{ SITE.brand_name|default:'MR' }}">{% include 'partials/logo.html' %}</a>
       <button class="icon-btn" data-drawer-close aria-label="{% t 'close' %}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
@@ -67,15 +87,20 @@
     </form>
 
     <nav>
-      <a href="{% url 'home' %}">{% t 'home' %}</a>
-      <a href="{% url 'shop' %}">{% t 'shop' %}</a>
-      {% for cat in NAV_CATEGORIES %}
-        <a href="{% url 'category_detail' cat.slug %}">{{ cat.name }}</a>
+      {% for link in NAV_LINKS %}
+        <a href="{{ link.href }}"{% if link.new_tab %} target="_blank" rel="noopener"{% endif %}>{{ link.label }}</a>
       {% endfor %}
-      <a href="{% url 'shop' %}?sale=1">{% t 'sale' %}</a>
       <a href="{% url 'track_order' %}">{% t 'track_order' %}</a>
-      <a href="{% url 'about' %}">{% t 'about' %}</a>
-      <a href="{% url 'contact' %}">{% t 'contact' %}</a>
     </nav>
+
+    <div class="drawer-foot">
+      {% if user.is_authenticated %}
+        <a class="btn btn-ghost btn-block" href="{% url 'account' %}">{% include 'partials/icon.html' with name='user' %} {% t 'account' %}</a>
+      {% else %}
+        <a class="btn btn-block" href="{% url 'account_login' %}">{% t 'login' %}</a>
+        <a class="btn btn-ghost btn-block" href="{% url 'account_register' %}">{% t 'register' %}</a>
+      {% endif %}
+      <a class="btn btn-soft btn-block" href="{% lang_switch_url ALT_LANG %}" lang="{{ ALT_LANG }}">{% include 'partials/icon.html' with name='globe' %} {% t 'switch_lang' %}</a>
+    </div>
   </aside>
 </div>

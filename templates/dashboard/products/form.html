@@ -5,7 +5,7 @@
 <div class="page-head">
   <div>
     <h2>{% if product %}تعديل: {{ product.name }}{% else %}إضافة منتج جديد{% endif %}</h2>
-    <p>البيانات الأساسية — الألوان والصور والمخزون في خطوات تالية · المتجر إنجليزي فاكتب الأسماء بالإنجليزي</p>
+    <p>البيانات الأساسية — الألوان والصور والمخزون في خطوات تالية · اكتب بالعربي، والإنجليزي اختياري</p>
   </div>
   <a class="btn btn-ghost" href="{% url 'dash_products' %}">رجوع</a>
 </div>
@@ -26,7 +26,7 @@
     <div>
       <div class="card">
         <div class="card-head"><h3>بيانات المنتج</h3></div>
-        <div class="field"><label>اسم المنتج</label>{{ form.name_en }}{% for e in form.name_en.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+        {% include 'dashboard/_pair.html' with ar=form.name_ar en=form.name_en label='اسم المنتج' %}
         <div class="grid g2">
           <div class="field"><label>القسم</label>{{ form.category }}</div>
           <div class="field"><label>كود المنتج (SKU)</label>{{ form.sku }}</div>
@@ -35,8 +35,8 @@
           <div class="field"><label>السعر</label>{{ form.price }}{% for e in form.price.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
           <div class="field"><label>السعر قبل الخصم (اختياري)</label>{{ form.compare_price }}</div>
         </div>
-        <div class="field"><label>وصف مختصر</label>{{ form.short_en }}</div>
-        <div class="field"><label>الوصف الكامل</label>{{ form.description_en }}</div>
+        {% include 'dashboard/_pair.html' with ar=form.short_ar en=form.short_en label='وصف مختصر' %}
+        {% include 'dashboard/_pair.html' with ar=form.description_ar en=form.description_en label='الوصف الكامل' %}
       </div>
     </div>
 

@@ -1,0 +1,94 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}صور وفيديوهات العمل{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>{{ work.title_ar }}</h2><p>ارفع صور وفيديوهات، أو حط لينك يوتيوب — رتبهم واكتب تعليق على كل واحدة</p></div>
+  <a class="btn btn-ghost" href="{% url 'dash_works' %}">رجوع</a>
+</div>
+
+<div class="filters-bar">
+  <a class="btn btn-sm btn-ghost" href="{% url 'dash_work_edit' work.pk %}">١. البيانات والبانر</a>
+  <a class="btn btn-sm" href="{% url 'dash_work_media' work.pk %}">٢. الصور والفيديوهات</a>
+  <span class="spacer"></span>
+  <a class="btn btn-sm btn-soft" href="{{ work.get_absolute_url }}" target="_blank">معاينة {% include 'partials/icon.html' with name='external' %}</a>
+</div>
+
+<div class="grid g3 upload-cards">
+  <form class="card" method="post" enctype="multipart/form-data">
+    {% csrf_token %}<input type="hidden" name="action" value="upload_images">
+    <div class="card-head"><h3>{% include 'partials/icon.html' with name='image' %} صور</h3></div>
+    <div class="field"><input class="inp file" type="file" name="images" accept="image/*" multiple required data-multi-preview>
+      <div class="help">تقدر تختار كذا صورة مرة واحدة</div><div class="multi-preview"></div></div>
+    <button class="btn btn-block" type="submit">رفع الصور</button>
+  </form>
+
+  <form class="card" method="post" enctype="multipart/form-data">
+    {% csrf_token %}<input type="hidden" name="action" value="upload_video">
+    <div class="card-head"><h3>{% include 'partials/icon.html' with name='film' %} فيديو من جهازك</h3></div>
+    <div class="field"><label>الفيديو (MP4 / WEBM / MOV)</label><input class="inp file" type="file" name="video" accept="video/mp4,video/webm,video/quicktime,.mov,.m4v" required></div>
+    <div class="field"><label>صورة غلاف (اختياري)</label><input class="inp file" type="file" name="poster" accept="image/*"></div>
+    <div class="lang-pair">
+      <div class="field"><label>تعليق <span class="lang-tag ar">عربي</span></label><input class="inp" name="caption_ar" dir="rtl"></div>
+      <div class="field"><label>تعليق <span class="lang-tag en">English</span></label><input class="inp" name="caption_en" dir="ltr"></div>
+    </div>
+    <button class="btn btn-block" type="submit">رفع الفيديو</button>
+  </form>
+
+  <form class="card" method="post" enctype="multipart/form-data">
+    {% csrf_token %}<input type="hidden" name="action" value="add_embed">
+    <div class="card-head"><h3>{% include 'partials/icon.html' with name='play' %} لينك يوتيوب / فيميو</h3></div>
+    <div class="field"><label>الرابط</label><input class="inp" name="embed_url" dir="ltr" placeholder="https://youtu.be/..." required></div>
+    <div class="field"><label>صورة غلاف (اختياري)</label><input class="inp file" type="file" name="poster" accept="image/*"><div class="help">يوتيوب بيجيب صورة لوحده</div></div>
+    <div class="lang-pair">
+      <div class="field"><label>تعليق <span class="lang-tag ar">عربي</span></label><input class="inp" name="caption_ar" dir="rtl"></div>
+      <div class="field"><label>تعليق <span class="lang-tag en">English</span></label><input class="inp" name="caption_en" dir="ltr"></div>
+    </div>
+    <button class="btn btn-block" type="submit">إضافة</button>
+  </form>
+</div>
+
+<div class="card" style="margin-top:18px">
+  <div class="card-head"><h3>محتوى العمل ({{ media|length }})</h3><span class="small muted">الترتيب: الرقم الأصغر يظهر الأول</span></div>
+  {% if media %}
+  <form method="post" enctype="multipart/form-data" id="media-form">
+    {% csrf_token %}<input type="hidden" name="action" value="save_items">
+    <div class="media-grid">
+      {% for item in media %}
+      <div class="media-cell">
+        <div class="media-thumb">
+          {% if item.thumb_url %}<img src="{{ item.thumb_url }}" alt="">
+          {% elif item.kind == 'video' %}<video src="{{ item.video.url }}#t=0.5" preload="metadata" muted></video>
+          {% else %}<span class="media-ph">{% include 'partials/icon.html' with name='film' %}</span>{% endif %}
+          <span class="chip {% if item.is_video %}chip-accent{% else %}chip-muted{% endif %} media-kind">{{ item.get_kind_display }}</span>
+          {% if item.kind == 'image' and work.cover.name == item.image.name %}<span class="chip chip-ok media-cover-tag">البانر</span>{% endif %}
+        </div>
+        <div class="media-fields">
+          <div class="grid" style="grid-template-columns:70px 1fr;gap:8px">
+            <input class="inp" type="number" min="0" name="m{{ item.pk }}_order" value="{{ item.ordering }}" title="الترتيب" aria-label="الترتيب">
+            <input class="inp" name="m{{ item.pk }}_caption_ar" value="{{ item.caption_ar }}" placeholder="تعليق (عربي)" dir="rtl">
+          </div>
+          <input class="inp" name="m{{ item.pk }}_caption_en" value="{{ item.caption_en }}" placeholder="Caption (English)" dir="ltr">
+          {% if item.is_video %}<label class="small muted">غلاف الفيديو <input class="inp file" type="file" name="m{{ item.pk }}_poster" accept="image/*"></label>{% endif %}
+          {% if item.kind == 'embed' %}<div class="small muted" dir="ltr" style="text-align:start;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ item.embed_url }}</div>{% endif %}
+        </div>
+        <div class="media-actions">
+          {% if item.kind == 'image' and work.cover.name != item.image.name %}
+            <button class="btn btn-sm btn-ghost" type="submit" form="cover-{{ item.pk }}">{% include 'partials/icon.html' with name='image' %} اجعلها البانر</button>
+          {% endif %}
+          <button class="btn btn-sm btn-danger" type="submit" form="del-{{ item.pk }}">{% include 'partials/icon.html' with name='trash' %}</button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <button class="btn" type="submit" style="margin-top:16px">حفظ الترتيب والتعليقات</button>
+  </form>
+  {% for item in media %}
+    <form id="del-{{ item.pk }}" method="post" action="{% url 'dash_work_media_delete' item.pk %}" data-confirm="حذف الملف ده؟">{% csrf_token %}</form>
+    {% if item.kind == 'image' %}<form id="cover-{{ item.pk }}" method="post" action="{% url 'dash_work_media_cover' item.pk %}">{% csrf_token %}</form>{% endif %}
+  {% endfor %}
+  {% else %}
+    <div class="empty"><div class="ico ico-badge">{% include 'partials/icon.html' with name='image' %}</div>لسه مفيش صور أو فيديوهات</div>
+  {% endif %}
+</div>
+{% endblock %}

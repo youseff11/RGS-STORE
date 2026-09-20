@@ -9,7 +9,7 @@
       <a href="{% url 'cart' %}">{% t 'cart' %}</a> <span>/</span> <span>{% t 'checkout' %}</span>
     </div>
     <h1>{% t 'checkout_title' %}</h1>
-    <p>{% t 'cod_note' %}</p>
+    <p>{% t 'shipping_details' %} · {% t 'choose_payment' %}</p>
   </div>
 </section>
 
@@ -30,7 +30,7 @@
           </div>
           <div class="field {% if errors.phone %}has-error{% endif %}">
             <label>{% t 'phone' %} <span class="req">*</span></label>
-            <input type="tel" name="phone" value="{{ data.phone }}" dir="ltr" required>
+            <input type="tel" name="phone" value="{{ data.phone }}" dir="ltr" placeholder="01xxxxxxxxx" required>
             {% if errors.phone %}<div class="err">{{ errors.phone }}</div>{% endif %}
           </div>
         </div>
@@ -40,9 +40,10 @@
             <label>{% t 'phone_alt' %}</label>
             <input type="tel" name="phone_alt" value="{{ data.phone_alt }}" dir="ltr">
           </div>
-          <div class="field">
+          <div class="field {% if errors.email %}has-error{% endif %}">
             <label>{% t 'email' %}</label>
             <input type="email" name="email" value="{{ data.email }}" dir="ltr">
+            {% if errors.email %}<div class="err">{{ errors.email }}</div>{% endif %}
           </div>
         </div>
 
@@ -78,15 +79,26 @@
       </div>
 
       <div class="form-card" style="margin-bottom:18px">
-        <h3>{% t 'payment_method' %}</h3>
-        <div class="pay-option">
-          <span class="ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="26" height="26"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6 12h.01M18 12h.01"/></svg>
-          </span>
-          <div>
-            <h4>{% t 'cod' %}</h4>
-            <p>{% t 'cod_note' %}</p>
-          </div>
+        <h3>{% t 'choose_payment' %}</h3>
+        <div class="pay-options">
+          {% for method in methods %}
+            <label class="pay-option">
+              <input type="radio" name="payment_method" value="{{ method }}" {% if data.payment_method == method %}checked{% endif %}>
+              <span class="ico">
+                {% if method == 'paypal' %}{% include 'partials/icon.html' with name='card' %}{% else %}{% include 'partials/icon.html' with name='wallet' %}{% endif %}
+              </span>
+              <span class="pay-text">
+                {% if method == 'paypal' %}
+                  <h4>{% t 'pay_paypal' %} <span class="pp-mark" aria-hidden="true">PayPal</span></h4>
+                  <p>{% t 'pay_paypal_note' %}</p>
+                {% else %}
+                  <h4>{% t 'cod' %}</h4>
+                  <p>{% t 'cod_note' %}</p>
+                {% endif %}
+              </span>
+              <span class="pay-check" aria-hidden="true">{% include 'partials/icon.html' with name='check' %}</span>
+            </label>
+          {% endfor %}
         </div>
       </div>
 
@@ -107,8 +119,9 @@
           </div>
           {% endfor %}
         </div>
-        <button class="btn btn-lg btn-block" type="submit" style="margin-top:18px">
-          {% t 'place_order' %} — {% price totals.total %}
+        <button class="btn btn-lg btn-block" type="submit" style="margin-top:18px" data-checkout-submit
+                data-label-paypal="{% t 'continue_to_payment' %}" data-label-cod="{% t 'place_order' %}">
+          <span data-submit-label>{% if data.payment_method == 'paypal' %}{% t 'continue_to_payment' %}{% else %}{% t 'place_order' %}{% endif %}</span> — {% price totals.total %}
         </button>
       </div>
     </form>

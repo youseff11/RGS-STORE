@@ -22,7 +22,26 @@ urlpatterns = [
 
     path('checkout/', views.checkout, name='checkout'),
     path('order/<str:number>/success/', views.order_success, name='order_success'),
+    path('order/<str:number>/pay/', views.order_pay, name='order_pay'),
+    path('order/<str:number>/pay/paypal/create/', views.paypal_create, name='paypal_create'),
+    path('order/<str:number>/pay/paypal/capture/', views.paypal_capture, name='paypal_capture'),
+    path('order/<str:number>/pay/sent/', views.order_paid_manual, name='order_paid_manual'),
     path('track/', views.track_order, name='track_order'),
+
+    # accounts
+    path('account/', views.account, name='account'),
+    path('account/login/', views.account_login, name='account_login'),
+    path('account/register/', views.account_register, name='account_register'),
+    path('account/logout/', views.account_logout, name='account_logout'),
+    path('account/orders/<str:number>/', views.account_order, name='account_order'),
+
+    # portfolio + reviews + pages
+    path('works/', views.works, name='works'),
+    path('works/<str:slug>/', views.work_detail, name='work_detail'),
+    path('reviews/', views.reviews, name='reviews'),
+    path('reviews/new/', views.review_submit, name='review_submit'),
+    path('policies/<str:slug>/', views.policy_detail, name='policy_detail'),
+    path('lang/<str:code>/', views.set_language, name='set_language'),
 
     path('about/', views.about, name='about'),
     path('contact/', views.contact, name='contact'),
@@ -96,6 +115,57 @@ urlpatterns = [
     path('dashboard/messages/<int:pk>/', dv.message_detail, name='dash_message_detail'),
     path('dashboard/messages/<int:pk>/delete/', dv.message_delete, name='dash_message_delete'),
 
+    # customers
+    path('dashboard/customers/', dv.customer_list, name='dash_customers'),
+    path('dashboard/customers/export/', dv.customer_export, name='dash_customers_export'),
+    path('dashboard/customers/<int:pk>/', dv.customer_detail, name='dash_customer_detail'),
+    path('dashboard/customers/<int:pk>/toggle/', dv.customer_toggle, name='dash_customer_toggle'),
+    path('dashboard/customers/<int:pk>/delete/', dv.customer_delete, name='dash_customer_delete'),
+
+    # orders — payment
+    path('dashboard/orders/<int:pk>/payment/', dv.order_payment, name='dash_order_payment'),
+
+    # portfolio
+    path('dashboard/works/', dv.work_list, name='dash_works'),
+    path('dashboard/works/new/', dv.work_form, name='dash_work_new'),
+    path('dashboard/works/<int:pk>/edit/', dv.work_form, name='dash_work_edit'),
+    path('dashboard/works/<int:pk>/media/', dv.work_media, name='dash_work_media'),
+    path('dashboard/works/<int:pk>/toggle/<str:field>/', dv.work_toggle, name='dash_work_toggle'),
+    path('dashboard/works/<int:pk>/delete/', dv.work_delete, name='dash_work_delete'),
+    path('dashboard/works/media/<int:pk>/delete/', dv.work_media_delete, name='dash_work_media_delete'),
+    path('dashboard/works/media/<int:pk>/cover/', dv.work_media_cover, name='dash_work_media_cover'),
+    path('dashboard/works/categories/', dv.work_category_list, name='dash_work_categories'),
+    path('dashboard/works/categories/<int:pk>/delete/', dv.work_category_delete, name='dash_work_category_delete'),
+
+    # reviews
+    path('dashboard/reviews/', dv.review_list, name='dash_reviews'),
+    path('dashboard/reviews/<int:pk>/', dv.review_edit, name='dash_review_edit'),
+    path('dashboard/reviews/<int:pk>/toggle/<str:field>/', dv.review_toggle, name='dash_review_toggle'),
+    path('dashboard/reviews/<int:pk>/delete/', dv.review_delete, name='dash_review_delete'),
+
+    # homepage + navbar + policies
+    path('dashboard/homepage/', dv.home_sections, name='dash_home'),
+    path('dashboard/homepage/<int:pk>/', dv.home_section_edit, name='dash_home_edit'),
+    path('dashboard/homepage/<int:pk>/move/<str:direction>/', dv.home_section_move, name='dash_home_move'),
+    path('dashboard/homepage/<int:pk>/toggle/', dv.home_section_toggle, name='dash_home_toggle'),
+    path('dashboard/navbar/', dv.nav_list, name='dash_nav'),
+    path('dashboard/navbar/new/', dv.nav_form, name='dash_nav_new'),
+    path('dashboard/navbar/<int:pk>/edit/', dv.nav_form, name='dash_nav_edit'),
+    path('dashboard/navbar/<int:pk>/move/<str:direction>/', dv.nav_move, name='dash_nav_move'),
+    path('dashboard/navbar/<int:pk>/toggle/', dv.nav_toggle, name='dash_nav_toggle'),
+    path('dashboard/navbar/<int:pk>/delete/', dv.nav_delete, name='dash_nav_delete'),
+    path('dashboard/policies/', dv.policy_list, name='dash_policies'),
+    path('dashboard/policies/new/', dv.policy_form, name='dash_policy_new'),
+    path('dashboard/policies/<int:pk>/edit/', dv.policy_form, name='dash_policy_edit'),
+    path('dashboard/policies/<int:pk>/delete/', dv.policy_delete, name='dash_policy_delete'),
+
+    # staff
+    path('dashboard/staff/', dv.staff_list, name='dash_staff'),
+    path('dashboard/staff/new/', dv.staff_form, name='dash_staff_new'),
+    path('dashboard/staff/<int:pk>/edit/', dv.staff_form, name='dash_staff_edit'),
+    path('dashboard/staff/<int:pk>/delete/', dv.staff_delete, name='dash_staff_delete'),
+
     # settings
     path('dashboard/settings/', dv.settings_view, name='dash_settings'),
+    path('dashboard/settings/payments/', dv.payment_settings, name='dash_payments'),
 ]

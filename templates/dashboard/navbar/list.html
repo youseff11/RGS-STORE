@@ -1,0 +1,39 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}القائمة (الناف بار){% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>روابط القائمة</h2><p>اللي بيظهر في الناف بار فوق وفي قائمة الموبايل — رتّب، اخفي، أو زوّد روابط جديدة</p></div>
+  <a class="btn" href="{% url 'dash_nav_new' %}">{% include 'partials/icon.html' with name='plus' %} رابط جديد</a>
+</div>
+
+<div class="nav-preview">
+  <span class="small muted">معاينة:</span>
+  {% for link in links %}{% if link.is_visible %}<span class="nav-chip">{{ link.label }}</span>{% endif %}{% endfor %}
+</div>
+
+<div class="section-list">
+  {% for link in links %}
+  <div class="section-row{% if not link.is_active %} is-off{% endif %}">
+    <div class="section-move">
+      <form method="post" action="{% url 'dash_nav_move' link.pk 'up' %}">{% csrf_token %}<button type="submit" {% if forloop.first %}disabled{% endif %} aria-label="لفوق">{% include 'partials/icon.html' with name='up' %}</button></form>
+      <form method="post" action="{% url 'dash_nav_move' link.pk 'down' %}">{% csrf_token %}<button type="submit" {% if forloop.last %}disabled{% endif %} aria-label="لتحت">{% include 'partials/icon.html' with name='down' %}</button></form>
+    </div>
+    <span class="section-num">{{ forloop.counter }}</span>
+    <div class="section-info">
+      <b>{{ link.label }}</b>
+      <span class="small muted">{{ link.get_link_type_display }} · <span dir="ltr">{{ link.href }}</span>{% if link.new_tab %} · تاب جديد{% endif %}</span>
+    </div>
+    <form method="post" action="{% url 'dash_nav_toggle' link.pk %}">{% csrf_token %}
+      <button class="toggle-pill{% if link.is_active %} is-on{% endif %}" type="submit"><span></span>{% if link.is_active %}ظاهر{% else %}مخفي{% endif %}</button>
+    </form>
+    <a class="btn btn-sm btn-soft" href="{% url 'dash_nav_edit' link.pk %}">{% include 'partials/icon.html' with name='edit' %}</a>
+    <form method="post" action="{% url 'dash_nav_delete' link.pk %}" data-confirm="حذف الرابط «{{ link.label }}»؟">{% csrf_token %}
+      <button class="btn btn-sm btn-danger" type="submit" aria-label="حذف">{% include 'partials/icon.html' with name='trash' %}</button>
+    </form>
+  </div>
+  {% empty %}
+  <div class="card"><div class="empty">لا توجد روابط</div></div>
+  {% endfor %}
+</div>
+{% endblock %}

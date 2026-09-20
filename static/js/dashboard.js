@@ -4,25 +4,8 @@
   const $  = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
 
-  /* theme (shared key with the storefront) */
-  const KEY = 'rgs-theme';
-  function apply(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    $$('[data-theme-toggle]').forEach((btn) => {
-      const sun = $('.ico-sun', btn), moon = $('.ico-moon', btn);
-      if (sun && moon) {
-        sun.style.display  = theme === 'dark' ? 'block' : 'none';
-        moon.style.display = theme === 'dark' ? 'none' : 'block';
-      }
-    });
-  }
-  let current = 'dark';
-  try {
-    const stored = localStorage.getItem(KEY);
-    current = (stored === 'light' || stored === 'dark') ? stored
-      : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-  } catch (e) {}
-  apply(current);
+  /* dashboard is dark only — forget the old light/dark choice */
+  try { localStorage.removeItem('rgs-theme'); } catch (e) {}
 
   /* mobile sidebar */
   const sidebar  = $('.sidebar');
@@ -46,11 +29,6 @@
   }
 
   document.addEventListener('click', (event) => {
-    if (event.target.closest('[data-theme-toggle]')) {
-      current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      apply(current);
-      try { localStorage.setItem(KEY, current); } catch (e) {}
-    }
     if (event.target.closest('[data-sb-toggle]')) {
       setSidebar(!isOpen());
     } else if (event.target.closest('[data-sb-close]')) {
@@ -125,4 +103,59 @@
     scope.addEventListener('change', sync);
     sync();
   }
+
+  /* several images → small previews */
+  $$('[data-multi-preview]').forEach((input) => {
+    input.addEventListener('change', () => {
+      const box = input.parentElement && $('.multi-preview', input.parentElement);
+      if (!box) return;
+      box.innerHTML = '';
+      Array.from(input.files || []).slice(0, 24).forEach((file) => {
+        if (!file.type.startsWith('image/')) return;
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        box.appendChild(img);
+      });
+    });
+  });
+
+  /* work cover preview */
+  const coverInput = $('#id_cover');
+  if (coverInput) {
+    coverInput.addEventListener('change', () => {
+      const file = coverInput.files && coverInput.files[0];
+      const target = $('[data-cover-preview]');
+      if (!file || !target) return;
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(file);
+      img.setAttribute('data-cover-preview', '');
+      target.replaceWith(img);
+    });
+  }
+
+  /* navbar link form: only show the field that matches the link type */
+  const navForm = $('[data-nav-form]');
+  if (navForm) {
+    const type = $('#id_link_type', navForm);
+    const show = (name, on) => {
+      const field = $('[data-field="' + name + '"]', navForm);
+      if (field) field.style.display = on ? '' : 'none';
+    };
+    const sync = () => {
+      show('category', type.value === 'category');
+      show('policy', type.value === 'policy');
+      show('url', type.value === 'custom');
+    };
+    type.addEventListener('change', sync);
+    sync();
+  }
+
+  /* select / clear every permission */
+  $$('[data-check-all]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const boxes = $$('input[type="checkbox"]', document.getElementById(btn.dataset.checkAll));
+      const allOn = boxes.every((b) => b.checked);
+      boxes.forEach((b) => { b.checked = !allOn; });
+    });
+  });
 })();

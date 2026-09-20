@@ -1,0 +1,32 @@
+{% load static store_tags %}
+<section class="hero-main">
+  <div class="hero-media">
+    {% if sec.image %}
+      <img src="{{ sec.image.url }}" alt="" fetchpriority="high">
+    {% else %}
+      <img src="{% static 'img/hero-dark.webp' %}" alt="" fetchpriority="high">
+    {% endif %}
+  </div>
+
+  <div class="hero-wrap">
+    {# the hero stays in English in both languages #}
+    <div class="hero-copy" lang="en" dir="ltr">
+      {% if sec.hero_eyebrow %}<span class="hero-eyebrow">{{ sec.hero_eyebrow }}</span>{% endif %}
+      {% with lines=sec.hero_lines %}
+      <h1 class="hero-title">
+        {% if lines.0 %}<span class="line-1">{{ lines.0 }}</span>{% endif %}
+        {% if lines.1 %}<span class="line-2">{{ lines.1 }}</span>{% endif %}
+      </h1>
+      {% endwith %}
+      {% if sec.hero_subtitle %}<p class="hero-sub">{{ sec.hero_subtitle }}</p>{% endif %}
+      {% if sec.hero_button %}
+      <a class="hero-cta" href="{{ sec.button_link|default:'/shop/' }}">
+        {{ sec.hero_button }}
+        {% include 'partials/icon.html' with name='arrow' %}
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <span class="hero-script" aria-hidden="true">Better<br>Clothes<br>Bigger<br>Dreams</span>
+</section>

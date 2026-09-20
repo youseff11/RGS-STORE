@@ -7,18 +7,22 @@
 
 <div class="page-head">
   <div>
-    <h2 class="hello">أهلاً {{ request.user.username }} <span class="hello-ico">{% include 'partials/icon.html' with name='sparkles' %}</span></h2>
+    <h2 class="hello">أهلاً {{ request.user.first_name|default:request.user.username }} <span class="hello-ico">{% include 'partials/icon.html' with name='sparkles' %}</span></h2>
     <p>ملخص سريع لأداء المتجر</p>
   </div>
   <div class="flex">
-    <a class="btn btn-ghost" href="{% url 'dash_orders' %}">كل الطلبات</a>
+    {% if 'orders' in perms %}<a class="btn btn-ghost" href="{% url 'dash_orders' %}">كل الطلبات</a>{% endif %}
+    {% if 'portfolio' in perms %}<a class="btn btn-ghost" href="{% url 'dash_work_new' %}">{% include 'partials/icon.html' with name='camera' %} عمل جديد</a>{% endif %}
+    {% if 'products' in perms %}
     <a class="btn" href="{% url 'dash_product_new' %}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
       منتج جديد
     </a>
+    {% endif %}
   </div>
 </div>
 
+{% if 'orders' in perms %}
 <div class="grid g4">
   <div class="stat">
     <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 7h12l-1 12.2a2 2 0 01-2 1.8H9a2 2 0 01-2-1.8L6 7z"/><path d="M9.2 7V5.6a2.8 2.8 0 015.6 0V7"/></svg></span>
@@ -37,10 +41,61 @@
     <div><div class="v">{{ stats.active_products }}<span style="font-size:14px;color:var(--muted)">/{{ stats.products }}</span></div><div class="l">منتجات معروضة</div></div>
   </div>
 </div>
+{% endif %}
+
+<div class="grid g4" style="margin-top:16px">
+  {% if 'customers' in perms %}
+  <a class="stat" href="{% url 'dash_customers' %}">
+    <span class="ico">{% include 'partials/icon.html' with name='users' %}</span>
+    <div><div class="v">{{ stats.customers }}</div><div class="l">عميل مسجّل · {{ stats.new_customers }} جديد هذا الشهر</div></div>
+  </a>
+  {% endif %}
+  {% if 'orders' in perms %}
+  <a class="stat warn" href="{% url 'dash_orders' %}?payment=pending">
+    <span class="ico">{% include 'partials/icon.html' with name='wallet' %}</span>
+    <div><div class="v">{{ pending_payments }}</div><div class="l">مدفوعات بانتظار تأكيدك</div></div>
+  </a>
+  {% endif %}
+  {% if 'reviews' in perms %}
+  <a class="stat ok" href="{% url 'dash_reviews' %}">
+    <span class="ico">{% include 'partials/icon.html' with name='star' %}</span>
+    <div><div class="v">{% if stats.reviews %}{{ stats.rating }} <span style="font-size:14px;color:var(--muted)">/ 5</span>{% else %}—{% endif %}</div><div class="l">{{ stats.reviews }} تقييم منشور · {{ pending_reviews }} بانتظار المراجعة</div></div>
+  </a>
+  {% endif %}
+  {% if 'portfolio' in perms %}
+  <a class="stat info" href="{% url 'dash_works' %}">
+    <span class="ico">{% include 'partials/icon.html' with name='camera' %}</span>
+    <div><div class="v">{{ stats.works }}</div><div class="l">عمل منشور في «أعمالنا»</div></div>
+  </a>
+  {% endif %}
+</div>
 
 <div class="split" style="margin-top:18px">
 
   <div>
+    {% if 'orders' in perms %}
+    {% if awaiting_payments %}
+    <div class="card">
+      <div class="card-head">
+        <h3>{% include 'partials/icon.html' with name='wallet' %} مدفوعات PayPal محتاجة تأكيد</h3>
+        <a class="btn btn-sm btn-ghost" href="{% url 'dash_orders' %}?payment=pending">الكل</a>
+      </div>
+      {% for order in awaiting_payments %}
+      <div class="flex" style="padding:9px 0;{% if not forloop.last %}border-bottom:1px solid var(--line-soft){% endif %}">
+        <div style="flex:1;min-width:0">
+          <b>{{ order.order_number }}</b> — {{ order.full_name }}
+          <div class="small muted" dir="ltr" style="text-align:start">{{ order.pay_amount }} {{ order.pay_currency }}{% if order.payment_reference %} · {{ order.payment_reference }}{% endif %}</div>
+        </div>
+        <form method="post" action="{% url 'dash_order_payment' order.pk %}">
+          {% csrf_token %}<input type="hidden" name="payment_status" value="paid">
+          <button class="btn btn-sm" type="submit">{% include 'partials/icon.html' with name='check' %} تأكيد الدفع</button>
+        </form>
+        <a class="btn btn-sm btn-ghost" href="{% url 'dash_order_detail' order.pk %}">تفاصيل</a>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
     <div class="card">
       <div class="card-head">
         <h3>مبيعات آخر ٧ أيام</h3>
@@ -72,7 +127,7 @@
               <td><b>{{ order.order_number }}</b></td>
               <td>{{ order.full_name }}<div class="small muted" dir="ltr">{{ order.phone }}</div></td>
               <td><b>{% price order.total %}</b></td>
-              <td><span class="chip chip-{% status_color order.status %}">{{ order.get_status_display }}</span></td>
+              <td><span class="chip chip-{% status_color order.status %}">{{ order.status_label_local }}</span></td>
               <td class="small muted">{{ order.created_at|date:"Y/m/d H:i" }}</td>
               <td class="row-actions"><a class="btn btn-sm btn-ghost" href="{% url 'dash_order_detail' order.pk %}">تفاصيل</a></td>
             </tr>
@@ -84,9 +139,27 @@
         <div class="empty"><div class="ico ico-badge">{% include 'partials/icon.html' with name='bag' %}</div>لا توجد طلبات بعد</div>
       {% endif %}
     </div>
+    {% endif %}
+
+    {% if 'reviews' in perms and latest_reviews %}
+    <div class="card">
+      <div class="card-head"><h3>أحدث التقييمات</h3><a class="btn btn-sm btn-ghost" href="{% url 'dash_reviews' %}">إدارة التقييمات</a></div>
+      {% for review in latest_reviews %}
+      <div class="flex" style="padding:9px 0;align-items:flex-start;{% if not forloop.last %}border-bottom:1px solid var(--line-soft){% endif %}">
+        <span class="mini-av">{{ review.initial }}</span>
+        <div style="flex:1;min-width:0">
+          <b>{{ review.name }}</b> <span class="stars-txt">{% for i in review.stars %}★{% endfor %}</span>
+          <div class="small muted">{{ review.comment|truncatechars:110 }}</div>
+        </div>
+        <span class="chip {% if review.is_approved %}chip-ok{% else %}chip-warn{% endif %}">{% if review.is_approved %}منشور{% else %}بانتظار{% endif %}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
   </div>
 
   <div>
+    {% if 'products' in perms %}
     <div class="card">
       <div class="card-head"><h3>مخزون على وشك النفاد</h3></div>
       {% if low_stock %}
@@ -119,14 +192,18 @@
         <div class="empty" style="padding:26px"><div class="ico ico-badge">{% include 'partials/icon.html' with name='trend' %}</div>لا توجد مبيعات بعد</div>
       {% endif %}
     </div>
+    {% endif %}
 
     <div class="card">
       <div class="card-head"><h3>روابط سريعة</h3></div>
       <div class="grid" style="gap:8px">
-        <a class="btn btn-soft btn-block" href="{% url 'dash_promotion_new' %}">إضافة عرض جديد</a>
-        <a class="btn btn-soft btn-block" href="{% url 'dash_coupon_new' %}">إنشاء كود خصم</a>
-        <a class="btn btn-soft btn-block" href="{% url 'dash_announcements' %}">تعديل الشريط المتحرك</a>
-        <a class="btn btn-soft btn-block" href="{% url 'dash_settings' %}">إعدادات المتجر والسوشيال</a>
+        {% if 'content' in perms %}<a class="btn btn-soft btn-block" href="{% url 'dash_home' %}">ترتيب أقسام الصفحة الرئيسية</a>{% endif %}
+        {% if 'portfolio' in perms %}<a class="btn btn-soft btn-block" href="{% url 'dash_work_new' %}">نشر عمل جديد في «أعمالنا»</a>{% endif %}
+        {% if 'marketing' in perms %}<a class="btn btn-soft btn-block" href="{% url 'dash_promotion_new' %}">إضافة عرض جديد</a>
+        <a class="btn btn-soft btn-block" href="{% url 'dash_coupon_new' %}">إنشاء كود خصم</a>{% endif %}
+        {% if 'content' in perms %}<a class="btn btn-soft btn-block" href="{% url 'dash_announcements' %}">تعديل الشريط المتحرك</a>{% endif %}
+        {% if 'settings' in perms %}<a class="btn btn-soft btn-block" href="{% url 'dash_payments' %}">إعدادات الدفع (PayPal)</a>
+        <a class="btn btn-soft btn-block" href="{% url 'dash_settings' %}">إعدادات المتجر والسوشيال</a>{% endif %}
       </div>
     </div>
   </div>

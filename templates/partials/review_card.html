@@ -1,0 +1,19 @@
+{% load store_tags %}
+<article class="review-card reveal">
+  <div class="review-top">
+    <span class="review-av">{{ review.initial }}</span>
+    <div>
+      <b>{{ review.name }}</b>
+      <span class="review-meta">{% include 'partials/icon.html' with name='shield' %} {% t 'verified_buyer' %} · {{ review.created_at|date:"Y/m/d" }}</span>
+    </div>
+    <span class="review-q">{% include 'partials/icon.html' with name='quote' %}</span>
+  </div>
+  {% include 'partials/stars.html' with rating=review.rating %}
+  <p class="review-text">{{ review.comment }}</p>
+  {% if review.reply %}
+    <div class="review-reply">
+      <b>{% include 'partials/icon.html' with name='reply' %} {% t 'store_reply' %}</b>
+      <p>{{ review.reply }}</p>
+    </div>
+  {% endif %}
+</article>

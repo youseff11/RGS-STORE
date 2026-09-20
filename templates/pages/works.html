@@ -1,0 +1,50 @@
+{% extends 'base/base.html' %}
+{% load store_tags %}
+
+{% block content %}
+<section class="page-hero works-hero">
+  <div class="wrap">
+    <div class="crumbs"><a href="{% url 'home' %}">{% t 'home' %}</a> <span>/</span> <span>{% t 'portfolio' %}</span></div>
+    <h1>{% t 'portfolio' %}</h1>
+    <p>{% t 'portfolio_sub' %}</p>
+  </div>
+</section>
+
+<section class="section-sm">
+  <div class="wrap">
+    {% if categories %}
+    <nav class="work-filters" aria-label="{% t 'filters' %}">
+      <a href="{% url 'works' %}" class="{% if not active_cat %}is-active{% endif %}">{% t 'all' %}</a>
+      {% for cat in categories %}
+        <a href="{% url 'works' %}?cat={{ cat.slug|urlencode }}" class="{% if active_cat == cat.slug %}is-active{% endif %}">{{ cat.name }}</a>
+      {% endfor %}
+    </nav>
+    {% endif %}
+
+    {% if works %}
+      <div class="works-grid">
+        {% for work in works %}
+          <a class="work-tile reveal" href="{{ work.get_absolute_url }}">
+            <span class="work-tile-media">
+              <img src="{{ work.cover.url }}" alt="{{ work.title }}" loading="lazy">
+              {% if work.has_video %}<span class="work-play" aria-hidden="true">{% include 'partials/icon.html' with name='play' %}</span>{% endif %}
+              <span class="work-count">{% include 'partials/icon.html' with name='camera' %} {{ work.n_media }}</span>
+            </span>
+            <span class="work-tile-body">
+              {% if work.category %}<span class="work-cat">{{ work.category.name }}</span>{% endif %}
+              <span class="work-title">{{ work.title }}</span>
+              {% if work.summary %}<span class="work-sum">{{ work.summary|truncatechars:110 }}</span>{% endif %}
+            </span>
+          </a>
+        {% endfor %}
+      </div>
+      {% include 'partials/pagination.html' %}
+    {% else %}
+      <div class="empty-state">
+        <div class="ico ico-badge">{% include 'partials/icon.html' with name='camera' %}</div>
+        <h3>{% t 'no_works' %}</h3>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

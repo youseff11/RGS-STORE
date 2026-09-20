@@ -1,0 +1,75 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}الدفع{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>طرق الدفع</h2><p>PayPal (لينك دفع و/أو زرار PayPal الرسمي) + الدفع عند الاستلام</p></div>
+</div>
+
+<form method="post" autocomplete="off">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert">{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div>{% endif %}
+  <div class="split">
+    <div>
+      <div class="card">
+        <div class="card-head"><h3>{% include 'partials/icon.html' with name='card' %} PayPal</h3>
+          <span class="chip {% if site.paypal_ready %}chip-ok{% else %}chip-muted{% endif %}">{% if site.paypal_ready %}شغال{% else %}متوقف{% endif %}</span></div>
+        <div class="switch">{{ form.paypal_enabled }}<label for="{{ form.paypal_enabled.id_for_label }}">{{ form.paypal_enabled.label }}</label></div>
+
+        <div class="pay-step">
+          <span class="pay-step-n">1</span>
+          <div style="flex:1">
+            <div class="field"><label>{{ form.paypal_link.label }}</label>{{ form.paypal_link }}<div class="help">{{ form.paypal_link.help_text }}</div>{% for e in form.paypal_link.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+          </div>
+        </div>
+        <div class="pay-step">
+          <span class="pay-step-n">2</span>
+          <div class="grid g2" style="flex:1">
+            <div class="field"><label>{{ form.paypal_rate.label }}</label>{{ form.paypal_rate }}<div class="help">{{ form.paypal_rate.help_text }}</div>{% for e in form.paypal_rate.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+            <div class="field"><label>{{ form.paypal_currency.label }}</label>{{ form.paypal_currency }}<div class="help">{{ form.paypal_currency.help_text }}</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>{% include 'partials/icon.html' with name='shield' %} زرار PayPal الرسمي (تأكيد أوتوماتيك) — اختياري</h3>
+          <span class="chip {% if site.paypal_smart_ready %}chip-ok{% else %}chip-muted{% endif %}">{% if site.paypal_smart_ready %}مفعّل{% else %}غير مفعّل{% endif %}</span></div>
+        <p class="small muted" style="margin-top:0">لو حطيت الـ Client ID والـ Secret من حساب PayPal Business، العميل هيدفع من غير ما يخرج من الموقع والطلب يتعلّم «مدفوع» لوحده. من غيرهم الدفع بيبقى باللينك وانت بتأكده.</p>
+        <div class="field"><label>{{ form.paypal_client_id.label }}</label>{{ form.paypal_client_id }}<div class="help">{{ form.paypal_client_id.help_text }}</div></div>
+        <div class="field"><label>{{ form.paypal_secret.label }}</label>{{ form.paypal_secret }}<div class="help">{{ form.paypal_secret.help_text }}</div></div>
+        <div class="switch">{{ form.paypal_sandbox }}<label for="{{ form.paypal_sandbox.id_for_label }}">{{ form.paypal_sandbox.label }}</label></div>
+        <details class="inline-edit">
+          <summary>{% include 'partials/icon.html' with name='file' %} أجيب الـ Client ID والـ Secret منين؟</summary>
+          <ol class="small muted" style="line-height:2;margin:10px 0 0">
+            <li>ادخل developer.paypal.com بحساب PayPal Business بتاعك</li>
+            <li>Apps &amp; Credentials ← اختار Live ← Create App</li>
+            <li>انسخ Client ID و Secret وحطهم هنا</li>
+          </ol>
+        </details>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-head"><h3>{% include 'partials/icon.html' with name='wallet' %} الدفع عند الاستلام</h3></div>
+        <div class="switch">{{ form.cod_enabled }}<label for="{{ form.cod_enabled.id_for_label }}">{{ form.cod_enabled.label }}</label></div>
+        <div class="help">لما الطلب يتعلّم «تم التسليم» بيتحسب مدفوع أوتوماتيك.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>إزاي بيشتغل</h3></div>
+        <ol class="small" style="line-height:2;margin:0;padding-inline-start:18px;color:var(--text-2)">
+          <li>العميل لازم يسجل دخول أو يعمل حساب</li>
+          <li>يكتب بياناته (الاسم، الموبايل، العنوان) — بتتسجل في «العملاء»</li>
+          <li>يختار PayPal ← يدفع باللينك أو بالزرار</li>
+          <li>بعد الدفع يقدر يقيّم المتجر</li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <button class="btn btn-block" type="submit">حفظ إعدادات الدفع</button>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

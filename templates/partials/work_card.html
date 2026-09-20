@@ -1,0 +1,12 @@
+{% load store_tags %}
+<a class="work-card reveal{% if big %} is-big{% endif %}" href="{{ work.get_absolute_url }}">
+  <img src="{{ work.cover.url }}" alt="{{ work.title }}" loading="lazy">
+  <span class="work-shade"></span>
+  {% if work.has_video %}<span class="work-play" aria-hidden="true">{% include 'partials/icon.html' with name='play' %}</span>{% endif %}
+  <span class="work-info">
+    {% if work.category %}<span class="work-cat">{{ work.category.name }}</span>{% endif %}
+    <span class="work-title">{{ work.title }}</span>
+    {% if work.summary and big %}<span class="work-sum">{{ work.summary|truncatechars:120 }}</span>{% endif %}
+  </span>
+  <span class="work-go">{% include 'partials/icon.html' with name='arrow' %}</span>
+</a>

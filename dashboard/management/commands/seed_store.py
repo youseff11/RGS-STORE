@@ -4,7 +4,25 @@ from decimal import Decimal
 
 from django.core.management.base import BaseCommand
 
-from dashboard.models import Announcement, Category, Governorate, SiteSettings, Size
+from dashboard.models import (
+    Announcement, Category, Governorate, HomeSection, NavLink, SiteSettings, Size,
+    ensure_policy_defaults,
+)
+
+GOVERNORATES_AR = {
+    'Cairo': 'القاهرة', 'Giza': 'الجيزة', 'Alexandria': 'الإسكندرية', 'Qalyubia': 'القليوبية',
+    'Dakahlia': 'الدقهلية', 'Sharqia': 'الشرقية', 'Gharbia': 'الغربية', 'Monufia': 'المنوفية',
+    'Beheira': 'البحيرة', 'Kafr El Sheikh': 'كفر الشيخ', 'Damietta': 'دمياط',
+    'Port Said': 'بورسعيد', 'Ismailia': 'الإسماعيلية', 'Suez': 'السويس',
+    'North Sinai': 'شمال سيناء', 'South Sinai': 'جنوب سيناء', 'Beni Suef': 'بني سويف',
+    'Fayoum': 'الفيوم', 'Minya': 'المنيا', 'Asyut': 'أسيوط', 'Sohag': 'سوهاج', 'Qena': 'قنا',
+    'Luxor': 'الأقصر', 'Aswan': 'أسوان', 'Red Sea': 'البحر الأحمر', 'New Valley': 'الوادي الجديد',
+    'Matrouh': 'مطروح',
+}
+CATEGORIES_AR = {
+    'T-Shirts': 'تيشيرتات', 'Shirts': 'قمصان', 'Pants': 'بناطيل', 'Jackets': 'جواكت',
+    'Shoes': 'أحذية', 'Accessories': 'إكسسوارات',
+}
 
 GOVERNORATES = [
     'Cairo', 'Giza', 'Alexandria', 'Qalyubia', 'Dakahlia', 'Sharqia', 'Gharbia',
@@ -24,17 +42,18 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         site = SiteSettings.load()
         site.brand_name_en = site.brand_name_en or 'RGS TOWER'
-        site.brand_name_ar = site.brand_name_en
+        site.brand_name_ar = site.brand_name_ar or site.brand_name_en
         site.tagline_en = site.tagline_en or 'Menswear, refined.'
-        site.tagline_ar = site.tagline_en
+        site.tagline_ar = site.tagline_ar or 'أناقة الرجل الحقيقي'
         site.currency_en = site.currency_en or 'EGP'
+        site.currency_ar = site.currency_ar or 'ج.م'
         site.shipping_fee = site.shipping_fee or Decimal('60.00')
         site.save()
         self.stdout.write(self.style.SUCCESS('OK  site settings'))
 
         for index, name in enumerate(GOVERNORATES):
             Governorate.objects.get_or_create(
-                name_en=name, defaults={'name_ar': name, 'ordering': index}
+                name_en=name, defaults={'name_ar': GOVERNORATES_AR.get(name, name), 'ordering': index}
             )
         self.stdout.write(self.style.SUCCESS(f'OK  {len(GOVERNORATES)} governorates'))
 
@@ -44,13 +63,20 @@ class Command(BaseCommand):
 
         for index, name in enumerate(CATEGORIES):
             Category.objects.get_or_create(
-                name_en=name, defaults={'name_ar': name, 'ordering': index}
+                name_en=name, defaults={'name_ar': CATEGORIES_AR.get(name, name), 'ordering': index}
             )
         self.stdout.write(self.style.SUCCESS(f'OK  {len(CATEGORIES)} categories'))
 
         if not Announcement.objects.exists():
-            text = 'Free shipping over 2000 EGP  •  Cash on delivery'
-            Announcement.objects.create(text_en=text, text_ar=text)
+            Announcement.objects.create(
+                text_ar='شحن مجاني للطلبات فوق 2000 ج.م  •  الدفع عند الاستلام أو PayPal',
+                text_en='Free shipping over 2000 EGP  •  Cash on delivery or PayPal',
+            )
             self.stdout.write(self.style.SUCCESS('OK  announcement bar'))
+
+        HomeSection.ensure_defaults()
+        NavLink.ensure_defaults()
+        ensure_policy_defaults()
+        self.stdout.write(self.style.SUCCESS('OK  homepage sections, navbar, policies'))
 
         self.stdout.write(self.style.SUCCESS('\nRGS TOWER seeded successfully.'))

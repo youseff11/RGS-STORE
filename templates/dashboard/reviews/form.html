@@ -1,0 +1,16 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}تعديل تقييم{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>تقييم {{ review.name }}</h2><p>{{ review.created_at|date:"Y/m/d H:i" }}{% if review.order %} · طلب {{ review.order.order_number }}{% endif %}</p></div>
+  <a class="btn btn-ghost" href="{% url 'dash_reviews' %}">رجوع</a>
+</div>
+<form method="post" style="max-width:760px">
+  {% csrf_token %}
+  <div class="card">
+    {% include 'dashboard/_form_fields.html' %}
+    <button class="btn" type="submit">حفظ</button>
+  </div>
+</form>
+{% endblock %}

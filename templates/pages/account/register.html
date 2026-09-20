@@ -1,0 +1,55 @@
+{% extends 'base/base.html' %}
+{% load store_tags %}
+
+{% block content %}
+<section class="auth-section">
+  <div class="auth-card is-wide">
+    <div class="auth-logo">{% include 'partials/logo.html' %}</div>
+    <h1>{% t 'register_title' %}</h1>
+    <p class="auth-sub">{% t 'register_sub' %}</p>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="field {% if errors.full_name %}has-error{% endif %}">
+        <label for="r-name">{% t 'full_name' %} <span class="req">*</span></label>
+        <input id="r-name" type="text" name="full_name" value="{{ data.full_name }}" autocomplete="name" required>
+        {% if errors.full_name %}<div class="err">{{ errors.full_name }}</div>{% endif %}
+      </div>
+      <div class="field-row">
+        <div class="field {% if errors.email %}has-error{% endif %}">
+          <label for="r-email">{% t 'email' %} <span class="req">*</span></label>
+          <input id="r-email" type="email" name="email" value="{{ data.email }}" autocomplete="email" dir="ltr" required>
+          {% if errors.email %}<div class="err">{{ errors.email }}</div>{% endif %}
+        </div>
+        <div class="field {% if errors.phone %}has-error{% endif %}">
+          <label for="r-phone">{% t 'phone' %} <span class="req">*</span></label>
+          <input id="r-phone" type="tel" name="phone" value="{{ data.phone }}" autocomplete="tel" dir="ltr" placeholder="01xxxxxxxxx" required>
+          {% if errors.phone %}<div class="err">{{ errors.phone }}</div>{% endif %}
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field {% if errors.password %}has-error{% endif %}">
+          <label for="r-pass">{% t 'password' %} <span class="req">*</span></label>
+          <div class="pass-wrap">
+            <input id="r-pass" type="password" name="password" autocomplete="new-password" dir="ltr" minlength="8" required>
+            <button type="button" class="pass-eye" data-pass-toggle aria-label="{% t 'password' %}">{% include 'partials/icon.html' with name='eye' %}</button>
+          </div>
+          {% if errors.password %}<div class="err">{{ errors.password }}</div>{% endif %}
+        </div>
+        <div class="field {% if errors.password2 %}has-error{% endif %}">
+          <label for="r-pass2">{% t 'password_confirm' %} <span class="req">*</span></label>
+          <input id="r-pass2" type="password" name="password2" autocomplete="new-password" dir="ltr" minlength="8" required>
+          {% if errors.password2 %}<div class="err">{{ errors.password2 }}</div>{% endif %}
+        </div>
+      </div>
+      <button class="btn btn-lg btn-block" type="submit">{% t 'register' %}</button>
+    </form>
+
+    <div class="auth-switch">
+      {% t 'have_account' %}
+      <a href="{% url 'account_login' %}{% if next %}?next={{ next|urlencode }}{% endif %}">{% t 'login' %}</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

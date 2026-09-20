@@ -1,0 +1,48 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}إداري{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>{% if member %}تعديل {{ member.get_full_name|default:member.username }}{% else %}إضافة إداري جديد{% endif %}</h2><p>بيدخل من نفس صفحة دخول لوحة التحكم باسم المستخدم وكلمة المرور</p></div>
+  <a class="btn btn-ghost" href="{% url 'dash_staff' %}">رجوع</a>
+</div>
+
+<form method="post" autocomplete="off">
+  {% csrf_token %}
+  <div class="split">
+    <div class="card">
+      <div class="card-head"><h3>بيانات الحساب</h3></div>
+      <div class="grid g2">
+        <div class="field"><label>{{ form.full_name.label }} <span class="req">*</span></label>{{ form.full_name }}{% for e in form.full_name.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+        <div class="field"><label>{{ form.job_title.label }}</label>{{ form.job_title }}</div>
+      </div>
+      <div class="grid g2">
+        <div class="field"><label>{{ form.username.label }} <span class="req">*</span></label>{{ form.username }}{% for e in form.username.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+        <div class="field"><label>{{ form.email.label }}</label>{{ form.email }}{% for e in form.email.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+      </div>
+      <div class="field"><label>{{ form.password.label }}{% if not member %} <span class="req">*</span>{% endif %}</label>{{ form.password }}<div class="help">{{ form.password.help_text }}</div>{% for e in form.password.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+      {% if not editing_self and not is_owner %}
+        <div class="switch">{{ form.is_active }}<label for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label></div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>الصلاحيات</h3>
+        {% if not is_owner %}<button type="button" class="btn btn-sm btn-ghost" data-check-all="perm-list">تحديد الكل</button>{% endif %}
+      </div>
+      {% if is_owner %}
+        <p class="small muted">المدير الأساسي عنده كل الصلاحيات دايمًا.</p>
+      {% else %}
+        <div class="perm-list" id="perm-list">
+          {% for choice in form.permissions %}
+            <label class="perm-item">{{ choice.tag }}<span>{{ choice.choice_label }}</span></label>
+          {% endfor %}
+        </div>
+        {% if editing_self %}<div class="help" style="margin-top:10px">صلاحية «الإدارة» بتفضل معاك علشان ما تقفلش الصفحة دي على نفسك.</div>{% endif %}
+      {% endif %}
+      <button class="btn btn-block" type="submit" style="margin-top:16px">حفظ</button>
+    </div>
+  </div>
+</form>
+{% endblock %}

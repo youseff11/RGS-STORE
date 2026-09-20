@@ -130,7 +130,7 @@
               <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M6 9l6 6 6-6"/></svg></span>
             </button>
             <div class="acc-body"><div class="inner">
-              {% t 'cod_note' %}
+              {% if 'paypal' in SITE.payment_methods %}{% t 'pay_paypal_note' %}<br>{% endif %}{% if 'cod' in SITE.payment_methods %}{% t 'cod_note' %}{% endif %}
               {% if SITE.free_shipping_threshold %}
                 <br>{% t 'free_shipping_earned' %}: {{ SITE.free_shipping_threshold|money }} {{ CURRENCY }}+
               {% endif %}

@@ -1,10 +1,14 @@
 """RGS TOWER — data models (single app architecture)."""
 
 import random
+import re
 import string
-from decimal import Decimal
+from decimal import ROUND_UP, Decimal
 
+from django.conf import settings
+from django.core.validators import FileExtensionValidator, MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models.functions import Greatest
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
@@ -62,6 +66,26 @@ class SiteSettings(models.Model):
     low_stock_threshold = models.PositiveIntegerField(default=5)
     orders_enabled = models.BooleanField(default=True)
 
+    # payments
+    cod_enabled = models.BooleanField(default=True)
+    paypal_enabled = models.BooleanField(default=False)
+    paypal_link = models.URLField(
+        blank=True, default='',
+        help_text='لينك الدفع — مثال: https://paypal.me/YourName',
+    )
+    paypal_client_id = models.CharField(max_length=255, blank=True, default='')
+    paypal_secret = models.CharField(max_length=255, blank=True, default='')
+    paypal_sandbox = models.BooleanField(default=False)
+    paypal_currency = models.CharField(max_length=3, default='USD')
+    paypal_rate = models.DecimalField(
+        max_digits=10, decimal_places=4, default=Decimal('50.0000'),
+        help_text='كام جنيه = 1 دولار',
+    )
+
+    # reviews + sharing
+    reviews_auto_publish = models.BooleanField(default=False)
+    share_image = models.ImageField(upload_to='site/', blank=True, null=True)
+
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -100,6 +124,31 @@ class SiteSettings(models.Model):
     @property
     def currency(self):
         return pick(self.currency_ar, self.currency_en)
+
+    # -- payments
+    @property
+    def paypal_smart_ready(self):
+        """Official PayPal button (auto-confirmed) needs both API keys."""
+        return bool(self.paypal_enabled and self.paypal_client_id and self.paypal_secret)
+
+    @property
+    def paypal_ready(self):
+        return bool(self.paypal_enabled and (self.paypal_link or self.paypal_smart_ready))
+
+    @property
+    def payment_methods(self):
+        methods = []
+        if self.paypal_ready:
+            methods.append('paypal')
+        if self.cod_enabled:
+            methods.append('cod')
+        return methods
+
+    def to_paypal_amount(self, amount_egp):
+        rate = self.paypal_rate or Decimal('1')
+        if rate <= ZERO:
+            rate = Decimal('1')
+        return (Decimal(amount_egp or 0) / rate).quantize(Decimal('0.01'), rounding=ROUND_UP)
 
     def shipping_for(self, subtotal, governorate=None):
         """Flat fee, free above the threshold, optional per-governorate override."""
@@ -592,6 +641,37 @@ class Governorate(models.Model):
         return pick(self.name_ar, self.name_en)
 
 
+PAYMENT_METHODS = [
+    ('paypal', 'PayPal'),
+    ('cod', 'الدفع عند الاستلام'),
+]
+PAYMENT_METHOD_LABELS = {
+    'paypal': ('PayPal', 'PayPal'),
+    'cod': ('الدفع عند الاستلام', 'Cash on delivery'),
+}
+PAYMENT_STATUSES = [
+    ('unpaid', 'لم يتم الدفع'),
+    ('pending', 'بانتظار تأكيد الدفع'),
+    ('paid', 'مدفوع'),
+    ('failed', 'فشل الدفع'),
+    ('refunded', 'مسترد'),
+]
+PAYMENT_STATUS_LABELS = {
+    'unpaid': ('لم يتم الدفع', 'Unpaid'),
+    'pending': ('بانتظار تأكيد الدفع', 'Awaiting confirmation'),
+    'paid': ('مدفوع', 'Paid'),
+    'failed': ('فشل الدفع', 'Payment failed'),
+    'refunded': ('مسترد', 'Refunded'),
+}
+ORDER_STATUS_LABELS = {
+    'pending': ('قيد المراجعة', 'Pending'),
+    'confirmed': ('تم التأكيد', 'Confirmed'),
+    'shipped': ('تم الشحن', 'Shipped'),
+    'delivered': ('تم التسليم', 'Delivered'),
+    'cancelled': ('ملغي', 'Cancelled'),
+}
+
+
 class Order(models.Model):
     STATUSES = [
         ('pending', 'قيد المراجعة / Pending'),
@@ -624,6 +704,29 @@ class Order(models.Model):
 
     status = models.CharField(max_length=12, choices=STATUSES, default='pending')
     admin_note = models.TextField(blank=True, default='')
+
+    # customer account + payment
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='orders',
+    )
+    payment_method = models.CharField(max_length=10, choices=PAYMENT_METHODS, default='cod')
+    payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUSES, default='unpaid')
+    paid_at = models.DateTimeField(null=True, blank=True)
+    pay_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        help_text='المبلغ بعملة PayPal (دولار)',
+    )
+    pay_currency = models.CharField(max_length=3, blank=True, default='')
+    paypal_order_id = models.CharField(max_length=64, blank=True, default='')
+    paypal_capture_id = models.CharField(max_length=64, blank=True, default='')
+    payer_email = models.CharField(max_length=254, blank=True, default='')
+    payment_reference = models.CharField(
+        max_length=120, blank=True, default='',
+        help_text='رقم العملية اللي كتبه العميل بعد الدفع باللينك',
+    )
+    stock_restored = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -632,6 +735,64 @@ class Order(models.Model):
 
     def __str__(self):
         return self.order_number
+
+    @property
+    def is_paid(self):
+        return self.payment_status == 'paid'
+
+    @property
+    def payment_status_label(self):
+        return pick(*PAYMENT_STATUS_LABELS.get(self.payment_status, (self.payment_status,) * 2))
+
+    @property
+    def payment_method_label(self):
+        return pick(*PAYMENT_METHOD_LABELS.get(self.payment_method, (self.payment_method,) * 2))
+
+    @property
+    def status_label_local(self):
+        return pick(*ORDER_STATUS_LABELS.get(self.status, (self.status,) * 2))
+
+    @property
+    def awaiting_payment(self):
+        """PayPal order that the customer still has to pay."""
+        return (
+            self.payment_method == 'paypal'
+            and self.payment_status in ('unpaid', 'failed')
+            and self.status != 'cancelled'
+        )
+
+    def mark_paid(self, save=True):
+        self.payment_status = 'paid'
+        if not self.paid_at:
+            self.paid_at = timezone.now()
+        if self.status == 'pending':
+            self.status = 'confirmed'
+        if save:
+            self.save(update_fields=['payment_status', 'paid_at', 'status', 'updated_at'])
+
+    def restore_stock(self):
+        """Give the reserved pieces back once (used when an order is cancelled)."""
+        if self.stock_restored:
+            return
+        for item in self.items.select_related('variant'):
+            if item.variant_id:
+                ProductVariant.objects.filter(pk=item.variant_id).update(
+                    quantity=models.F('quantity') + item.quantity
+                )
+        self.stock_restored = True
+        self.save(update_fields=['stock_restored', 'updated_at'])
+
+    def take_stock_again(self):
+        """Re-reserve stock if a cancelled order is brought back."""
+        if not self.stock_restored:
+            return
+        for item in self.items.select_related('variant'):
+            if item.variant_id:
+                ProductVariant.objects.filter(pk=item.variant_id).update(
+                    quantity=Greatest(models.F('quantity') - item.quantity, 0)
+                )
+        self.stock_restored = False
+        self.save(update_fields=['stock_restored', 'updated_at'])
 
     def save(self, *args, **kwargs):
         if not self.order_number:
@@ -689,3 +850,622 @@ class ContactMessage(models.Model):
 
     def __str__(self):
         return f'{self.name} — {self.subject or "رسالة"}'
+
+
+# ================================================================== customers
+class CustomerProfile(models.Model):
+    """Extra data for a shopper account (auth.User with is_staff=False)."""
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='customer'
+    )
+    phone = models.CharField(max_length=30, blank=True, default='')
+    phone_alt = models.CharField(max_length=30, blank=True, default='')
+    governorate = models.ForeignKey(
+        Governorate, on_delete=models.SET_NULL, null=True, blank=True, related_name='customers'
+    )
+    city = models.CharField(max_length=120, blank=True, default='')
+    address = models.TextField(blank=True, default='')
+    admin_note = models.TextField(blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.full_name or self.user.get_username()
+
+    @property
+    def full_name(self):
+        return self.user.get_full_name() or self.user.first_name or ''
+
+    @classmethod
+    def for_user(cls, user):
+        profile, _ = cls.objects.get_or_create(user=user)
+        return profile
+
+
+# ===================================================================== staff
+STAFF_PERMISSIONS = [
+    ('orders', 'الطلبات'),
+    ('customers', 'العملاء'),
+    ('products', 'المنتجات والأقسام والمقاسات'),
+    ('marketing', 'أكواد الخصم والعروض'),
+    ('portfolio', 'أعمالنا'),
+    ('reviews', 'تقييمات العملاء'),
+    ('content', 'الصفحة الرئيسية والقائمة والسياسات والبانرات'),
+    ('messages', 'الرسائل'),
+    ('shipping', 'المحافظات والشحن'),
+    ('settings', 'إعدادات المتجر والدفع'),
+    ('staff', 'الإدارة (إضافة وتعديل الإداريين)'),
+]
+STAFF_PERMISSION_KEYS = [key for key, _ in STAFF_PERMISSIONS]
+
+
+class StaffProfile(models.Model):
+    """Which dashboard sections a staff member may open."""
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='staff_profile'
+    )
+    job_title = models.CharField(max_length=80, blank=True, default='')
+    permissions = models.JSONField(default=list, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.user.get_username()} — {", ".join(self.permissions)}'
+
+    @property
+    def permission_labels(self):
+        labels = dict(STAFF_PERMISSIONS)
+        return [labels[p] for p in STAFF_PERMISSION_KEYS if p in (self.permissions or [])]
+
+
+def staff_permissions(user):
+    """Set of section keys `user` may open in the dashboard."""
+    if not (user and user.is_authenticated and user.is_active and user.is_staff):
+        return set()
+    if user.is_superuser:
+        return set(STAFF_PERMISSION_KEYS)
+    profile = getattr(user, 'staff_profile', None)
+    if profile is None:
+        # staff accounts created before permissions existed keep full access
+        try:
+            profile = StaffProfile.objects.get(user=user)
+        except StaffProfile.DoesNotExist:
+            return set(STAFF_PERMISSION_KEYS)
+    return {p for p in (profile.permissions or []) if p in STAFF_PERMISSION_KEYS}
+
+
+# =================================================================== reviews
+class Review(models.Model):
+    """A rating left by a customer who paid for an order."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews'
+    )
+    order = models.OneToOneField(
+        Order, on_delete=models.SET_NULL, null=True, blank=True, related_name='review'
+    )
+    name = models.CharField(max_length=120)
+    rating = models.PositiveSmallIntegerField(
+        default=5, validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    comment = models.TextField()
+    reply = models.TextField(blank=True, default='', help_text='رد المتجر (بيظهر تحت التقييم)')
+    is_approved = models.BooleanField(default=False)
+    is_featured = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.name} — {self.rating}★'
+
+    @property
+    def stars(self):
+        return range(self.rating)
+
+    @property
+    def empty_stars(self):
+        return range(5 - self.rating)
+
+    @property
+    def initial(self):
+        return (self.name or '?').strip()[:1].upper()
+
+    @classmethod
+    def published(cls):
+        return cls.objects.filter(is_approved=True)
+
+    @classmethod
+    def summary(cls):
+        qs = cls.published()
+        count = qs.count()
+        avg = qs.aggregate(a=models.Avg('rating'))['a'] or 0
+        dist = {i: 0 for i in range(1, 6)}
+        for row in qs.values('rating').annotate(c=models.Count('id')):
+            dist[row['rating']] = row['c']
+        bars = [
+            {'stars': i, 'count': dist[i], 'pct': round(dist[i] * 100 / count) if count else 0}
+            for i in range(5, 0, -1)
+        ]
+        return {'count': count, 'avg': round(avg, 1), 'bars': bars,
+                'avg_pct': round(avg * 20) if count else 0}
+
+
+def reviewable_orders(user):
+    """Paid orders of `user` that do not have a review yet."""
+    if not (user and user.is_authenticated):
+        return Order.objects.none()
+    return Order.objects.filter(user=user, payment_status='paid', review__isnull=True)
+
+
+# ================================================================= portfolio
+class WorkCategory(models.Model):
+    name_ar = models.CharField(max_length=80)
+    name_en = models.CharField(max_length=80, blank=True, default='')
+    slug = models.SlugField(max_length=100, unique=True, blank=True, allow_unicode=True)
+    ordering = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['ordering', 'id']
+        verbose_name_plural = 'Work categories'
+
+    def __str__(self):
+        return self.name_ar
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = unique_slugify(self, self.name_en or self.name_ar)
+        super().save(*args, **kwargs)
+
+    @property
+    def name(self):
+        return pick(self.name_ar, self.name_en)
+
+
+class Work(models.Model):
+    """One project in the «Our work» gallery."""
+
+    title_ar = models.CharField(max_length=160)
+    title_en = models.CharField(max_length=160, blank=True, default='')
+    slug = models.SlugField(max_length=190, unique=True, blank=True, allow_unicode=True)
+    category = models.ForeignKey(
+        WorkCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name='works'
+    )
+    summary_ar = models.CharField(max_length=300, blank=True, default='')
+    summary_en = models.CharField(max_length=300, blank=True, default='')
+    description_ar = models.TextField(blank=True, default='')
+    description_en = models.TextField(blank=True, default='')
+    cover = models.ImageField(
+        upload_to='works/covers/',
+        help_text='البانر — بيظهر فوق صفحة العمل وتحت الرابط لما تبعته لحد',
+    )
+    client = models.CharField(max_length=120, blank=True, default='')
+    work_date = models.DateField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False, help_text='يظهر في الصفحة الرئيسية')
+    ordering = models.PositiveIntegerField(default=0)
+    views = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['ordering', '-created_at']
+
+    def __str__(self):
+        return self.title_ar
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = unique_slugify(self, self.title_en or self.title_ar)
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse('work_detail', args=[self.slug])
+
+    @property
+    def title(self):
+        return pick(self.title_ar, self.title_en)
+
+    @property
+    def summary(self):
+        return pick(self.summary_ar, self.summary_en)
+
+    @property
+    def description(self):
+        return pick(self.description_ar, self.description_en)
+
+    @property
+    def share_text(self):
+        text = self.summary or self.description or ''
+        text = ' '.join(text.split())
+        return text[:200]
+
+    @property
+    def media_count(self):
+        return self.media.count()
+
+    @property
+    def has_video(self):
+        return self.media.filter(kind__in=['video', 'embed']).exists()
+
+
+def _youtube_id(url):
+    match = re.search(r'(?:youtu\.be/|youtube\.com/(?:watch\?(?:.*&)?v=|embed/|shorts/|live/))([\w-]{6,})', url or '')
+    return match.group(1) if match else ''
+
+
+def _vimeo_id(url):
+    match = re.search(r'vimeo\.com/(?:video/)?(\d+)', url or '')
+    return match.group(1) if match else ''
+
+
+class WorkMedia(models.Model):
+    KINDS = [
+        ('image', 'صورة'),
+        ('video', 'فيديو مرفوع'),
+        ('embed', 'فيديو يوتيوب / فيميو'),
+    ]
+
+    work = models.ForeignKey(Work, on_delete=models.CASCADE, related_name='media')
+    kind = models.CharField(max_length=10, choices=KINDS, default='image')
+    image = models.ImageField(upload_to='works/media/', blank=True, null=True)
+    video = models.FileField(
+        upload_to='works/videos/', blank=True, null=True,
+        validators=[FileExtensionValidator(['mp4', 'webm', 'mov', 'm4v'])],
+    )
+    poster = models.ImageField(
+        upload_to='works/posters/', blank=True, null=True,
+        help_text='صورة غلاف للفيديو (اختياري)',
+    )
+    embed_url = models.URLField(blank=True, default='')
+    caption_ar = models.CharField(max_length=200, blank=True, default='')
+    caption_en = models.CharField(max_length=200, blank=True, default='')
+    ordering = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['ordering', 'id']
+
+    def __str__(self):
+        return f'{self.get_kind_display()} — {self.work}'
+
+    @property
+    def caption(self):
+        return pick(self.caption_ar, self.caption_en)
+
+    @property
+    def is_video(self):
+        return self.kind in ('video', 'embed')
+
+    @property
+    def embed_src(self):
+        yt = _youtube_id(self.embed_url)
+        if yt:
+            return f'https://www.youtube-nocookie.com/embed/{yt}?autoplay=1&rel=0'
+        vm = _vimeo_id(self.embed_url)
+        if vm:
+            return f'https://player.vimeo.com/video/{vm}?autoplay=1'
+        return self.embed_url
+
+    @property
+    def thumb_url(self):
+        if self.kind == 'image' and self.image:
+            return self.image.url
+        if self.poster:
+            return self.poster.url
+        yt = _youtube_id(self.embed_url)
+        if yt:
+            return f'https://i.ytimg.com/vi/{yt}/hqdefault.jpg'
+        return ''
+
+    @property
+    def full_url(self):
+        if self.kind == 'image' and self.image:
+            return self.image.url
+        if self.kind == 'video' and self.video:
+            return self.video.url
+        return self.embed_src
+
+
+# ================================================================== homepage
+HOME_SECTIONS = [
+    ('hero', 'الواجهة الرئيسية (Hero)'),
+    ('banners', 'سلايدر البانرات'),
+    ('features', 'مميزات المتجر'),
+    ('categories', 'الأقسام'),
+    ('featured', 'منتجات مختارة'),
+    ('about', 'من نحن'),
+    ('portfolio', 'أعمالنا'),
+    ('sale', 'العروض'),
+    ('new_arrivals', 'وصل حديثًا'),
+    ('reviews', 'تقييمات العملاء'),
+]
+
+# key: (eyebrow ar/en, title ar/en, subtitle ar/en, button ar/en, link, limit)
+HOME_SECTION_DEFAULTS = {
+    'hero': ('موسم جديد', 'NEW SEASON', 'البس\nثقتك', 'WEAR YOUR\nCONFIDENCE',
+             'خامات ممتازة. ستايلات مودرن. معمولة عشانك.',
+             'Premium quality. Modern styles. Made for you.',
+             'تسوّق الآن', 'SHOP NOW', '/shop/', 0),
+    'banners': ('', '', '', '', '', '', '', '', '', 0),
+    'features': ('', '', '', '', '', '', '', '', '', 4),
+    'categories': ('الأقسام', 'Categories', 'تصفح الأقسام', 'Browse categories',
+                   'اختار القسم اللي يناسب ستايلك', 'Pick the section that fits your style',
+                   '', '', '', 6),
+    'featured': ('مختارات', 'Featured', 'منتجات مختارة', 'Featured pieces',
+                 'قطع اخترناها لك من أحدث المجموعات', 'Hand-picked pieces from our latest drops',
+                 'عرض الكل', 'View all', '/shop/', 8),
+    'about': ('من نحن', 'About us', 'حكايتنا', 'Our story',
+              '', '', 'اعرف أكتر', 'Learn more', '/about/', 0),
+    'portfolio': ('أعمالنا', 'Our work', 'من أعمالنا', 'Selected work',
+                  'لقطات من شغلنا — صور وفيديوهات', 'Moments from our work — photos and films',
+                  'كل الأعمال', 'All work', '/works/', 5),
+    'sale': ('العروض', 'Sale', 'عروض لفترة محدودة', 'Limited-time offers',
+             '', '', 'عرض الكل', 'View all', '/shop/?sale=1', 8),
+    'new_arrivals': ('جديد', 'New', 'وصل حديثًا', 'New arrivals',
+                     'آخر ما وصل إلى المتجر', 'The latest to land in store',
+                     'عرض الكل', 'View all', '/shop/?sort=new', 8),
+    'reviews': ('تقييمات العملاء', 'Reviews', 'آراء عملائنا', 'What our customers say',
+                'تقييمات حقيقية من عملاء اشتروا من المتجر', 'Real ratings from verified buyers',
+                'كل التقييمات', 'All reviews', '/reviews/', 6),
+}
+
+
+class HomeSection(models.Model):
+    """One block of the homepage — the owner orders, hides and retitles them."""
+
+    key = models.CharField(max_length=30, unique=True, choices=HOME_SECTIONS)
+    is_active = models.BooleanField(default=True)
+    ordering = models.PositiveIntegerField(default=0)
+    eyebrow_ar = models.CharField(max_length=80, blank=True, default='')
+    eyebrow_en = models.CharField(max_length=80, blank=True, default='')
+    title_ar = models.CharField(
+        max_length=200, blank=True, default='',
+        help_text='في الـ Hero: السطر التاني بعد Enter بيتلوّن',
+    )
+    title_en = models.CharField(max_length=200, blank=True, default='')
+    subtitle_ar = models.TextField(blank=True, default='')
+    subtitle_en = models.TextField(blank=True, default='')
+    button_text_ar = models.CharField(max_length=60, blank=True, default='')
+    button_text_en = models.CharField(max_length=60, blank=True, default='')
+    button_link = models.CharField(max_length=255, blank=True, default='')
+    image = models.ImageField(upload_to='home/', blank=True, null=True)
+    items_limit = models.PositiveSmallIntegerField(default=8)
+
+    class Meta:
+        ordering = ['ordering', 'id']
+
+    def __str__(self):
+        return self.get_key_display()
+
+    @property
+    def eyebrow(self):
+        return pick(self.eyebrow_ar, self.eyebrow_en)
+
+    @property
+    def title(self):
+        return pick(self.title_ar, self.title_en)
+
+    # -- hero: always English, whatever the page language (owner's choice)
+    @staticmethod
+    def _lines(text):
+        lines = [line.strip() for line in (text or '').replace('\\n', '\n').splitlines()]
+        lines = [line for line in lines if line]
+        if not lines:
+            return '', ''
+        return lines[0], ' '.join(lines[1:])
+
+    @property
+    def hero_eyebrow(self):
+        return self.eyebrow_en or self.eyebrow_ar
+
+    @property
+    def hero_lines(self):
+        return self._lines(self.title_en or self.title_ar)
+
+    @property
+    def hero_subtitle(self):
+        return self.subtitle_en or self.subtitle_ar
+
+    @property
+    def hero_button(self):
+        return self.button_text_en or self.button_text_ar
+
+    @property
+    def title_lines(self):
+        lines = [line.strip() for line in (self.title or '').replace('\\n', '\n').splitlines()]
+        lines = [line for line in lines if line]
+        if not lines:
+            return '', ''
+        return lines[0], ' '.join(lines[1:])
+
+    @property
+    def subtitle(self):
+        return pick(self.subtitle_ar, self.subtitle_en)
+
+    @property
+    def button_text(self):
+        return pick(self.button_text_ar, self.button_text_en)
+
+    @property
+    def label(self):
+        return self.get_key_display()
+
+    @property
+    def uses_limit(self):
+        return self.key in ('categories', 'featured', 'portfolio', 'sale', 'new_arrivals', 'reviews')
+
+    @property
+    def uses_image(self):
+        return self.key in ('hero', 'about')
+
+    @classmethod
+    def ensure_defaults(cls):
+        existing = set(cls.objects.values_list('key', flat=True))
+        for index, (key, _) in enumerate(HOME_SECTIONS):
+            if key in existing:
+                continue
+            d = HOME_SECTION_DEFAULTS.get(key, ('',) * 9 + (8,))
+            cls.objects.create(
+                key=key, ordering=index,
+                eyebrow_ar=d[0], eyebrow_en=d[1], title_ar=d[2], title_en=d[3],
+                subtitle_ar=d[4], subtitle_en=d[5], button_text_ar=d[6], button_text_en=d[7],
+                button_link=d[8], items_limit=d[9] or 8,
+            )
+
+
+# ==================================================================== navbar
+NAV_TYPES = [
+    ('home', 'الرئيسية'),
+    ('shop', 'المتجر'),
+    ('new', 'وصل حديثًا'),
+    ('sale', 'العروض'),
+    ('portfolio', 'أعمالنا'),
+    ('reviews', 'تقييمات العملاء'),
+    ('about', 'من نحن'),
+    ('contact', 'اتصل بنا'),
+    ('track', 'تتبع الطلب'),
+    ('category', 'قسم من المتجر'),
+    ('policy', 'صفحة سياسة'),
+    ('custom', 'رابط مخصص'),
+]
+
+# default label (ar, en) + url name for the built-in types
+NAV_BUILTINS = {
+    'home': ('الرئيسية', 'Home', 'home', ''),
+    'shop': ('المتجر', 'Shop', 'shop', ''),
+    'new': ('وصل حديثًا', 'New', 'shop', '?sort=new'),
+    'sale': ('العروض', 'Sale', 'shop', '?sale=1'),
+    'portfolio': ('أعمالنا', 'Our work', 'works', ''),
+    'reviews': ('آراء العملاء', 'Reviews', 'reviews', ''),
+    'about': ('من نحن', 'About', 'about', ''),
+    'contact': ('اتصل بنا', 'Contact', 'contact', ''),
+    'track': ('تتبع طلبك', 'Track order', 'track_order', ''),
+}
+
+
+class Policy(models.Model):
+    """Store policies (privacy, returns, shipping…) — the owner writes the text."""
+
+    title_ar = models.CharField(max_length=160)
+    title_en = models.CharField(max_length=160, blank=True, default='')
+    slug = models.SlugField(max_length=190, unique=True, blank=True, allow_unicode=True)
+    content_ar = models.TextField(blank=True, default='')
+    content_en = models.TextField(blank=True, default='')
+    is_active = models.BooleanField(default=True)
+    show_in_footer = models.BooleanField(default=True)
+    ordering = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['ordering', 'id']
+        verbose_name_plural = 'Policies'
+
+    def __str__(self):
+        return self.title_ar
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = unique_slugify(self, self.title_en or self.title_ar)
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse('policy_detail', args=[self.slug])
+
+    @property
+    def title(self):
+        return pick(self.title_ar, self.title_en)
+
+    @property
+    def content(self):
+        return pick(self.content_ar, self.content_en)
+
+    @property
+    def has_content(self):
+        return bool((self.content_ar or '').strip() or (self.content_en or '').strip())
+
+
+class NavLink(models.Model):
+    """An item of the header menu (desktop bar + mobile drawer)."""
+
+    link_type = models.CharField(max_length=12, choices=NAV_TYPES, default='custom')
+    label_ar = models.CharField(max_length=60, blank=True, default='', help_text='اتركه فاضي للاسم الافتراضي')
+    label_en = models.CharField(max_length=60, blank=True, default='')
+    category = models.ForeignKey(
+        Category, on_delete=models.CASCADE, null=True, blank=True, related_name='nav_links'
+    )
+    policy = models.ForeignKey(
+        Policy, on_delete=models.CASCADE, null=True, blank=True, related_name='nav_links'
+    )
+    url = models.CharField(max_length=255, blank=True, default='', help_text='للرابط المخصص فقط')
+    new_tab = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    ordering = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['ordering', 'id']
+
+    def __str__(self):
+        return self.label or self.get_link_type_display()
+
+    @property
+    def label(self):
+        if self.label_ar or self.label_en:
+            return pick(self.label_ar, self.label_en)
+        if self.link_type in NAV_BUILTINS:
+            ar, en, _, _ = NAV_BUILTINS[self.link_type]
+            return pick(ar, en)
+        if self.link_type == 'category' and self.category:
+            return self.category.name
+        if self.link_type == 'policy' and self.policy:
+            return self.policy.title
+        return self.url
+
+    @property
+    def href(self):
+        if self.link_type in NAV_BUILTINS:
+            _, _, name, query = NAV_BUILTINS[self.link_type]
+            return reverse(name) + query
+        if self.link_type == 'category' and self.category:
+            return reverse('category_detail', args=[self.category.slug])
+        if self.link_type == 'policy' and self.policy:
+            return self.policy.get_absolute_url()
+        return self.url or '#'
+
+    @property
+    def is_visible(self):
+        if not self.is_active:
+            return False
+        if self.link_type == 'category':
+            return bool(self.category and self.category.is_active)
+        if self.link_type == 'policy':
+            return bool(self.policy and self.policy.is_active)
+        return True
+
+    @classmethod
+    def ensure_defaults(cls):
+        if cls.objects.exists():
+            return
+        for index, key in enumerate(['home', 'shop', 'portfolio', 'sale', 'reviews', 'about', 'contact']):
+            cls.objects.create(link_type=key, ordering=index)
+
+
+DEFAULT_POLICIES = [
+    ('سياسة الخصوصية', 'Privacy policy', 'privacy-policy'),
+    ('سياسة الاستبدال والاسترجاع', 'Returns & exchanges', 'returns-policy'),
+    ('سياسة الشحن والتوصيل', 'Shipping policy', 'shipping-policy'),
+    ('الشروط والأحكام', 'Terms & conditions', 'terms'),
+]
+
+
+def ensure_policy_defaults():
+    if Policy.objects.exists():
+        return
+    for index, (ar, en, slug) in enumerate(DEFAULT_POLICIES):
+        Policy.objects.create(title_ar=ar, title_en=en, slug=slug, ordering=index)

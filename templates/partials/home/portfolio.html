@@ -1,0 +1,11 @@
+{% load store_tags %}
+<section class="section works-home">
+  <div class="wrap">
+    {% include 'partials/home/section_head.html' %}
+    <div class="works-bento">
+      {% for work in items %}
+        {% include 'partials/work_card.html' with big=forloop.first %}
+      {% endfor %}
+    </div>
+  </div>
+</section>

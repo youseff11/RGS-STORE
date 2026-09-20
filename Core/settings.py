@@ -33,6 +33,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'dashboard.middleware.LanguageMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -80,11 +81,20 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # ------------------------------------------------------------ internationalize
-LANGUAGE_CODE = 'en'
+LANGUAGE_CODE = 'ar'
+
+# Arabic is the storefront's default; the navbar button switches to English.
+LANGUAGES = [
+    ('ar', 'العربية'),
+    ('en', 'English'),
+]
 
 TIME_ZONE = 'Africa/Cairo'
 
 USE_I18N = True
+
+# numbers keep a dot as the decimal separator in Arabic too (Core/formats/ar)
+FORMAT_MODULE_PATH = ['Core.formats']
 
 USE_TZ = True
 
@@ -104,7 +114,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # 30 days
 SESSION_SAVE_EVERY_REQUEST = True
 
-LOGIN_URL = '/dashboard/login/'
+LOGIN_URL = '/account/login/'   # customers; the dashboard has its own login
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 

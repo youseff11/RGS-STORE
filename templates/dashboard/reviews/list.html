@@ -1,0 +1,73 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}تقييمات العملاء{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>تقييمات العملاء</h2><p>العملاء اللي دفعوا بس هم اللي يقدروا يقيّموا · {% if auto_publish %}النشر تلقائي{% else %}التقييمات الجديدة بتستنى موافقتك{% endif %}</p></div>
+  <a class="btn btn-ghost" href="{% url 'reviews' %}" target="_blank">صفحة التقييمات {% include 'partials/icon.html' with name='external' %}</a>
+</div>
+
+<div class="grid g4" style="margin-bottom:16px">
+  <div class="stat ok"><span class="ico">{% include 'partials/icon.html' with name='star-fill' %}</span><div><div class="v">{% if summary.count %}{{ summary.avg }}{% else %}—{% endif %}</div><div class="l">متوسط التقييم المنشور</div></div></div>
+  <a class="stat warn" href="?status=pending"><span class="ico">{% include 'partials/icon.html' with name='eye' %}</span><div><div class="v">{{ counts.pending }}</div><div class="l">بانتظار المراجعة</div></div></a>
+  <a class="stat" href="?status=published"><span class="ico">{% include 'partials/icon.html' with name='check-circle' %}</span><div><div class="v">{{ counts.published }}</div><div class="l">منشور</div></div></a>
+  <a class="stat info" href="?status=featured"><span class="ico">{% include 'partials/icon.html' with name='home' %}</span><div><div class="v">{{ counts.featured }}</div><div class="l">مميز في الرئيسية</div></div></a>
+</div>
+
+<form class="filters-bar" method="get">
+  <input class="inp" type="search" name="q" value="{{ q }}" placeholder="اسم العميل أو نص التقييم...">
+  <select class="inp select" name="status" style="max-width:190px">
+    <option value="">كل التقييمات ({{ counts.all }})</option>
+    <option value="pending" {% if status == 'pending' %}selected{% endif %}>بانتظار المراجعة</option>
+    <option value="published" {% if status == 'published' %}selected{% endif %}>منشور</option>
+    <option value="featured" {% if status == 'featured' %}selected{% endif %}>مميز</option>
+  </select>
+  <select class="inp select" name="rating" style="max-width:150px">
+    <option value="">كل النجوم</option>
+    {% for n in "54321" %}<option value="{{ n }}" {% if rating == n %}selected{% endif %}>{{ n }} ★</option>{% endfor %}
+  </select>
+  <button class="btn btn-sm" type="submit">بحث</button>
+  <a class="btn btn-sm btn-ghost" href="{% url 'dash_reviews' %}">مسح</a>
+</form>
+
+{% if page_obj.object_list %}
+<div class="review-admin-list">
+  {% for review in page_obj %}
+  <article class="review-admin{% if not review.is_approved %} is-pending{% endif %}">
+    <div class="review-admin-head">
+      <span class="mini-av">{{ review.initial }}</span>
+      <div style="flex:1;min-width:0">
+        <b>{{ review.name }}</b>
+        <div class="small muted">
+          {{ review.created_at|date:"Y/m/d H:i" }}
+          {% if review.order %} · طلب <a href="{% url 'dash_order_detail' review.order.pk %}" style="color:var(--accent-text)">{{ review.order.order_number }}</a>{% endif %}
+          · <a href="{% url 'dash_customer_detail' review.user_id %}" style="color:var(--accent-text)">ملف العميل</a>
+        </div>
+      </div>
+      <span class="stars-txt big">{% for i in review.stars %}★{% endfor %}<span class="off">{% for i in review.empty_stars %}★{% endfor %}</span></span>
+    </div>
+    <p class="review-admin-text">{{ review.comment }}</p>
+    {% if review.reply %}<div class="review-admin-reply"><b>ردك:</b> {{ review.reply }}</div>{% endif %}
+    <div class="review-admin-foot">
+      <span class="chip {% if review.is_approved %}chip-ok{% else %}chip-warn{% endif %}">{% if review.is_approved %}منشور{% else %}بانتظار المراجعة{% endif %}</span>
+      {% if review.is_featured %}<span class="chip chip-accent">مميز في الرئيسية</span>{% endif %}
+      <span class="spacer"></span>
+      <form method="post" action="{% url 'dash_review_toggle' review.pk 'is_approved' %}">{% csrf_token %}
+        <button class="btn btn-sm {% if review.is_approved %}btn-ghost{% endif %}" type="submit">{% if review.is_approved %}{% include 'partials/icon.html' with name='eye-off' %} إخفاء{% else %}{% include 'partials/icon.html' with name='check' %} موافقة ونشر{% endif %}</button>
+      </form>
+      <form method="post" action="{% url 'dash_review_toggle' review.pk 'is_featured' %}">{% csrf_token %}
+        <button class="btn btn-sm btn-ghost" type="submit">{% include 'partials/icon.html' with name='star' %} {% if review.is_featured %}إلغاء التمييز{% else %}تمييز في الرئيسية{% endif %}</button>
+      </form>
+      <a class="btn btn-sm btn-soft" href="{% url 'dash_review_edit' review.pk %}">{% include 'partials/icon.html' with name='reply' %} رد / تعديل</a>
+      <form method="post" action="{% url 'dash_review_delete' review.pk %}" data-confirm="حذف التقييم نهائيًا؟">{% csrf_token %}
+        <button class="btn btn-sm btn-danger" type="submit" aria-label="حذف">{% include 'partials/icon.html' with name='trash' %}</button>
+      </form>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% include 'dashboard/_pager.html' %}
+{% else %}
+<div class="card"><div class="empty"><div class="ico ico-badge">{% include 'partials/icon.html' with name='star' %}</div>لا توجد تقييمات{% if status or q or rating %} بالفلتر ده{% endif %}</div></div>
+{% endif %}
+{% endblock %}

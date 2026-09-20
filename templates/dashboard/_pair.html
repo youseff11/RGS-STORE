@@ -1,0 +1,14 @@
+{# Arabic + English inputs for one text: {% include 'dashboard/_pair.html' with ar=form.name_ar en=form.name_en label='الاسم' %} #}
+<div class="lang-pair">
+  <div class="field">
+    <label for="{{ ar.id_for_label }}">{{ label|default:ar.label }} <span class="lang-tag ar">عربي</span>{% if ar.field.required %} <span class="req">*</span>{% endif %}</label>
+    {{ ar }}
+    {% if help %}<div class="help">{{ help }}</div>{% endif %}
+    {% for e in ar.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}
+  </div>
+  <div class="field">
+    <label for="{{ en.id_for_label }}">{{ label|default:en.label }} <span class="lang-tag en">English</span></label>
+    {{ en }}
+    {% for e in en.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}
+  </div>
+</div>

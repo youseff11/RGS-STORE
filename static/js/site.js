@@ -5,39 +5,8 @@
   const $  = (sel, root) => (root || document).querySelector(sel);
   const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
 
-  /* ------------------------------------------------------------ theme ---- */
-  const THEME_KEY = 'rgs-theme';
-
-  function readTheme() {
-    try {
-      const stored = localStorage.getItem(THEME_KEY);
-      if (stored === 'light' || stored === 'dark') return stored;
-    } catch (e) { /* storage unavailable */ }
-    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-  }
-
-  function applyTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    $$('[data-theme-toggle]').forEach((btn) => {
-      btn.setAttribute('aria-label', theme === 'dark' ? 'Light mode' : 'Dark mode');
-      const sun = $('.ico-sun', btn);
-      const moon = $('.ico-moon', btn);
-      if (sun && moon) {
-        sun.style.display  = theme === 'dark' ? 'block' : 'none';
-        moon.style.display = theme === 'dark' ? 'none' : 'block';
-      }
-    });
-  }
-
-  applyTheme(readTheme());
-
-  document.addEventListener('click', (event) => {
-    const toggle = event.target.closest('[data-theme-toggle]');
-    if (!toggle) return;
-    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    applyTheme(next);
-    try { localStorage.setItem(THEME_KEY, next); } catch (e) { /* ignore */ }
-  });
+  /* The store is dark only — drop the theme some visitors saved before. */
+  try { localStorage.removeItem('rgs-theme'); } catch (e) { /* storage unavailable */ }
 
   /* ------------------------------------------------------------ toasts --- */
   function toast(message, kind) {
@@ -313,4 +282,123 @@
     toast(el.dataset.serverMessage, el.dataset.serverLevel || 'info');
     el.remove();
   });
+
+  /* ------------------------------------------------------ account menu -- */
+  document.addEventListener('click', (event) => {
+    const toggle = event.target.closest('[data-menu-toggle]');
+    $$('[data-menu].is-open').forEach((menu) => {
+      if (!toggle || !menu.contains(toggle)) {
+        menu.classList.remove('is-open');
+        const btn = $('[data-menu-toggle]', menu);
+        btn && btn.setAttribute('aria-expanded', 'false');
+      }
+    });
+    if (toggle) {
+      const menu = toggle.closest('[data-menu]');
+      const open = menu.classList.toggle('is-open');
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    $$('[data-menu].is-open').forEach((menu) => menu.classList.remove('is-open'));
+  });
+
+  /* --------------------------------------------------- show password ---- */
+  document.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-pass-toggle]');
+    if (!btn) return;
+    const input = $('input', btn.closest('.pass-wrap'));
+    if (input) input.type = input.type === 'password' ? 'text' : 'password';
+  });
+
+  /* ------------------------------------------------------- copy link ---- */
+  document.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-copy]');
+    if (!btn) return;
+    const text = btn.dataset.copy;
+    const done = () => toast(btn.dataset.copied || 'Copied', 'success');
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(done).catch(() => window.prompt('', text));
+    } else {
+      const area = document.createElement('textarea');
+      area.value = text; area.style.position = 'fixed'; area.style.opacity = '0';
+      document.body.appendChild(area); area.select();
+      try { document.execCommand('copy'); done(); } catch (e) { window.prompt('', text); }
+      area.remove();
+    }
+  });
+
+  /* ------------------------------------------ checkout button label ---- */
+  const submitBtn = $('[data-checkout-submit]');
+  if (submitBtn) {
+    const label = $('[data-submit-label]', submitBtn);
+    $$('input[name="payment_method"]').forEach((radio) => {
+      radio.addEventListener('change', () => {
+        if (!radio.checked || !label) return;
+        label.textContent = radio.value === 'paypal' ? submitBtn.dataset.labelPaypal : submitBtn.dataset.labelCod;
+      });
+    });
+  }
+
+  /* -------------------------------------------------- work lightbox ----- */
+  const gallery = $('[data-gallery]');
+  const box = $('[data-lightbox]');
+  if (gallery && box) {
+    const items = $$('.gal-item', gallery);
+    const stage = $('[data-lb-stage]', box);
+    const caption = $('[data-lb-caption]', box);
+    const count = $('[data-lb-count]', box);
+    let current = 0;
+    let lastFocus = null;
+
+    const render = () => {
+      const item = items[current];
+      const kind = item.dataset.kind;
+      const src = item.dataset.src;
+      stage.innerHTML = '';
+      let node;
+      if (kind === 'image') {
+        node = document.createElement('img');
+        node.src = src; node.alt = item.dataset.caption || '';
+      } else if (kind === 'video') {
+        node = document.createElement('video');
+        node.src = src; node.controls = true; node.autoplay = true; node.playsInline = true;
+      } else {
+        node = document.createElement('iframe');
+        node.src = src;
+        node.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media';
+        node.allowFullscreen = true;
+        node.title = item.dataset.caption || 'video';
+      }
+      stage.appendChild(node);
+      caption.textContent = item.dataset.caption || '';
+      count.textContent = (current + 1) + ' / ' + items.length;
+    };
+    const open = (index) => {
+      current = index; lastFocus = document.activeElement;
+      box.hidden = false; document.body.style.overflow = 'hidden';
+      render();
+      const close = $('[data-lb-close]', box); close && close.focus();
+    };
+    const close = () => {
+      box.hidden = true; stage.innerHTML = ''; document.body.style.overflow = '';
+      lastFocus && lastFocus.focus && lastFocus.focus();
+    };
+    const step = (dir) => { current = (current + dir + items.length) % items.length; render(); };
+    const rtl = document.documentElement.dir === 'rtl';
+
+    items.forEach((item, i) => item.addEventListener('click', () => open(i)));
+    $('[data-lb-close]', box).addEventListener('click', close);
+    $('[data-lb-prev]', box).addEventListener('click', () => step(-1));
+    $('[data-lb-next]', box).addEventListener('click', () => step(1));
+    box.addEventListener('click', (event) => { if (event.target === box) close(); });
+    document.addEventListener('keydown', (event) => {
+      if (box.hidden) return;
+      if (event.key === 'Escape') close();
+      if (event.key === 'ArrowRight') step(rtl ? -1 : 1);
+      if (event.key === 'ArrowLeft') step(rtl ? 1 : -1);
+    });
+    if (items.length < 2) $$('.lb-nav', box).forEach((btn) => { btn.hidden = true; });
+  }
 })();

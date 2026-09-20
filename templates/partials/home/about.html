@@ -1,0 +1,34 @@
+{% load store_tags %}
+<section class="section about-block">
+  <div class="wrap about-grid">
+    <div class="about-media reveal">
+      {% if sec.image %}
+        <img src="{{ sec.image.url }}" alt="{{ sec.title }}" loading="lazy">
+      {% else %}
+        <div class="about-mark" aria-hidden="true">{% include 'partials/logo.html' %}</div>
+      {% endif %}
+      <span class="about-tag">{{ SITE.brand_name|default:'RGS TOWER' }}</span>
+    </div>
+
+    <div class="about-copy reveal">
+      {% if sec.eyebrow %}<span class="eyebrow">{{ sec.eyebrow }}</span>{% endif %}
+      <h2>{{ sec.title|default:SITE.brand_name }}</h2>
+      <div class="about-text">{{ sec.subtitle|default:block.text|default:SITE.tagline|linebreaksbr }}</div>
+
+      {% if block.stats %}
+      <div class="about-stats">
+        {% for stat in block.stats %}
+          <div class="about-stat">
+            <b>{{ stat.value }}{% if stat.plus %}<i>+</i>{% endif %}{% if stat.star %} {% include 'partials/icon.html' with name='star-fill' %}{% endif %}</b>
+            <span>{{ stat.label }}</span>
+          </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if sec.button_text %}
+        <a class="btn" href="{{ sec.button_link|default:'/about/' }}">{{ sec.button_text }} {% include 'partials/icon.html' with name='arrow' %}</a>
+      {% endif %}
+    </div>
+  </div>
+</section>

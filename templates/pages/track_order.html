@@ -38,16 +38,16 @@
     <div class="form-card">
       <div class="between" style="margin-bottom:6px">
         <h3 style="margin:0;border:0;padding:0">{{ order.order_number }}</h3>
-        <span class="chip chip-{% status_color order.status %}">{{ order.status_label }}</span>
+        <span class="chip chip-{% status_color order.status %}">{{ order.status_label_local }}</span>
       </div>
       <p style="color:var(--muted);font-size:12.5px">{{ order.created_at|date:"Y/m/d — H:i" }}</p>
 
       <div class="timeline">
         {% with s=order.status %}
         <div class="tl-step {% if s == 'pending' or s == 'confirmed' or s == 'shipped' or s == 'delivered' %}is-done{% endif %}"><span class="bullet">1</span>{% t 'order_received' %}</div>
-        <div class="tl-step {% if s == 'confirmed' or s == 'shipped' or s == 'delivered' %}is-done{% endif %}"><span class="bullet">2</span>Confirmed</div>
-        <div class="tl-step {% if s == 'shipped' or s == 'delivered' %}is-done{% endif %}"><span class="bullet">3</span>Shipped</div>
-        <div class="tl-step {% if s == 'delivered' %}is-done{% endif %}"><span class="bullet">4</span>Delivered</div>
+        <div class="tl-step {% if s == 'confirmed' or s == 'shipped' or s == 'delivered' %}is-done{% endif %}"><span class="bullet">2</span>{% if LANG == 'ar' %}تم التأكيد{% else %}Confirmed{% endif %}</div>
+        <div class="tl-step {% if s == 'shipped' or s == 'delivered' %}is-done{% endif %}"><span class="bullet">3</span>{% if LANG == 'ar' %}تم الشحن{% else %}Shipped{% endif %}</div>
+        <div class="tl-step {% if s == 'delivered' %}is-done{% endif %}"><span class="bullet">4</span>{% if LANG == 'ar' %}تم التسليم{% else %}Delivered{% endif %}</div>
         {% endwith %}
       </div>
 

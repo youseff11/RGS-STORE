@@ -1,0 +1,44 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}تصنيفات الأعمال{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>تصنيفات «أعمالنا»</h2><p>بتظهر كفلاتر فوق معرض الأعمال (مثلاً: جلسات تصوير، فعاليات، كوليكشن)</p></div>
+  <a class="btn btn-ghost" href="{% url 'dash_works' %}">رجوع للأعمال</a>
+</div>
+
+<div class="split">
+  <div>
+    {% if categories %}
+    <div class="table-wrap">
+      <table class="t">
+        <thead><tr><th>التصنيف</th><th>English</th><th>عدد الأعمال</th><th>الترتيب</th><th></th></tr></thead>
+        <tbody>
+          {% for c in categories %}
+          <tr>
+            <td><b>{{ c.name_ar }}</b></td>
+            <td class="small" dir="ltr" style="text-align:start">{{ c.name_en|default:'—' }}</td>
+            <td><span class="chip chip-muted">{{ c.n }}</span></td>
+            <td class="small muted">{{ c.ordering }}</td>
+            <td><div class="row-actions">
+              <a class="btn btn-sm btn-soft" href="?edit={{ c.pk }}">تعديل</a>
+              <form method="post" action="{% url 'dash_work_category_delete' c.pk %}" data-confirm="حذف التصنيف؟ الأعمال نفسها مش هتتمسح.">{% csrf_token %}<button class="btn btn-sm btn-danger" type="submit">حذف</button></form>
+            </div></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <div class="card"><div class="empty"><div class="ico ico-badge">{% include 'partials/icon.html' with name='grid' %}</div>لا توجد تصنيفات</div></div>
+    {% endif %}
+  </div>
+  <form class="card" method="post">
+    {% csrf_token %}
+    <div class="card-head"><h3>{% if edit %}تعديل «{{ edit.name_ar }}»{% else %}تصنيف جديد{% endif %}</h3></div>
+    {% include 'dashboard/_form_fields.html' %}
+    <button class="btn btn-block" type="submit">حفظ</button>
+    {% if edit %}<a class="btn btn-block btn-ghost" style="margin-top:8px" href="{% url 'dash_work_categories' %}">إلغاء</a>{% endif %}
+  </form>
+</div>
+{% endblock %}

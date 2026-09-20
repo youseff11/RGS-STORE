@@ -1,0 +1,32 @@
+{% load store_tags %}
+<section class="section reviews-home">
+  <div class="wrap">
+    <div class="reviews-home-grid">
+      <div class="reviews-intro reveal">
+        {% if sec.eyebrow %}<span class="eyebrow">{{ sec.eyebrow }}</span>{% endif %}
+        <h2>{{ sec.title }}</h2>
+        {% if sec.subtitle %}<p>{{ sec.subtitle }}</p>{% endif %}
+        {% with s=block.summary %}
+        {% if s.count %}
+        <div class="rating-big">
+          <b>{{ s.avg }}</b>
+          <div>
+            {% include 'partials/stars.html' with rating=s.avg pct=s.avg_pct %}
+            <span>{% t 'based_on' %} {{ s.count }} {% t 'reviews_count' %}</span>
+          </div>
+        </div>
+        {% endif %}
+        {% endwith %}
+        {% if sec.button_text %}
+          <a class="btn btn-ghost" href="{{ sec.button_link|default:'/reviews/' }}">{{ sec.button_text }} {% include 'partials/icon.html' with name='arrow' %}</a>
+        {% endif %}
+      </div>
+
+      <div class="reviews-rail" data-rail>
+        {% for review in items %}
+          {% include 'partials/review_card.html' %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>

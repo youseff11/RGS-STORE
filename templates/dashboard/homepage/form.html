@@ -1,0 +1,24 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}قسم الصفحة الرئيسية{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>قسم «{{ section.label }}»</h2><p>{% if section.key == 'banners' %}الصور نفسها بتتعدل من صفحة البانرات{% elif section.key == 'features' %}شريط مميزات المتجر (توصيل، دفع آمن، جودة، دعم){% elif section.key == 'hero' %}الـ Hero بيفضل بالإنجليزي في العربي والإنجليزي{% else %}اكتب العربي، والإنجليزي اختياري{% endif %}</p></div>
+  <a class="btn btn-ghost" href="{% url 'dash_home' %}">رجوع</a>
+</div>
+
+<form method="post" enctype="multipart/form-data" style="max-width:860px">
+  {% csrf_token %}
+  <div class="card">
+    {% include 'dashboard/_form_fields.html' %}
+    {% if section.uses_image and section.image %}
+      <div class="flex" style="margin-bottom:14px;align-items:flex-end">
+        <img src="{{ section.image.url }}" alt="" style="max-height:130px;border-radius:10px">
+        <button class="btn btn-sm btn-danger" type="submit" name="clear_image" value="1">حذف الصورة</button>
+      </div>
+    {% endif %}
+    <button class="btn" type="submit">حفظ</button>
+    {% if section.key == 'banners' %}<a class="btn btn-soft" href="{% url 'dash_banners' %}">إدارة البانرات</a>{% endif %}
+  </div>
+</form>
+{% endblock %}

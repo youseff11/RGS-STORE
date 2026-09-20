@@ -54,8 +54,8 @@
     </div>
     <div class="box">
       <h4>بيانات الطلب</h4>
-      <div>الحالة: <b>{{ order.get_status_display }}</b></div>
-      <div>طريقة الدفع: <b>الدفع عند الاستلام</b></div>
+      <div>الحالة: <b>{{ order.status_label_local }}</b></div>
+      <div>طريقة الدفع: <b>{{ order.get_payment_method_display }}</b> — {{ order.get_payment_status_display }}</div>
       <div>عدد القطع: <b>{{ order.items_count }}</b></div>
       <div style="margin-top:8px;font-size:17px">المطلوب تحصيله: <b>{% price order.total %}</b></div>
     </div>
@@ -85,7 +85,7 @@
   </div>
 
   <div class="foot">
-    شكرًا لثقتك في {{ SITE.brand_name|default:"MR" }} — الدفع عند الاستلام
+    شكرًا لثقتك في {{ SITE.brand_name|default:"MR" }} 
   </div>
 </div>
 </body>

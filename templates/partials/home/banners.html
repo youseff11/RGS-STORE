@@ -1,0 +1,26 @@
+{% load store_tags %}
+<section class="hero">
+  <div class="hero-slides">
+    {% for banner in items %}
+      <div class="hero-slide {% if forloop.first %}is-active{% endif %}">
+        <img src="{{ banner.image.url }}" alt="{{ banner.title }}" loading="lazy">
+        <div class="hero-content">
+          <div class="inner">
+            <div class="eyebrow">{{ SITE.brand_name|default:"RGS TOWER" }}</div>
+            <h2 class="banner-title">{{ banner.title|default:SITE.tagline }}</h2>
+            {% if banner.subtitle %}<p>{{ banner.subtitle }}</p>{% endif %}
+            <a class="btn btn-lg" href="{{ banner.link|default:'/shop/' }}">
+              {% if banner.button_text %}{{ banner.button_text }}{% else %}{% t 'shop_now' %}{% endif %}
+              {% include 'partials/icon.html' with name='arrow' %}
+            </a>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  {% if items|length > 1 %}
+  <div class="hero-dots">
+    {% for banner in items %}<button class="{% if forloop.first %}is-active{% endif %}" aria-label="slide {{ forloop.counter }}"></button>{% endfor %}
+  </div>
+  {% endif %}
+</section>

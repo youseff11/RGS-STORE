@@ -1,0 +1,18 @@
+{% extends 'base/base.html' %}
+{% load store_tags %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="wrap">
+    <div class="crumbs"><a href="{% url 'account' %}">{% t 'account' %}</a> <span>/</span> <span>{% t 'my_orders' %}</span></div>
+    <h1 dir="ltr" style="text-align:start">{{ order.order_number }}</h1>
+    <p>{{ order.created_at|date:"Y/m/d — H:i" }}</p>
+  </div>
+</section>
+
+<section class="section-sm">
+  <div class="wrap" style="max-width:860px">
+    {% include 'partials/order_body.html' %}
+  </div>
+</section>
+{% endblock %}

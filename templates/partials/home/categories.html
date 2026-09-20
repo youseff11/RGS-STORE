@@ -1,0 +1,18 @@
+{% load store_tags %}
+<section class="section">
+  <div class="wrap">
+    {% include 'partials/home/section_head.html' with center=1 %}
+    <div class="cats-grid">
+      {% for cat in items %}
+        <a class="cat-tile reveal" href="{% url 'category_detail' cat.slug %}">
+          {% if cat.image %}<img src="{{ cat.image.url }}" alt="{{ cat.name }}" loading="lazy">{% endif %}
+          <span class="go">{% include 'partials/icon.html' with name='arrow' %}</span>
+          <div class="meta">
+            <h3>{{ cat.name }}</h3>
+            <span>{{ cat.live_products_count }} {% t 'results_count' %}</span>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>

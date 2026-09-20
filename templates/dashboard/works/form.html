@@ -1,0 +1,57 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}{% if object %}تعديل عمل{% else %}عمل جديد{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>{% if object %}تعديل: {{ object.title_ar }}{% else %}نشر عمل جديد{% endif %}</h2><p>البيانات والبانر — الصور والفيديوهات في الخطوة التالية</p></div>
+  <a class="btn btn-ghost" href="{% url 'dash_works' %}">رجوع</a>
+</div>
+
+{% if object %}
+<div class="filters-bar">
+  <a class="btn btn-sm" href="{% url 'dash_work_edit' object.pk %}">١. البيانات والبانر</a>
+  <a class="btn btn-sm btn-ghost" href="{% url 'dash_work_media' object.pk %}">٢. الصور والفيديوهات</a>
+  <span class="spacer"></span>
+  <a class="btn btn-sm btn-soft" href="{{ object.get_absolute_url }}" target="_blank">معاينة {% include 'partials/icon.html' with name='external' %}</a>
+</div>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <div class="split">
+    <div class="card">
+      {% include 'dashboard/_pair.html' with ar=form.title_ar en=form.title_en label='اسم العمل' %}
+      {% include 'dashboard/_pair.html' with ar=form.summary_ar en=form.summary_en label='نبذة قصيرة' help='بتظهر في الكارت وتحت الرابط لما تشاركه' %}
+      {% include 'dashboard/_pair.html' with ar=form.description_ar en=form.description_en label='التفاصيل' %}
+      <div class="grid g2">
+        <div class="field"><label>{{ form.client.label }}</label>{{ form.client }}</div>
+        <div class="field"><label>{{ form.work_date.label }}</label>{{ form.work_date }}</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-head"><h3>البانر / الغلاف {% if not object %}<span class="req">*</span>{% endif %}</h3></div>
+        <div class="cover-drop">
+          {% if object.cover %}<img src="{{ object.cover.url }}" alt="" data-cover-preview>{% else %}<div class="cover-empty" data-cover-preview>{% include 'partials/icon.html' with name='image' %}<span>1200×630 أو أكبر</span></div>{% endif %}
+        </div>
+        <div class="field">{{ form.cover }}{% for e in form.cover.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}
+          <div class="help">{{ form.cover.help_text }}</div></div>
+        <div class="field"><label>{{ form.category.label }}</label>{{ form.category }}
+          <div class="help"><a href="{% url 'dash_work_categories' %}" style="color:var(--accent-text)">إدارة التصنيفات</a></div></div>
+        <div class="switch">{{ form.is_active }}<label for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label></div>
+        <div class="switch">{{ form.is_featured }}<label for="{{ form.is_featured.id_for_label }}">{{ form.is_featured.label }}</label></div>
+        <div class="grid g2" style="margin-top:10px">
+          <div class="field"><label>{{ form.ordering.label }}</label>{{ form.ordering }}</div>
+          <div class="field"><label>{{ form.slug.label }}</label>{{ form.slug }}</div>
+        </div>
+        {% if form.non_field_errors %}<div class="alert">{{ form.non_field_errors }}</div>{% endif %}
+      </div>
+      <div class="card">
+        <button class="btn btn-block" type="submit">{% if object %}حفظ{% else %}حفظ والانتقال للصور والفيديو{% endif %}</button>
+        {% if object %}<button class="btn btn-block btn-soft" type="submit" name="save_and_media" value="1" style="margin-top:8px">حفظ والانتقال للصور والفيديو</button>{% endif %}
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

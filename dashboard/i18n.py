@@ -1,11 +1,19 @@
-"""Tiny bilingual layer (AR / EN) — no .po files needed."""
+"""Tiny bilingual layer (AR / EN) — no .po files needed.
 
-DEFAULT_LANG = 'en'
+Arabic is the default language; the navbar button switches to English.
+`dashboard.middleware.LanguageMiddleware` activates the visitor's choice
+for every request (the dashboard itself is always Arabic).
+"""
+
+from django.utils import translation
+
+DEFAULT_LANG = 'ar'
+LANGS = ('ar', 'en')
 
 
 def current_lang():
-    """The storefront is English-only — kept as a function so callers stay put."""
-    return 'en'
+    lang = (translation.get_language() or DEFAULT_LANG)[:2].lower()
+    return lang if lang in LANGS else DEFAULT_LANG
 
 
 def pick(ar, en):
@@ -223,6 +231,140 @@ STRINGS = {
     'not_found_sub': ('الرابط اللي بتدور عليه مش موجود', 'The page you are looking for does not exist'),
     'go_home': ('الرجوع للرئيسية', 'Back home'),
     'server_error': ('حصل خطأ في الخادم', 'Something went wrong'),
+
+    # --- language
+    'switch_lang': ('English', 'العربية'),
+    'switch_lang_short': ('EN', 'ع'),
+
+    # --- accounts
+    'account': ('حسابي', 'My account'),
+    'login': ('تسجيل الدخول', 'Log in'),
+    'logout': ('تسجيل الخروج', 'Log out'),
+    'register': ('إنشاء حساب', 'Create account'),
+    'login_title': ('أهلًا بيك تاني', 'Welcome back'),
+    'login_sub': ('سجّل دخولك علشان تكمل طلبك وتتابع طلباتك',
+                  'Log in to check out and follow your orders'),
+    'register_title': ('حساب جديد', 'Create your account'),
+    'register_sub': ('ثواني وتبقى جاهز تطلب وتتابع طلباتك وتقيّمنا',
+                     'Takes a few seconds — order, track and review'),
+    'login_id': ('البريد الإلكتروني أو رقم الموبايل', 'Email or phone number'),
+    'password': ('كلمة المرور', 'Password'),
+    'password_confirm': ('تأكيد كلمة المرور', 'Confirm password'),
+    'no_account': ('معندكش حساب؟', "Don't have an account?"),
+    'have_account': ('عندك حساب بالفعل؟', 'Already have an account?'),
+    'login_required_checkout': ('سجّل دخولك أو أنشئ حساب جديد علشان تكمل الطلب',
+                                'Log in or create an account to complete your order'),
+    'login_failed': ('بيانات الدخول غير صحيحة', 'Incorrect login details'),
+    'account_disabled': ('الحساب ده موقوف، تواصل معانا', 'This account is disabled, please contact us'),
+    'email_taken': ('البريد الإلكتروني ده مسجّل قبل كده', 'This email is already registered'),
+    'phone_taken': ('رقم الموبايل ده مسجّل قبل كده', 'This phone number is already registered'),
+    'invalid_email': ('اكتب بريد إلكتروني صحيح', 'Enter a valid email address'),
+    'invalid_phone': ('اكتب رقم موبايل صحيح', 'Enter a valid phone number'),
+    'password_short': ('كلمة المرور لازم تكون 8 حروف على الأقل', 'Password must be at least 8 characters'),
+    'password_mismatch': ('كلمتين المرور مش متطابقين', 'Passwords do not match'),
+    'welcome_user': ('أهلًا {name}!', 'Welcome, {name}!'),
+    'account_created': ('تم إنشاء حسابك بنجاح', 'Your account has been created'),
+    'logged_out': ('تم تسجيل الخروج', 'You have been logged out'),
+    'my_orders': ('طلباتي', 'My orders'),
+    'my_profile': ('بياناتي', 'My details'),
+    'no_orders_yet': ('لسه ما طلبتش حاجة', "You haven't ordered anything yet"),
+    'profile_saved': ('تم حفظ بياناتك', 'Your details were saved'),
+    'change_password': ('تغيير كلمة المرور', 'Change password'),
+    'current_password': ('كلمة المرور الحالية', 'Current password'),
+    'new_password': ('كلمة المرور الجديدة', 'New password'),
+    'password_changed': ('تم تغيير كلمة المرور', 'Password changed'),
+    'wrong_password': ('كلمة المرور الحالية غلط', 'Current password is incorrect'),
+    'member_since': ('عضو من', 'Member since'),
+    'view_order': ('عرض الطلب', 'View order'),
+    'items': ('قطعة', 'items'),
+
+    # --- payment
+    'pay_paypal': ('الدفع عبر PayPal', 'Pay with PayPal'),
+    'pay_paypal_note': ('ادفع أونلاين بأمان عن طريق PayPal أو الكارت',
+                        'Pay securely online with PayPal or card'),
+    'choose_payment': ('اختار طريقة الدفع', 'Choose a payment method'),
+    'continue_to_payment': ('متابعة للدفع', 'Continue to payment'),
+    'payment_title': ('الدفع', 'Payment'),
+    'payment_sub': ('خطوة أخيرة — ادفع علشان نأكد طلبك', 'Last step — pay to confirm your order'),
+    'amount_to_pay': ('المبلغ المطلوب', 'Amount to pay'),
+    'paypal_rate_note': ('PayPal بيقبل الدولار — المبلغ متحوّل بسعر {rate} ج.م للدولار',
+                         'PayPal charges in USD — converted at {rate} EGP per dollar'),
+    'paypal_card_note': ('تقدر تدفع بحساب PayPal أو بالكارت مباشرة',
+                         'Pay with your PayPal account or directly by card'),
+    'pay_now_link': ('ادفع الآن عبر PayPal', 'Pay now with PayPal'),
+    'pay_link_steps': ('بعد ما تدفع ارجع هنا واضغط «أنا دفعت» واكتب رقم العملية',
+                       "After paying, come back here, press “I've paid” and add the transaction ID"),
+    'i_paid': ('أنا دفعت', "I've paid"),
+    'payment_reference': ('رقم العملية أو إيميل PayPal (اختياري)', 'Transaction ID or PayPal email (optional)'),
+    'payment_submitted': ('تمام! هنراجع الدفع ونأكد طلبك في أقرب وقت',
+                          "Thanks! We'll verify the payment and confirm your order shortly"),
+    'payment_success': ('تم الدفع بنجاح', 'Payment successful'),
+    'payment_failed': ('الدفع ما تمّش، حاول تاني', 'Payment did not go through, please try again'),
+    'payment_error': ('حصلت مشكلة في الاتصال بـ PayPal', 'Could not reach PayPal'),
+    'already_paid': ('الطلب ده مدفوع بالفعل', 'This order is already paid'),
+    'payment_status': ('حالة الدفع', 'Payment status'),
+    'pay_order': ('ادفع الطلب', 'Pay for this order'),
+    'secure_payment_note': ('بيانات الكارت بتتدخل عند PayPal مباشرة — إحنا مش بنشوفها',
+                            'Card details go straight to PayPal — we never see them'),
+    'order_paid_sub': ('وصلنا الدفع وطلبك اتأكد', 'We received your payment and confirmed your order'),
+    'order_pending_payment_sub': ('طلبك اتسجل — كمّل الدفع علشان نأكده',
+                                  'Your order is saved — complete the payment to confirm it'),
+    'no_payment_methods': ('الدفع متوقف حاليًا، تواصل معانا', 'Payment is unavailable right now, please contact us'),
+    'payments_secure': ('دفع آمن', 'Secure payment'),
+    'cod_or_paypal': ('PayPal أو الدفع عند الاستلام', 'PayPal or cash on delivery'),
+
+    # --- reviews
+    'reviews': ('تقييمات العملاء', 'Customer reviews'),
+    'reviews_sub': ('تقييمات حقيقية من عملاء اشتروا من المتجر', 'Real ratings from verified buyers'),
+    'reviews_count': ('تقييم', 'reviews'),
+    'based_on': ('بناءً على', 'Based on'),
+    'add_review': ('أضف تقييمك', 'Write a review'),
+    'your_rating': ('تقييمك', 'Your rating'),
+    'your_review': ('رأيك في تجربتك', 'Tell us about your experience'),
+    'review_placeholder': ('الخامة، المقاس، التوصيل… اكتب اللي عجبك', 'Quality, fit, delivery… share what you liked'),
+    'submit_review': ('نشر التقييم', 'Post review'),
+    'review_thanks': ('شكرًا! تقييمك وصلنا', 'Thank you! Your review was received'),
+    'review_pending': ('هيظهر بعد مراجعة سريعة', 'It will appear after a quick check'),
+    'review_login': ('سجّل دخولك علشان تقيّمنا', 'Log in to leave a review'),
+    'review_need_order': ('التقييم متاح للعملاء بعد أول طلب مدفوع', 'Reviews open after your first paid order'),
+    'review_no_more': ('قيّمت كل طلباتك — شكرًا ليك', "You've reviewed all your orders — thank you"),
+    'review_choose_rating': ('اختار عدد النجوم', 'Choose a star rating'),
+    'review_write_more': ('اكتب رأيك (5 حروف على الأقل)', 'Write a few words (at least 5 characters)'),
+    'no_reviews': ('لسه مفيش تقييمات', 'No reviews yet'),
+    'no_reviews_sub': ('كن أول واحد يقيّم تجربته معانا', 'Be the first to share your experience'),
+    'verified_buyer': ('مشتري موثّق', 'Verified buyer'),
+    'store_reply': ('رد المتجر', 'Store reply'),
+    'review_for_order': ('تقييم الطلب', 'Review for order'),
+    'rate_order': ('قيّم الطلب', 'Rate this order'),
+
+    # --- portfolio
+    'portfolio': ('أعمالنا', 'Our work'),
+    'portfolio_sub': ('لقطات من شغلنا — صور وفيديوهات', 'Moments from our work — photos and films'),
+    'all_works': ('كل الأعمال', 'All work'),
+    'no_works': ('لسه مفيش أعمال منشورة', 'No work published yet'),
+    'photos': ('صورة', 'photos'),
+    'videos': ('فيديو', 'videos'),
+    'client': ('العميل', 'Client'),
+    'share': ('شارك', 'Share'),
+    'copy_link': ('نسخ الرابط', 'Copy link'),
+    'link_copied': ('تم نسخ الرابط', 'Link copied'),
+    'more_works': ('أعمال تانية', 'More work'),
+    'prev': ('السابق', 'Previous'),
+    'next': ('التالي', 'Next'),
+    'gallery': ('المعرض', 'Gallery'),
+    'watch': ('مشاهدة', 'Watch'),
+
+    # --- about / policies / footer
+    'about_title': ('حكايتنا', 'Our story'),
+    'learn_more': ('اعرف أكتر', 'Learn more'),
+    'stat_customers': ('عميل', 'customers'),
+    'stat_works': ('عمل', 'projects'),
+    'stat_rating': ('متوسط التقييم', 'average rating'),
+    'stat_products': ('منتج', 'products'),
+    'policies': ('السياسات', 'Policies'),
+    'last_updated': ('آخر تحديث', 'Last updated'),
+    'policy_empty': ('المحتوى هيتضاف قريب', 'Content coming soon'),
+    'back_to_top': ('لأعلى', 'Back to top'),
 }
 
 

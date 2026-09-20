@@ -1,0 +1,117 @@
+{% extends 'base/base.html' %}
+{% load store_tags %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="wrap">
+    <div class="crumbs">
+      <a href="{% url 'home' %}">{% t 'home' %}</a> <span>/</span>
+      <a href="{% url 'account' %}">{% t 'my_orders' %}</a> <span>/</span> <span>{% t 'payment_title' %}</span>
+    </div>
+    <h1>{% t 'payment_title' %}</h1>
+    <p>{% t 'payment_sub' %}</p>
+  </div>
+</section>
+
+<section class="section-sm">
+  <div class="wrap pay-layout">
+
+    <div class="form-card pay-card">
+      <div class="pay-amount">
+        <span>{% t 'amount_to_pay' %}</span>
+        <b dir="ltr">{{ order.pay_amount }} <small>{{ order.pay_currency|default:'USD' }}</small></b>
+        <em>= {% price order.total %}</em>
+      </div>
+      <p class="small-note">{% t 'paypal_rate_note' rate=rate %}</p>
+
+      {% if smart %}
+        {# official PayPal button — payment is confirmed automatically #}
+        <div id="paypal-buttons" class="pp-buttons"
+             data-create="{% url 'paypal_create' order.order_number %}"
+             data-capture="{% url 'paypal_capture' order.order_number %}"
+             data-error="{% t 'payment_error' %}" data-failed="{% t 'payment_failed' %}" data-csrf="{{ csrf_token }}"></div>
+        <p class="small-note">{% include 'partials/icon.html' with name='lock' %} {% t 'secure_payment_note' %}</p>
+      {% endif %}
+
+      {% if not smart and not pay_link %}
+        <div class="auth-alert" style="margin-top:14px">{% t 'no_payment_methods' %}</div>
+      {% endif %}
+
+      {% if pay_link %}
+        {% if smart %}<div class="or-sep"><span>{% if LANG == 'ar' %}أو{% else %}or{% endif %}</span></div>{% endif %}
+        <a class="btn btn-lg btn-block pp-link-btn" href="{{ pay_link }}" target="_blank" rel="noopener" data-pay-link>
+          {% include 'partials/icon.html' with name='card' %} {% t 'pay_now_link' %} {% include 'partials/icon.html' with name='external' %}
+        </a>
+        <ol class="pay-steps">
+          <li>{% t 'pay_now_link' %} — <b dir="ltr">{{ order.pay_amount }} {{ order.pay_currency|default:'USD' }}</b></li>
+          <li>{% t 'pay_link_steps' %}</li>
+        </ol>
+        <form method="post" action="{% url 'order_paid_manual' order.order_number %}" class="paid-form">
+          {% csrf_token %}
+          <div class="field">
+            <label for="pay-ref">{% t 'payment_reference' %}</label>
+            <input id="pay-ref" type="text" name="reference" maxlength="120" dir="ltr" autocomplete="off">
+          </div>
+          <button class="btn btn-ghost btn-block" type="submit">{% include 'partials/icon.html' with name='check' %} {% t 'i_paid' %}</button>
+        </form>
+      {% endif %}
+    </div>
+
+    <aside class="summary">
+      <h3>{% t 'your_order' %} <span class="muted-text" dir="ltr">{{ order.order_number }}</span></h3>
+      <div class="mini-list">
+        {% for item in order.items.all %}
+        <div class="mini-row">
+          <div class="thumb">{% if item.image_url %}<img src="{{ item.image_url }}" alt="">{% endif %}</div>
+          <div>
+            <div class="n">{{ item.product_name }}</div>
+            <div class="o">{{ item.color_name }} {% if item.size_name %}· {{ item.size_name }}{% endif %} · ×{{ item.quantity }}</div>
+          </div>
+          <div class="p">{% price item.line_total %}</div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="sum-row"><span>{% t 'subtotal' %}</span><b>{% price order.subtotal %}</b></div>
+      {% if order.discount_total %}<div class="sum-row discount"><span>{% t 'discount' %}</span><b>− {% price order.discount_total %}</b></div>{% endif %}
+      <div class="sum-row muted"><span>{% t 'shipping' %}</span><b>{% if order.shipping_fee %}{% price order.shipping_fee %}{% else %}{% t 'free' %}{% endif %}</b></div>
+      <div class="sum-total"><span>{% t 'total' %}</span><span>{% price order.total %}</span></div>
+    </aside>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{% if smart %}
+<script src="https://www.paypal.com/sdk/js?client-id={{ client_id|urlencode }}&currency={{ order.pay_currency|default:'USD' }}&intent=capture&components=buttons&enable-funding=card{% if LANG == 'ar' %}&locale=ar_EG{% endif %}" data-namespace="paypal"></script>
+<script>
+(function () {
+  var box = document.getElementById('paypal-buttons');
+  if (!box || !window.paypal) { if (box) box.textContent = box.dataset.error; return; }
+  var csrf = box.dataset.csrf || (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+  function post(url, data) {
+    var body = new URLSearchParams(data || {});
+    return fetch(url, {
+      method: 'POST', body: body, credentials: 'same-origin',
+      headers: { 'X-CSRFToken': csrf, 'X-Requested-With': 'XMLHttpRequest' }
+    }).then(function (r) { return r.json(); });
+  }
+  paypal.Buttons({
+    style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'pay', height: 48 },
+    createOrder: function () {
+      return post(box.dataset.create).then(function (res) {
+        if (!res.ok) throw new Error(res.message || box.dataset.error);
+        return res.id;
+      });
+    },
+    onApprove: function (data) {
+      return post(box.dataset.capture, { orderID: data.orderID }).then(function (res) {
+        if (res.ok) { window.location.href = res.redirect; return; }
+        window.rgsToast && window.rgsToast(res.message || box.dataset.failed, 'error');
+      });
+    },
+    onError: function () { window.rgsToast && window.rgsToast(box.dataset.error, 'error'); }
+  }).render('#paypal-buttons');
+})();
+</script>
+{% endif %}
+{% endblock %}

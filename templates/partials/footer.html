@@ -64,8 +64,10 @@
       <div class="footer-col">
         <h4>{% t 'help' %}</h4>
         <div class="footer-links">
+          <a href="{% url 'works' %}">{% t 'portfolio' %}</a>
+          <a href="{% url 'reviews' %}">{% t 'reviews' %}</a>
           <a href="{% url 'track_order' %}">{% t 'track_order' %}</a>
-          <a href="{% url 'cart' %}">{% t 'cart' %}</a>
+          <a href="{% url 'account' %}">{% t 'account' %}</a>
           <a href="{% url 'about' %}">{% t 'about' %}</a>
           <a href="{% url 'contact' %}">{% t 'contact' %}</a>
         </div>
@@ -97,8 +99,8 @@
         {% endif %}
 
         <div class="footer-badge">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6 12h.01M18 12h.01"/></svg>
-          {% t 'cod_only' %}
+          {% include 'partials/icon.html' with name='lock' %}
+          {% if 'paypal' in SITE.payment_methods and 'cod' in SITE.payment_methods %}{% t 'cod_or_paypal' %}{% elif 'paypal' in SITE.payment_methods %}{% t 'pay_paypal' %}{% else %}{% t 'cod_only' %}{% endif %}
         </div>
       </div>
 
@@ -106,8 +108,13 @@
 
     <div class="footer-bottom">
       <span>© {% now "Y" %} {{ SITE.brand_name|default:"RGS TOWER" }} — {% t 'rights' %}</span>
+      {% if FOOTER_POLICIES %}
+      <nav class="footer-policies" aria-label="{% t 'policies' %}">
+        {% for policy in FOOTER_POLICIES %}<a href="{{ policy.get_absolute_url }}">{{ policy.title }}</a>{% endfor %}
+      </nav>
+      {% endif %}
       <a class="to-top" href="#top">
-        Back to top
+        {% t 'back_to_top' %}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
       </a>
     </div>

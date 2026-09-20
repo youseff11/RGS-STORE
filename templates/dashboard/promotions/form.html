@@ -32,7 +32,7 @@
       <div class="help">اضغط Ctrl لاختيار أكثر من منتج</div>
     </div>
 
-    <div class="field"><label>نص الشارة</label>{{ form.badge_en }}<div class="help">مثلاً: Summer Sale</div></div>
+    {% include 'dashboard/_pair.html' with ar=form.badge_ar en=form.badge_en label='نص الشارة' help='مثلاً: عروض الصيف / Summer Sale' %}
 
     <div class="grid g2">
       <div class="field"><label>يبدأ من</label>{{ form.start_at }}</div>

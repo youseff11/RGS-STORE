@@ -1,11 +1,34 @@
 {% load static store_tags %}<!DOCTYPE html>
-<html lang="en" dir="ltr" data-theme="dark">
+<html lang="{{ LANG }}" dir="{{ DIR }}" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{% if page_title %}{{ page_title }} — {% endif %}{{ SITE.brand_name|default:"RGS TOWER" }}{% endblock %}</title>
-  <meta name="description" content="{% block description %}{{ SITE.tagline|default:'' }}{% endblock %}">
-  <meta name="theme-color" content="#0A0A0C">
+  {% with desc=og_description|default:SITE.tagline|default:'' %}
+  <meta name="description" content="{% block description %}{{ desc|truncatechars:180 }}{% endblock %}">
+
+  {# ---- link previews (WhatsApp / Facebook / X / Telegram) ---- #}
+  <meta property="og:site_name" content="{{ SITE.brand_name|default:'RGS TOWER' }}">
+  <meta property="og:type" content="{{ og_type|default:'website' }}">
+  <meta property="og:title" content="{% if page_title %}{{ page_title }} — {% endif %}{{ SITE.brand_name|default:'RGS TOWER' }}">
+  <meta property="og:description" content="{{ desc|truncatechars:200 }}">
+  <meta property="og:url" content="{% absolute request.get_full_path %}">
+  <meta property="og:locale" content="{% if LANG == 'ar' %}ar_EG{% else %}en_US{% endif %}">
+  {% if og_image %}
+    <meta property="og:image" content="{% absolute og_image %}">
+  {% elif SITE.share_image %}
+    <meta property="og:image" content="{% absolute SITE.share_image.url %}">
+  {% else %}
+    {% static 'img/hero-dark.webp' as default_share %}<meta property="og:image" content="{% absolute default_share %}">
+  {% endif %}
+  <meta property="og:image:alt" content="{{ page_title|default:SITE.brand_name }}">
+  <meta name="twitter:card" content="summary_large_image">
+  {% endwith %}
+  <link rel="alternate" hreflang="ar" href="{% absolute request.path %}?lang=ar">
+  <link rel="alternate" hreflang="en" href="{% absolute request.path %}?lang=en">
+
+  <meta name="theme-color" content="#0D0B0A">
+  <meta name="color-scheme" content="dark">
 
   {% if SITE.favicon %}<link rel="icon" href="{{ SITE.favicon.url }}">{% else %}<link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">{% endif %}
   <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
@@ -15,17 +38,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Cairo:wght@400;600;700;800;900&family=Caveat:wght@600;700&family=Jost:wght@400;500;600;700&family=Kanit:ital,wght@1,800;1,900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/site.css' %}">
   {% block head %}{% endblock %}
-
-  <script>
-    (function () {
-      try {
-        var stored = localStorage.getItem('rgs-theme');
-        var theme = (stored === 'light' || stored === 'dark') ? stored
-          : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-        document.documentElement.setAttribute('data-theme', theme);
-      } catch (e) {}
-    })();
-  </script>
 </head>
 <body id="top">
 

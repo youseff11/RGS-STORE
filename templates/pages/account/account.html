@@ -1,0 +1,122 @@
+{% extends 'base/base.html' %}
+{% load store_tags %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="wrap account-hero">
+    <span class="acct-av is-lg">{{ user.first_name|default:user.get_username|slice:":1"|upper }}</span>
+    <div>
+      <div class="crumbs"><a href="{% url 'home' %}">{% t 'home' %}</a> <span>/</span> <span>{% t 'account' %}</span></div>
+      <h1>{{ user.get_full_name|default:user.get_username }}</h1>
+      <p>{% t 'member_since' %} {{ user.date_joined|date:"Y/m/d" }}</p>
+    </div>
+  </div>
+</section>
+
+<section class="section-sm">
+  <div class="wrap account-layout">
+    <nav class="account-tabs" aria-label="{% t 'account' %}">
+      <a href="?tab=orders" class="{% if tab == 'orders' %}is-active{% endif %}">{% include 'partials/icon.html' with name='bag' %} {% t 'my_orders' %} <small>{{ orders|length }}</small></a>
+      <a href="?tab=profile" class="{% if tab == 'profile' %}is-active{% endif %}">{% include 'partials/icon.html' with name='user' %} {% t 'my_profile' %}</a>
+      <a href="?tab=password" class="{% if tab == 'password' %}is-active{% endif %}">{% include 'partials/icon.html' with name='lock' %} {% t 'change_password' %}</a>
+      {% if can_review %}<a href="{% url 'reviews' %}#write" class="tab-cta">{% include 'partials/icon.html' with name='star' %} {% t 'add_review' %}</a>{% endif %}
+      <form method="post" action="{% url 'account_logout' %}">{% csrf_token %}<button type="submit">{% include 'partials/icon.html' with name='logout' %} {% t 'logout' %}</button></form>
+    </nav>
+
+    <div>
+      {% if tab == 'profile' %}
+        <form class="form-card" method="post" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="action" value="profile">
+          <h3>{% t 'my_profile' %}</h3>
+          <div class="field {% if errors.full_name %}has-error{% endif %}">
+            <label>{% t 'full_name' %} <span class="req">*</span></label>
+            <input type="text" name="full_name" value="{{ user.get_full_name }}" required>
+            {% if errors.full_name %}<div class="err">{{ errors.full_name }}</div>{% endif %}
+          </div>
+          <div class="field-row">
+            <div class="field {% if errors.email %}has-error{% endif %}">
+              <label>{% t 'email' %} <span class="req">*</span></label>
+              <input type="email" name="email" value="{{ user.email }}" dir="ltr" required>
+              {% if errors.email %}<div class="err">{{ errors.email }}</div>{% endif %}
+            </div>
+            <div class="field {% if errors.phone %}has-error{% endif %}">
+              <label>{% t 'phone' %} <span class="req">*</span></label>
+              <input type="tel" name="phone" value="{{ profile.phone }}" dir="ltr" required>
+              {% if errors.phone %}<div class="err">{{ errors.phone }}</div>{% endif %}
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>{% t 'phone_alt' %}</label>
+              <input type="tel" name="phone_alt" value="{{ profile.phone_alt }}" dir="ltr">
+            </div>
+            <div class="field">
+              <label>{% t 'governorate' %}</label>
+              <select name="governorate">
+                <option value="">—</option>
+                {% for gov in governorates %}<option value="{{ gov.id }}" {% if profile.governorate_id == gov.id %}selected{% endif %}>{{ gov.name }}</option>{% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>{% t 'city' %}</label>
+            <input type="text" name="city" value="{{ profile.city }}">
+          </div>
+          <div class="field">
+            <label>{% t 'address' %}</label>
+            <textarea name="address" rows="3">{{ profile.address }}</textarea>
+          </div>
+          <button class="btn" type="submit">{% t 'save' %}</button>
+        </form>
+
+      {% elif tab == 'password' %}
+        <form class="form-card" method="post" novalidate style="max-width:520px">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="password">
+          <h3>{% t 'change_password' %}</h3>
+          <div class="field {% if errors.current_password %}has-error{% endif %}">
+            <label>{% t 'current_password' %}</label>
+            <input type="password" name="current_password" autocomplete="current-password" dir="ltr" required>
+            {% if errors.current_password %}<div class="err">{{ errors.current_password }}</div>{% endif %}
+          </div>
+          <div class="field {% if errors.new_password %}has-error{% endif %}">
+            <label>{% t 'new_password' %}</label>
+            <input type="password" name="new_password" autocomplete="new-password" dir="ltr" minlength="8" required>
+            {% if errors.new_password %}<div class="err">{{ errors.new_password }}</div>{% endif %}
+          </div>
+          <button class="btn" type="submit">{% t 'save' %}</button>
+        </form>
+
+      {% else %}
+        {% if orders %}
+          <div class="orders-list">
+            {% for order in orders %}
+              <a class="order-row" href="{% url 'account_order' order.order_number %}">
+                <div class="order-thumbs">
+                  {% for item in order.items.all|slice:":3" %}<span>{% if item.image_url %}<img src="{{ item.image_url }}" alt="">{% endif %}</span>{% endfor %}
+                </div>
+                <div class="order-main">
+                  <b dir="ltr">{{ order.order_number }}</b>
+                  <span>{{ order.created_at|date:"Y/m/d" }} · {{ order.items_count }} {% t 'items' %}</span>
+                </div>
+                <div class="order-chips">
+                  <span class="chip chip-{% status_color order.status %}">{{ order.status_label_local }}</span>
+                  <span class="chip chip-{% payment_color order.payment_status %}">{{ order.payment_method_label }} · {{ order.payment_status_label }}</span>
+                </div>
+                <b class="order-total">{% price order.total %}</b>
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <div class="ico ico-badge">{% include 'partials/icon.html' with name='bag' %}</div>
+            <h3>{% t 'no_orders_yet' %}</h3>
+            <a class="btn" href="{% url 'shop' %}">{% t 'shop_now' %}</a>
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

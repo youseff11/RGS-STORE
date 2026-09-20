@@ -3,9 +3,10 @@
 from django.contrib import admin
 
 from .models import (
-    Announcement, Banner, Category, ContactMessage, Coupon, Governorate, Order,
-    OrderItem, Product, ProductColor, ProductImage, ProductVariant, Promotion,
-    SiteSettings, Size,
+    Announcement, Banner, Category, ContactMessage, Coupon, CustomerProfile, Governorate,
+    HomeSection, NavLink, Order, OrderItem, Policy, Product, ProductColor, ProductImage,
+    ProductVariant, Promotion, Review, SiteSettings, Size, StaffProfile, Work, WorkCategory,
+    WorkMedia,
 )
 
 
@@ -45,8 +46,9 @@ class OrderItemInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('order_number', 'full_name', 'phone', 'total', 'status', 'created_at')
-    list_filter = ('status', 'created_at')
+    list_display = ('order_number', 'full_name', 'phone', 'total', 'payment_method',
+                    'payment_status', 'status', 'created_at')
+    list_filter = ('status', 'payment_method', 'payment_status', 'created_at')
     search_fields = ('order_number', 'full_name', 'phone')
     inlines = [OrderItemInline]
 
@@ -61,7 +63,35 @@ class PromotionAdmin(admin.ModelAdmin):
     list_display = ('title', 'scope', 'discount_type', 'value', 'is_active')
 
 
-admin.site.register([Announcement, Banner, Size, Governorate, SiteSettings, ContactMessage])
+class WorkMediaInline(admin.TabularInline):
+    model = WorkMedia
+    extra = 0
+
+
+@admin.register(Work)
+class WorkAdmin(admin.ModelAdmin):
+    list_display = ('title_ar', 'category', 'is_active', 'is_featured', 'ordering')
+    list_filter = ('is_active', 'is_featured', 'category')
+    inlines = [WorkMediaInline]
+
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ('name', 'rating', 'is_approved', 'is_featured', 'created_at')
+    list_filter = ('is_approved', 'is_featured', 'rating')
+    search_fields = ('name', 'comment')
+
+
+@admin.register(CustomerProfile)
+class CustomerProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'phone', 'governorate', 'city', 'created_at')
+    search_fields = ('user__first_name', 'user__last_name', 'user__email', 'phone')
+
+
+admin.site.register([
+    Announcement, Banner, Size, Governorate, SiteSettings, ContactMessage,
+    WorkCategory, HomeSection, NavLink, Policy, StaffProfile,
+])
 
 admin.site.site_header = 'RGS TOWER'
 admin.site.site_title = 'RGS TOWER'

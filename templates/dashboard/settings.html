@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="page-head">
-  <div><h2>إعدادات المتجر</h2><p>الهوية، وسائل التواصل، الشحن، والعملة · واجهة المتجر إنجليزي</p></div>
+  <div><h2>إعدادات المتجر</h2><p>الهوية، وسائل التواصل، الشحن، والعملة · الموقع عربي أساسي + نسخة إنجليزي</p></div>
 </div>
 
 <form method="post" enctype="multipart/form-data">
@@ -12,10 +12,8 @@
     <div>
       <div class="card">
         <div class="card-head"><h3>هوية المتجر</h3></div>
-        <div class="grid g2">
-          <div class="field"><label>اسم المتجر</label>{{ form.brand_name_en }}{% for e in form.brand_name_en.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
-          <div class="field"><label>الشعار النصي (tagline)</label>{{ form.tagline_en }}</div>
-        </div>
+        {% include 'dashboard/_pair.html' with ar=form.brand_name_ar en=form.brand_name_en label='اسم المتجر' %}
+        {% include 'dashboard/_pair.html' with ar=form.tagline_ar en=form.tagline_en label='الشعار النصي (tagline)' %}
         <div class="grid g2">
           <div class="field">
             <label>اللوجو</label>{{ form.logo }}
@@ -26,7 +24,12 @@
             {% if site.favicon %}<img src="{{ site.favicon.url }}" style="max-height:40px;margin-top:8px">{% endif %}
           </div>
         </div>
-        <div class="field"><label>نبذة عن المتجر</label>{{ form.about_en }}</div>
+        <div class="field">
+          <label>صورة المشاركة الافتراضية</label>{{ form.share_image }}
+          <div class="help">{{ form.share_image.help_text }}</div>
+          {% if site.share_image %}<img src="{{ site.share_image.url }}" style="max-height:90px;margin-top:8px;border-radius:8px">{% endif %}
+        </div>
+        {% include 'dashboard/_pair.html' with ar=form.about_ar en=form.about_en label='نبذة عن المتجر (من نحن)' %}
       </div>
 
       <div class="card">
@@ -49,7 +52,7 @@
           <div class="field"><label>رقم الواتساب</label>{{ form.whatsapp }}<div class="help">بصيغة دولية بدون +، مثال: 201012345678</div></div>
         </div>
         <div class="field"><label>البريد الإلكتروني</label>{{ form.email }}</div>
-        <div class="field"><label>العنوان</label>{{ form.address_en }}</div>
+        {% include 'dashboard/_pair.html' with ar=form.address_ar en=form.address_en label='العنوان' %}
       </div>
     </div>
 
@@ -58,9 +61,18 @@
         <div class="card-head"><h3>الشحن والعملة</h3></div>
         <div class="field"><label>سعر الشحن الثابت</label>{{ form.shipping_fee }}</div>
         <div class="field"><label>شحن مجاني فوق</label>{{ form.free_shipping_threshold }}<div class="help">0 = إلغاء ميزة الشحن المجاني</div></div>
-        <div class="field"><label>العملة</label>{{ form.currency_en }}<div class="help">اللي هيظهر جنب الأسعار، مثلاً EGP</div></div>
+        <div class="grid g2">
+          <div class="field"><label>العملة <span class="lang-tag ar">عربي</span></label>{{ form.currency_ar }}<div class="help">مثلاً ج.م</div></div>
+          <div class="field"><label>العملة <span class="lang-tag en">English</span></label>{{ form.currency_en }}<div class="help">مثلاً EGP</div></div>
+        </div>
         <div class="field"><label>حد تنبيه المخزون</label>{{ form.low_stock_threshold }}</div>
         <div class="switch">{{ form.orders_enabled }}<label for="{{ form.orders_enabled.id_for_label }}">استقبال الطلبات مفعّل</label></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>تقييمات العملاء</h3></div>
+        <div class="switch">{{ form.reviews_auto_publish }}<label for="{{ form.reviews_auto_publish.id_for_label }}">{{ form.reviews_auto_publish.label }}</label></div>
+        <div class="help">لو مقفولة: كل تقييم جديد بيستنى موافقتك من «تقييمات العملاء».</div>
       </div>
 
       <div class="card">
@@ -68,11 +80,11 @@
       </div>
 
       <div class="card">
-        <div class="card-head"><h3>ملاحظة</h3></div>
-        <p class="small muted" style="margin:0">
-          الدفع في المتجر هو «الدفع عند الاستلام» فقط — مفيش بوابات دفع إلكتروني.
-        </p>
+        <div class="card-head"><h3>الدفع</h3></div>
+        <p class="small muted" style="margin:0 0 12px">لينك PayPal وسعر الدولار والدفع عند الاستلام من صفحة «الدفع».</p>
+        <a class="btn btn-soft btn-block" href="{% url 'dash_payments' %}">{% include 'partials/icon.html' with name='card' %} إعدادات الدفع</a>
       </div>
+      {% if form.non_field_errors %}<div class="alert">{{ form.non_field_errors }}</div>{% endif %}
     </div>
   </div>
 </form>

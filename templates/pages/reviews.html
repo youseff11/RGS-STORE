@@ -1,0 +1,113 @@
+{% extends 'base/base.html' %}
+{% load store_tags %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="wrap">
+    <div class="crumbs"><a href="{% url 'home' %}">{% t 'home' %}</a> <span>/</span> <span>{% t 'reviews' %}</span></div>
+    <h1>{% t 'reviews' %}</h1>
+    <p>{% t 'reviews_sub' %}</p>
+  </div>
+</section>
+
+<section class="section-sm">
+  <div class="wrap reviews-layout">
+
+    <aside class="reviews-side">
+      <div class="form-card rating-card">
+        {% if summary.count %}
+          <div class="rating-big">
+            <b>{{ summary.avg }}</b>
+            <div>
+              {% include 'partials/stars.html' with rating=summary.avg pct=summary.avg_pct %}
+              <span>{% t 'based_on' %} {{ summary.count }} {% t 'reviews_count' %}</span>
+            </div>
+          </div>
+          <div class="rating-bars">
+            {% for bar in summary.bars %}
+              <div class="rating-bar">
+                <span>{{ bar.stars }} {% include 'partials/icon.html' with name='star-fill' %}</span>
+                <span class="track"><span style="width:{{ bar.pct }}%"></span></span>
+                <small>{{ bar.count }}</small>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="rating-big is-empty">
+            <b>—</b>
+            <div>{% include 'partials/stars.html' with rating=0 pct=0 %}<span>{% t 'no_reviews' %}</span></div>
+          </div>
+        {% endif %}
+      </div>
+
+      {# ---- write a review: only customers with a paid order ---- #}
+      <div class="form-card write-card" id="write">
+        <h3>{% include 'partials/icon.html' with name='edit' %} {% t 'add_review' %}</h3>
+
+        {% if state == 'can' %}
+          <form method="post" action="{% url 'review_submit' %}" class="review-form" data-review-form>
+            {% csrf_token %}
+            {% if order_choices|length > 1 %}
+              <div class="field">
+                <label>{% t 'review_for_order' %}</label>
+                <select name="order">
+                  {% for o in order_choices %}<option value="{{ o.pk }}">{{ o.order_number }} — {{ o.created_at|date:"Y/m/d" }}</option>{% endfor %}
+                </select>
+              </div>
+            {% elif order_choices %}
+              <input type="hidden" name="order" value="{{ order_choices.0.pk }}">
+              <p class="small-note">{% t 'review_for_order' %} <b dir="ltr">{{ order_choices.0.order_number }}</b></p>
+            {% endif %}
+
+            <div class="field">
+              <label>{% t 'your_rating' %}</label>
+              <div class="star-input" role="radiogroup" aria-label="{% t 'your_rating' %}">
+                {% for n in "54321" %}
+                  <input type="radio" id="rate-{{ n }}" name="rating" value="{{ n }}" required>
+                  <label for="rate-{{ n }}" title="{{ n }}">{% include 'partials/icon.html' with name='star-fill' %}</label>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="field">
+              <label for="review-comment">{% t 'your_review' %}</label>
+              <textarea id="review-comment" name="comment" rows="4" minlength="5" maxlength="2000" required placeholder="{% t 'review_placeholder' %}"></textarea>
+            </div>
+            <button class="btn btn-block" type="submit">{% t 'submit_review' %}</button>
+            {% if not auto_publish %}<p class="small-note" style="margin:10px 0 0">{% t 'review_pending' %}</p>{% endif %}
+          </form>
+        {% elif state == 'login' %}
+          <p class="small-note">{% t 'review_login' %}</p>
+          <div class="grid" style="gap:8px">
+            <a class="btn btn-block" href="{% url 'account_login' %}?next={% url 'reviews' %}%23write">{% t 'login' %}</a>
+            <a class="btn btn-ghost btn-block" href="{% url 'account_register' %}?next={% url 'reviews' %}%23write">{% t 'register' %}</a>
+          </div>
+        {% elif state == 'done' %}
+          <p class="small-note">{% include 'partials/icon.html' with name='check-circle' %} {% t 'review_no_more' %}</p>
+        {% else %}
+          <p class="small-note">{% t 'review_need_order' %}</p>
+          <a class="btn btn-ghost btn-block" href="{% url 'shop' %}">{% t 'shop_now' %}</a>
+        {% endif %}
+
+        {% for mine in my_pending %}
+          <div class="my-pending">{% include 'partials/stars.html' with rating=mine.rating %}<span>{{ mine.comment|truncatechars:70 }}</span><small>{% t 'review_pending' %}</small></div>
+        {% endfor %}
+      </div>
+    </aside>
+
+    <div>
+      {% if reviews %}
+        <div class="reviews-grid">
+          {% for review in reviews %}{% include 'partials/review_card.html' %}{% endfor %}
+        </div>
+        {% include 'partials/pagination.html' %}
+      {% else %}
+        <div class="empty-state">
+          <div class="ico ico-badge">{% include 'partials/icon.html' with name='star' %}</div>
+          <h3>{% t 'no_reviews' %}</h3>
+          <p>{% t 'no_reviews_sub' %}</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

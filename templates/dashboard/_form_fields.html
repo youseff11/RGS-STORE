@@ -1,20 +1,45 @@
-{% for field in form %}
-  {% if field.field.widget.input_type == 'checkbox' %}
-    <div class="switch">
-      {{ field }}
-      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+{% load store_tags %}
+{# Arabic + English versions of the same field sit side by side (form_rows pairs x_ar / x_en). #}
+{% for row in form|form_rows %}
+  {% if row|length == 2 %}
+    <div class="lang-pair">
+      {% for field in row %}
+        <div class="field">
+          <label for="{{ field.id_for_label }}">
+            {{ field.label }}
+            <span class="lang-tag {{ field|field_lang }}">{% if field|field_lang == 'ar' %}عربي{% else %}English{% endif %}</span>
+            {% if field.field.required %}<span class="req">*</span>{% endif %}
+          </label>
+          {{ field }}
+          {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+          {% for error in field.errors %}<div class="err-msg">{{ error }}</div>{% endfor %}
+        </div>
+      {% endfor %}
     </div>
-    {% if field.help_text %}<div class="help" style="margin-top:-6px;margin-bottom:10px">{{ field.help_text }}</div>{% endif %}
   {% else %}
-    <div class="field">
-      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-      {{ field }}
-      {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
-      {% for error in field.errors %}<div class="err-msg">{{ error }}</div>{% endfor %}
-      {% if field.field.widget.input_type == 'file' %}<div class="file-preview"></div>{% endif %}
-    </div>
+    {% with field=row.0 %}
+    {% if field|is_checkbox %}
+      <div class="switch">
+        {{ field }}
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      </div>
+      {% if field.help_text %}<div class="help" style="margin-top:-6px;margin-bottom:10px">{{ field.help_text }}</div>{% endif %}
+    {% else %}
+      <div class="field" data-field="{{ field.name }}">
+        <label for="{{ field.id_for_label }}">
+          {{ field.label }}
+          {% if field|field_lang %}<span class="lang-tag {{ field|field_lang }}">{% if field|field_lang == 'ar' %}عربي{% else %}English{% endif %}</span>{% endif %}
+          {% if field.field.required %}<span class="req">*</span>{% endif %}
+        </label>
+        {{ field }}
+        {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+        {% for error in field.errors %}<div class="err-msg">{{ error }}</div>{% endfor %}
+        {% if field.field.widget.input_type == 'file' %}<div class="file-preview"></div>{% endif %}
+      </div>
+    {% endif %}
+    {% endwith %}
   {% endif %}
 {% endfor %}
 {% if form.non_field_errors %}
-  <div class="alert">{{ form.non_field_errors }}</div>
+  <div class="alert">{% for e in form.non_field_errors %}{{ e }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</div>
 {% endif %}

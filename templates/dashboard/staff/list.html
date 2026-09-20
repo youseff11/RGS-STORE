@@ -1,0 +1,42 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}الإدارة{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>الإدارة</h2><p>ضيف إداريين وحدد كل واحد يقدر يفتح أنهي أقسام في لوحة التحكم</p></div>
+  <a class="btn" href="{% url 'dash_staff_new' %}">{% include 'partials/icon.html' with name='plus' %} إداري جديد</a>
+</div>
+
+<div class="staff-grid">
+  {% for row in rows %}
+  {% with member=row.user %}
+  <article class="staff-card{% if not member.is_active %} is-off{% endif %}">
+    <div class="staff-head">
+      <span class="mini-av is-lg">{{ member.first_name|default:member.username|slice:":1"|upper }}</span>
+      <div style="min-width:0;flex:1">
+        <b>{{ member.get_full_name|default:member.username }}</b>
+        <div class="small muted" dir="ltr" style="text-align:start">@{{ member.username }}</div>
+        {% if row.profile.job_title %}<div class="small">{{ row.profile.job_title }}</div>{% endif %}
+      </div>
+      {% if member.is_superuser %}<span class="chip chip-accent">المدير الأساسي</span>
+      {% elif not member.is_active %}<span class="chip chip-bad">موقوف</span>
+      {% elif member.pk == request.user.pk %}<span class="chip chip-info">أنت</span>{% endif %}
+    </div>
+    <div class="perm-chips">
+      {% if row.full %}<span class="chip chip-ok">كل الصلاحيات</span>
+      {% else %}{% for label in row.labels %}<span class="chip chip-muted">{{ label }}</span>{% empty %}<span class="chip chip-warn">بدون صلاحيات</span>{% endfor %}{% endif %}
+    </div>
+    <div class="small muted">{% if member.last_login %}آخر دخول {{ member.last_login|date:"Y/m/d H:i" }}{% else %}لم يسجل دخول بعد{% endif %}</div>
+    {% if not member.is_superuser or request.user.is_superuser %}
+    <div class="row-actions" style="justify-content:flex-start">
+      <a class="btn btn-sm btn-soft" href="{% url 'dash_staff_edit' member.pk %}">{% include 'partials/icon.html' with name='edit' %} تعديل</a>
+      {% if not member.is_superuser and member.pk != request.user.pk %}
+      <form method="post" action="{% url 'dash_staff_delete' member.pk %}" data-confirm="حذف الإداري «{{ member.username }}»؟">{% csrf_token %}<button class="btn btn-sm btn-danger" type="submit">حذف</button></form>
+      {% endif %}
+    </div>
+    {% endif %}
+  </article>
+  {% endwith %}
+  {% endfor %}
+</div>
+{% endblock %}

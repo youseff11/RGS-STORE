@@ -2,144 +2,18 @@
 {% load static store_tags %}
 
 {% block content %}
-
-{# ------------------------------------------------------------------ hero #}
-<section class="hero-main">
-  <div class="hero-media">
-    <img class="for-light" src="{% static 'img/hero-light.webp' %}" alt="" fetchpriority="high">
-    <img class="for-dark" src="{% static 'img/hero-dark.webp' %}" alt="" fetchpriority="high">
-  </div>
-
-  <div class="hero-wrap">
-    <div class="hero-copy">
-      <span class="hero-eyebrow">{% t 'hero_eyebrow' %}</span>
-
-      <h1 class="hero-title">
-        <span class="line-1">{% t 'hero_line_1' %}</span>
-        <span class="line-2">{% t 'hero_line_2' %}</span>
-      </h1>
-
-      <p class="hero-sub">{% t 'hero_tagline' %}</p>
-
-      <a class="hero-cta" href="{% url 'shop' %}">
-        {% t 'hero_cta' %}
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 5.5l6.5 6.5-6.5 6.5"/></svg>
-      </a>
-
-    </div>
-  </div>
-
-  <span class="hero-script">Better<br>Clothes<br>Bigger<br>Dreams</span>
-</section>
-
-{# --------------------------------------------------- banners (dashboard) #}
-{% if banners %}
-<section class="hero">
-  <div class="hero-slides">
-    {% for banner in banners %}
-      <div class="hero-slide {% if forloop.first %}is-active{% endif %}">
-        <img src="{{ banner.image.url }}" alt="{{ banner.title }}" loading="lazy">
-        <div class="hero-content">
-          <div class="inner">
-            <div class="eyebrow">{{ SITE.brand_name|default:"RGS TOWER" }}</div>
-            <h1>{{ banner.title|default:SITE.tagline }}</h1>
-            {% if banner.subtitle %}<p>{{ banner.subtitle }}</p>{% endif %}
-            <a class="btn btn-lg" href="{{ banner.link|default:'/shop/' }}">
-              {{ banner.button_text|default_if_none:'' }}{% if not banner.button_text %}{% t 'shop_now' %}{% endif %}
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-            </a>
-          </div>
-        </div>
-      </div>
-    {% endfor %}
-  </div>
-  {% if banners|length > 1 %}
-  <div class="hero-dots">
-    {% for banner in banners %}<button class="{% if forloop.first %}is-active{% endif %}" aria-label="slide {{ forloop.counter }}"></button>{% endfor %}
-  </div>
-  {% endif %}
-</section>
-{% endif %}
-
-{# ------------------------------------------------------------ categories #}
-{% if categories %}
-<section class="section">
-  <div class="wrap">
-    <div class="section-head center">
-      <span class="eyebrow">{% t 'categories' %}</span>
-      <h2>{% t 'browse_categories' %}</h2>
-      <p>{% t 'categories_sub' %}</p>
-    </div>
-    <div class="cats-grid">
-      {% for cat in categories %}
-        <a class="cat-tile reveal" href="{% url 'category_detail' cat.slug %}">
-          {% if cat.image %}<img src="{{ cat.image.url }}" alt="{{ cat.name }}" loading="lazy">{% endif %}
-          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="15" height="15"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-          <div class="meta">
-            <h3>{{ cat.name }}</h3>
-            <span>{{ cat.live_products_count }} {% t 'results_count' %}</span>
-          </div>
-        </a>
-      {% endfor %}
-    </div>
-  </div>
-</section>
-{% endif %}
-
-{# -------------------------------------------------------------- featured #}
-{% if featured %}
-<section class="section-sm">
-  <div class="wrap">
-    <div class="section-head between">
-      <div>
-        <span class="eyebrow">{% t 'featured' %}</span>
-        <h2>{% t 'featured' %}</h2>
-        <p>{% t 'featured_sub' %}</p>
-      </div>
-      <a class="btn btn-ghost btn-sm" href="{% url 'shop' %}">{% t 'view_all' %}</a>
-    </div>
-    <div class="products-grid">
-      {% for product in featured %}{% include 'partials/product_card.html' %}{% endfor %}
-    </div>
-  </div>
-</section>
-{% endif %}
-
-{# ------------------------------------------------------------------ sale #}
-{% if sale_products %}
-<section class="section-sm">
-  <div class="wrap">
-    <div class="section-head between">
-      <div>
-        <span class="eyebrow">{% t 'sale' %}</span>
-        <h2>{% t 'sale' %}</h2>
-      </div>
-      <a class="btn btn-ghost btn-sm" href="{% url 'shop' %}?sale=1">{% t 'view_all' %}</a>
-    </div>
-    <div class="products-grid">
-      {% for product in sale_products %}{% include 'partials/product_card.html' %}{% endfor %}
-    </div>
-  </div>
-</section>
-{% endif %}
-
-{# ---------------------------------------------------------- new arrivals #}
-{% if new_arrivals %}
-<section class="section-sm" style="padding-bottom:70px">
-  <div class="wrap">
-    <div class="section-head between">
-      <div>
-        <span class="eyebrow">{% t 'new_arrivals' %}</span>
-        <h2>{% t 'new_arrivals' %}</h2>
-        <p>{% t 'new_sub' %}</p>
-      </div>
-      <a class="btn btn-ghost btn-sm" href="{% url 'shop' %}?sort=new">{% t 'view_all' %}</a>
-    </div>
-    <div class="products-grid">
-      {% for product in new_arrivals %}{% include 'partials/product_card.html' %}{% endfor %}
-    </div>
-  </div>
-</section>
-{% endif %}
-
+{# Sections, their order and their titles are managed from «الصفحة الرئيسية» in the dashboard #}
+{% for block in blocks %}
+  {% with sec=block.sec items=block.items %}
+    {% if block.key == 'hero' %}{% include 'partials/home/hero.html' %}
+    {% elif block.key == 'banners' %}{% include 'partials/home/banners.html' %}
+    {% elif block.key == 'features' %}{% include 'partials/home/features.html' %}
+    {% elif block.key == 'categories' %}{% include 'partials/home/categories.html' %}
+    {% elif block.key == 'about' %}{% include 'partials/home/about.html' %}
+    {% elif block.key == 'portfolio' %}{% include 'partials/home/portfolio.html' %}
+    {% elif block.key == 'reviews' %}{% include 'partials/home/reviews.html' %}
+    {% else %}{% include 'partials/home/products.html' %}
+    {% endif %}
+  {% endwith %}
+{% endfor %}
 {% endblock %}

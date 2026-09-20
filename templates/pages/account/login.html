@@ -1,0 +1,36 @@
+{% extends 'base/base.html' %}
+{% load store_tags %}
+
+{% block content %}
+<section class="auth-section">
+  <div class="auth-card">
+    <div class="auth-logo">{% include 'partials/logo.html' %}</div>
+    <h1>{% t 'login_title' %}</h1>
+    <p class="auth-sub">{% t 'login_sub' %}</p>
+
+    {% if error %}<div class="auth-alert">{{ error }}</div>{% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="field">
+        <label for="login-id">{% t 'login_id' %}</label>
+        <input id="login-id" type="text" name="login" value="{{ identifier }}" autocomplete="username" dir="ltr" required autofocus>
+      </div>
+      <div class="field">
+        <label for="login-pass">{% t 'password' %}</label>
+        <div class="pass-wrap">
+          <input id="login-pass" type="password" name="password" autocomplete="current-password" dir="ltr" required>
+          <button type="button" class="pass-eye" data-pass-toggle aria-label="{% t 'password' %}">{% include 'partials/icon.html' with name='eye' %}</button>
+        </div>
+      </div>
+      <button class="btn btn-lg btn-block" type="submit">{% t 'login' %}</button>
+    </form>
+
+    <div class="auth-switch">
+      {% t 'no_account' %}
+      <a href="{% url 'account_register' %}{% if next %}?next={{ next|urlencode }}{% endif %}">{% t 'register' %}</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -76,7 +76,7 @@
       <form method="post">
         {% csrf_token %}
         <input type="hidden" name="action" value="add_color">
-        <div class="field"><label>اسم اللون</label>{{ color_form.name_en }}{% for e in color_form.name_en.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+        {% include 'dashboard/_pair.html' with ar=color_form.name_ar en=color_form.name_en label='اسم اللون' %}
         <div class="field"><label>الكود اللوني</label>{{ color_form.hex_code }}</div>
         <button class="btn btn-block" type="submit">إضافة اللون</button>
       </form>
@@ -96,6 +96,20 @@
             {% csrf_token %}<button class="btn btn-sm btn-danger" type="submit">حذف</button>
           </form>
         </div>
+        <details class="inline-edit">
+          <summary>{% include 'partials/icon.html' with name='edit' %} تعديل «{{ color.name }}»</summary>
+          <form method="post" class="inline-edit-body">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="edit_color">
+            <input type="hidden" name="color_id" value="{{ color.pk }}">
+            <div class="lang-pair">
+              <div class="field"><label>اسم اللون <span class="lang-tag ar">عربي</span></label><input class="inp" name="name_ar" value="{{ color.name_ar }}" dir="rtl" required></div>
+              <div class="field"><label>اسم اللون <span class="lang-tag en">English</span></label><input class="inp" name="name_en" value="{{ color.name_en }}" dir="ltr"></div>
+            </div>
+            <div class="field"><label>الكود اللوني</label><input class="inp" type="color" name="hex_code" value="{{ color.hex_code }}"></div>
+            <button class="btn btn-sm" type="submit">حفظ</button>
+          </form>
+        </details>
         {% endfor %}
       {% else %}
         <div class="empty" style="padding:26px"><div class="ico ico-badge">{% include 'partials/icon.html' with name='palette' %}</div>لم تضف ألوانًا بعد</div>

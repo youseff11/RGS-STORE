@@ -1,3 +1,4 @@
+{# Each link shows only when the signed-in admin has that section's permission (DASH_PERMS). #}
 <aside class="sidebar" id="dash-sidebar">
   <div class="sb-brand">
     <a class="sb-logo" href="{% url 'dash_index' %}" aria-label="MR — لوحة التحكم">{% include 'partials/logo.html' %}</a>
@@ -8,76 +9,117 @@
   </div>
 
   <a class="sb-link {% if active_page == 'index' %}is-active{% endif %}" href="{% url 'dash_index' %}">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></svg>
-    نظرة عامة
+    {% include 'partials/icon.html' with name='grid' %} نظرة عامة
   </a>
 
-  <div class="sb-label">المتجر</div>
-
-  <a class="sb-link {% if active_page == 'products' %}is-active{% endif %}" href="{% url 'dash_products' %}">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 4l-4 3v13h16V7l-4-3"/><path d="M8 4a4 4 0 008 0"/></svg>
-    المنتجات
-  </a>
-  <a class="sb-link {% if active_page == 'categories' %}is-active{% endif %}" href="{% url 'dash_categories' %}">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-    الأقسام
-  </a>
-  <a class="sb-link {% if active_page == 'sizes' %}is-active{% endif %}" href="{% url 'dash_sizes' %}">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 8h18v8H3z"/><path d="M7 8v3M11 8v5M15 8v3M19 8v5"/></svg>
-    المقاسات
-  </a>
-
+  {% if 'orders' in DASH_PERMS or 'customers' in DASH_PERMS or 'marketing' in DASH_PERMS or 'shipping' in DASH_PERMS %}
   <div class="sb-label">المبيعات</div>
-
+  {% if 'orders' in DASH_PERMS %}
   <a class="sb-link {% if active_page == 'orders' %}is-active{% endif %}" href="{% url 'dash_orders' %}">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 7h12l-1 12.2a2 2 0 01-2 1.8H9a2 2 0 01-2-1.8L6 7z"/><path d="M9.2 7V5.6a2.8 2.8 0 015.6 0V7"/></svg>
-    الطلبات
-    {% if new_orders %}<span class="pill">{{ new_orders }}</span>{% endif %}
+    {% include 'partials/icon.html' with name='bag' %} الطلبات
+    {% if new_orders or pending_payments %}<span class="pill">{{ new_orders|add:pending_payments }}</span>{% endif %}
   </a>
+  {% endif %}
+  {% if 'customers' in DASH_PERMS %}
+  <a class="sb-link {% if active_page == 'customers' %}is-active{% endif %}" href="{% url 'dash_customers' %}">
+    {% include 'partials/icon.html' with name='users' %} العملاء
+  </a>
+  {% endif %}
+  {% if 'marketing' in DASH_PERMS %}
   <a class="sb-link {% if active_page == 'coupons' %}is-active{% endif %}" href="{% url 'dash_coupons' %}">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 9a2 2 0 002-2V6h14v1a2 2 0 000 4v1a2 2 0 000 4v1H5v-1a2 2 0 00-2-2z"/><path d="M9.5 9.5l5 5"/></svg>
-    أكواد الخصم
+    {% include 'partials/icon.html' with name='ticket' %} أكواد الخصم
   </a>
   <a class="sb-link {% if active_page == 'promotions' %}is-active{% endif %}" href="{% url 'dash_promotions' %}">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20.6 13.4L13.4 20.6a2 2 0 01-2.8 0l-7.2-7.2A2 2 0 013 12V4.5A1.5 1.5 0 014.5 3H12a2 2 0 011.4.6l7.2 7.2a2 2 0 010 2.6z"/><circle cx="7.5" cy="7.5" r="1.3"/></svg>
-    العروض والخصومات
+    {% include 'partials/icon.html' with name='tag' %} العروض والخصومات
   </a>
+  {% endif %}
+  {% if 'shipping' in DASH_PERMS %}
   <a class="sb-link {% if active_page == 'governorates' %}is-active{% endif %}" href="{% url 'dash_governorates' %}">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21s7-5.5 7-11a7 7 0 10-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
-    المحافظات
+    {% include 'partials/icon.html' with name='truck' %} المحافظات والشحن
   </a>
+  {% endif %}
+  {% endif %}
 
-  <div class="sb-label">المحتوى</div>
-
-  <a class="sb-link {% if active_page == 'announcements' %}is-active{% endif %}" href="{% url 'dash_announcements' %}">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 11v2a2 2 0 002 2h2l5 4V5L7 9H5a2 2 0 00-2 2z"/><path d="M16.5 9a4 4 0 010 6"/><path d="M19 6.5a7.5 7.5 0 010 11"/></svg>
-    الشريط المتحرك
+  {% if 'products' in DASH_PERMS %}
+  <div class="sb-label">المتجر</div>
+  <a class="sb-link {% if active_page == 'products' %}is-active{% endif %}" href="{% url 'dash_products' %}">
+    {% include 'partials/icon.html' with name='shirt' %} المنتجات
   </a>
+  <a class="sb-link {% if active_page == 'categories' %}is-active{% endif %}" href="{% url 'dash_categories' %}">
+    {% include 'partials/icon.html' with name='grid' %} الأقسام
+  </a>
+  <a class="sb-link {% if active_page == 'sizes' %}is-active{% endif %}" href="{% url 'dash_sizes' %}">
+    {% include 'partials/icon.html' with name='ruler' %} المقاسات
+  </a>
+  {% endif %}
+
+  {% if 'portfolio' in DASH_PERMS or 'reviews' in DASH_PERMS or 'content' in DASH_PERMS or 'messages' in DASH_PERMS %}
+  <div class="sb-label">الموقع</div>
+  {% if 'content' in DASH_PERMS %}
+  <a class="sb-link {% if active_page == 'homepage' %}is-active{% endif %}" href="{% url 'dash_home' %}">
+    {% include 'partials/icon.html' with name='home' %} الصفحة الرئيسية
+  </a>
+  <a class="sb-link {% if active_page == 'navbar' %}is-active{% endif %}" href="{% url 'dash_nav' %}">
+    {% include 'partials/icon.html' with name='menu' %} القائمة (الناف بار)
+  </a>
+  {% endif %}
+  {% if 'portfolio' in DASH_PERMS %}
+  <a class="sb-link {% if active_page == 'works' %}is-active{% endif %}" href="{% url 'dash_works' %}">
+    {% include 'partials/icon.html' with name='camera' %} أعمالنا
+  </a>
+  {% endif %}
+  {% if 'reviews' in DASH_PERMS %}
+  <a class="sb-link {% if active_page == 'reviews' %}is-active{% endif %}" href="{% url 'dash_reviews' %}">
+    {% include 'partials/icon.html' with name='star' %} تقييمات العملاء
+    {% if pending_reviews %}<span class="pill">{{ pending_reviews }}</span>{% endif %}
+  </a>
+  {% endif %}
+  {% if 'content' in DASH_PERMS %}
   <a class="sb-link {% if active_page == 'banners' %}is-active{% endif %}" href="{% url 'dash_banners' %}">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M4 17l5-4.5 4 3.5 3-2.5 4 3.5"/></svg>
-    البانرات
+    {% include 'partials/icon.html' with name='image' %} البانرات
   </a>
+  <a class="sb-link {% if active_page == 'announcements' %}is-active{% endif %}" href="{% url 'dash_announcements' %}">
+    {% include 'partials/icon.html' with name='megaphone' %} الشريط المتحرك
+  </a>
+  <a class="sb-link {% if active_page == 'policies' %}is-active{% endif %}" href="{% url 'dash_policies' %}">
+    {% include 'partials/icon.html' with name='file' %} السياسات
+  </a>
+  {% endif %}
+  {% if 'messages' in DASH_PERMS %}
   <a class="sb-link {% if active_page == 'messages' %}is-active{% endif %}" href="{% url 'dash_messages' %}">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="4.5" width="19" height="15" rx="2"/><path d="M3 6l9 7 9-7"/></svg>
-    الرسائل
+    {% include 'partials/icon.html' with name='mail' %} الرسائل
     {% if unread_messages %}<span class="pill">{{ unread_messages }}</span>{% endif %}
   </a>
+  {% endif %}
+  {% endif %}
 
+  {% if 'settings' in DASH_PERMS or 'staff' in DASH_PERMS %}
   <div class="sb-label">الإعدادات</div>
-
+  {% if 'staff' in DASH_PERMS %}
+  <a class="sb-link {% if active_page == 'staff' %}is-active{% endif %}" href="{% url 'dash_staff' %}">
+    {% include 'partials/icon.html' with name='shield' %} الإدارة
+  </a>
+  {% endif %}
+  {% if 'settings' in DASH_PERMS %}
+  <a class="sb-link {% if active_page == 'payments' %}is-active{% endif %}" href="{% url 'dash_payments' %}">
+    {% include 'partials/icon.html' with name='card' %} الدفع (PayPal)
+  </a>
   <a class="sb-link {% if active_page == 'settings' %}is-active{% endif %}" href="{% url 'dash_settings' %}">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5V21a2 2 0 11-4 0v-.1A1.6 1.6 0 008 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.6 1.6 0 00.3-1.8 1.6 1.6 0 00-1.5-1H2a2 2 0 110-4h.1A1.6 1.6 0 003.6 8a1.6 1.6 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 008 3.7 1.6 1.6 0 009 2.2V2a2 2 0 114 0v.1A1.6 1.6 0 0016 3.6a1.6 1.6 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 00-.3 1.8V8a1.6 1.6 0 001.5 1H22a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg>
     إعدادات المتجر
   </a>
+  {% endif %}
+  {% if request.user.is_superuser %}
   <a class="sb-link" href="/django-admin/" target="_blank">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l8 4v5c0 4.4-3.4 8.4-8 9-4.6-.6-8-4.6-8-9V7z"/></svg>
     Django Admin
   </a>
+  {% endif %}
+  {% endif %}
 
   <div class="sb-foot">
     <a class="sb-link" href="{% url 'dash_logout' %}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M15 17l5-5-5-5"/><path d="M20 12H9"/><path d="M9 20H6a2 2 0 01-2-2V6a2 2 0 012-2h3"/></svg>
-      تسجيل الخروج
+      {% include 'partials/icon.html' with name='logout' %} تسجيل الخروج
     </a>
   </div>
 </aside>

@@ -1,0 +1,16 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}رابط القائمة{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>{% if object %}تعديل «{{ object.label }}»{% else %}رابط جديد في القائمة{% endif %}</h2><p>اختار صفحة من الموقع، قسم، سياسة، أو اكتب رابط بنفسك</p></div>
+  <a class="btn btn-ghost" href="{% url 'dash_nav' %}">رجوع</a>
+</div>
+<form method="post" style="max-width:720px" data-nav-form>
+  {% csrf_token %}
+  <div class="card">
+    {% include 'dashboard/_form_fields.html' %}
+    <button class="btn" type="submit">حفظ</button>
+  </div>
+</form>
+{% endblock %}

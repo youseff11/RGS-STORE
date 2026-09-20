@@ -1,0 +1,30 @@
+{% extends 'base/base.html' %}
+{% load store_tags %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="wrap">
+    <div class="crumbs"><a href="{% url 'home' %}">{% t 'home' %}</a> <span>/</span> <span>{% t 'policies' %}</span></div>
+    <h1>{{ policy.title }}</h1>
+    <p>{% t 'last_updated' %}: {{ policy.updated_at|date:"Y/m/d" }}</p>
+  </div>
+</section>
+
+<section class="section-sm">
+  <div class="wrap policy-layout">
+    <article class="form-card prose">
+      {% if policy.content %}
+        {{ policy.content|rich_text }}
+      {% else %}
+        <p class="muted-text">{% t 'policy_empty' %}</p>
+      {% endif %}
+    </article>
+    {% if others %}
+    <aside class="policy-side">
+      <h4>{% t 'policies' %}</h4>
+      {% for other in others %}<a href="{{ other.get_absolute_url }}">{% include 'partials/icon.html' with name='file' %} {{ other.title }}</a>{% endfor %}
+    </aside>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

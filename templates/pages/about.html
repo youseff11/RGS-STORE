@@ -10,10 +10,34 @@
   </div>
 </section>
 
-<section class="section-sm">
-  <div class="wrap" style="max-width:820px">
-    <div class="form-card">
-      <p style="white-space:pre-line;font-size:15px;color:var(--text-2);margin:0">{{ SITE.about|default:SITE.tagline }}</p>
+<section class="section about-block">
+  <div class="wrap about-grid">
+    <div class="about-media">
+      {% if sec.image %}
+        <img src="{{ sec.image.url }}" alt="{{ SITE.brand_name }}">
+      {% else %}
+        <div class="about-mark" aria-hidden="true">{% include 'partials/logo.html' %}</div>
+      {% endif %}
+      <span class="about-tag">{{ SITE.brand_name|default:'RGS TOWER' }}</span>
+    </div>
+    <div class="about-copy">
+      <span class="eyebrow">{{ sec.eyebrow|default:SITE.brand_name }}</span>
+      <h2>{{ sec.title|default:SITE.brand_name }}</h2>
+      <div class="about-text">{{ SITE.about|default:sec.subtitle|default:SITE.tagline|linebreaks }}</div>
+      {% if stats %}
+      <div class="about-stats">
+        {% for stat in stats %}
+          <div class="about-stat">
+            <b>{{ stat.value }}{% if stat.plus %}<i>+</i>{% endif %}{% if stat.star %} {% include 'partials/icon.html' with name='star-fill' %}{% endif %}</b>
+            <span>{{ stat.label }}</span>
+          </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <div class="flex" style="flex-wrap:wrap">
+        <a class="btn" href="{% url 'shop' %}">{% t 'shop_now' %} {% include 'partials/icon.html' with name='arrow' %}</a>
+        <a class="btn btn-ghost" href="{% url 'works' %}">{% t 'portfolio' %}</a>
+      </div>
     </div>
   </div>
 </section>

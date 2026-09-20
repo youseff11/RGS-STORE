@@ -1,0 +1,5 @@
+{# rating stars — use `pct` (0–100) for fractional averages, or `rating` (1–5) for a single review #}
+<span class="stars" role="img" aria-label="{{ rating }} / 5">
+  <span class="stars-base">{% for i in "12345" %}{% include 'partials/icon.html' with name='star-fill' %}{% endfor %}</span>
+  <span class="stars-fill" style="width:{% if pct %}{{ pct }}{% else %}{% widthratio rating 5 100 %}{% endif %}%">{% for i in "12345" %}{% include 'partials/icon.html' with name='star-fill' %}{% endfor %}</span>
+</span>

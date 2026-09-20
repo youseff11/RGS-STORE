@@ -1,0 +1,8 @@
+<section class="section-sm">
+  <div class="wrap">
+    {% include 'partials/home/section_head.html' %}
+    <div class="products-grid">
+      {% for product in items %}{% include 'partials/product_card.html' %}{% endfor %}
+    </div>
+  </div>
+</section>

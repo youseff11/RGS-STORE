@@ -1,0 +1,51 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}أعمالنا{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>أعمالنا</h2><p>معرض الأعمال (صور وفيديوهات) — كل عمل له صفحة ورابط لما تبعته بيظهر البانر بتاعه</p></div>
+  <div class="flex">
+    <a class="btn btn-ghost" href="{% url 'dash_work_categories' %}">{% include 'partials/icon.html' with name='grid' %} التصنيفات</a>
+    <a class="btn" href="{% url 'dash_work_new' %}">{% include 'partials/icon.html' with name='plus' %} عمل جديد</a>
+  </div>
+</div>
+
+{% if categories %}
+<div class="filters-bar">
+  <a class="btn btn-sm {% if not cat %}{% else %}btn-ghost{% endif %}" href="{% url 'dash_works' %}">الكل</a>
+  {% for c in categories %}<a class="btn btn-sm {% if cat == c.pk|stringformat:'s' %}{% else %}btn-ghost{% endif %}" href="?cat={{ c.pk }}">{{ c.name_ar }}</a>{% endfor %}
+</div>
+{% endif %}
+
+{% if works %}
+<div class="work-admin-grid">
+  {% for work in works %}
+  <article class="work-admin{% if not work.is_active %} is-off{% endif %}">
+    <a class="work-admin-media" href="{% url 'dash_work_edit' work.pk %}">
+      <img src="{{ work.cover.url }}" alt="">
+      <span class="work-admin-flags">
+        {% if work.is_featured %}<span class="chip chip-accent">{% include 'partials/icon.html' with name='star-fill' %} في الرئيسية</span>{% endif %}
+        {% if not work.is_active %}<span class="chip chip-muted">مخفي</span>{% endif %}
+      </span>
+    </a>
+    <div class="work-admin-body">
+      <b>{{ work.title_ar }}</b>
+      <div class="small muted">{{ work.category.name_ar|default:'بدون تصنيف' }} · {{ work.n_media }} ملف · {{ work.views }} مشاهدة</div>
+      <div class="work-admin-actions">
+        <a class="btn btn-sm btn-soft" href="{% url 'dash_work_edit' work.pk %}">{% include 'partials/icon.html' with name='edit' %} تعديل</a>
+        <a class="btn btn-sm btn-soft" href="{% url 'dash_work_media' work.pk %}">{% include 'partials/icon.html' with name='image' %} الصور والفيديو</a>
+        <a class="btn btn-sm btn-ghost" href="{{ work.get_absolute_url }}" target="_blank" title="عرض" aria-label="عرض">{% include 'partials/icon.html' with name='external' %}</a>
+      </div>
+      <div class="work-admin-actions">
+        <form method="post" action="{% url 'dash_work_toggle' work.pk 'is_active' %}">{% csrf_token %}<button class="btn btn-sm btn-ghost" type="submit">{% if work.is_active %}{% include 'partials/icon.html' with name='eye-off' %} إخفاء{% else %}{% include 'partials/icon.html' with name='eye' %} نشر{% endif %}</button></form>
+        <form method="post" action="{% url 'dash_work_toggle' work.pk 'is_featured' %}">{% csrf_token %}<button class="btn btn-sm btn-ghost" type="submit">{% include 'partials/icon.html' with name='star' %} {% if work.is_featured %}شيله من الرئيسية{% else %}اعرضه في الرئيسية{% endif %}</button></form>
+        <form method="post" action="{% url 'dash_work_delete' work.pk %}" data-confirm="حذف «{{ work.title_ar }}» بكل صوره وفيديوهاته؟">{% csrf_token %}<button class="btn btn-sm btn-danger" type="submit">{% include 'partials/icon.html' with name='trash' %}</button></form>
+      </div>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card"><div class="empty"><div class="ico ico-badge">{% include 'partials/icon.html' with name='camera' %}</div>لسه مفيش أعمال — <a href="{% url 'dash_work_new' %}" style="color:var(--accent-text)">انشر أول عمل</a></div></div>
+{% endif %}
+{% endblock %}

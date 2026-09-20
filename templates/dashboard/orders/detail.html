@@ -19,7 +19,7 @@
     <div class="card">
       <div class="card-head">
         <h3>المنتجات ({{ order.items_count }} قطعة)</h3>
-        <span class="chip chip-{% status_color order.status %}">{{ order.get_status_display }}</span>
+        <span class="chip chip-{% status_color order.status %}">{{ order.status_label_local }}</span>
       </div>
       <div class="table-wrap" style="border:0">
         <table class="t">
@@ -80,6 +80,37 @@
       </form>
     </div>
 
+    <div class="card pay-box">
+      <div class="card-head">
+        <h3>{% include 'partials/icon.html' with name='wallet' %} الدفع</h3>
+        <span class="chip chip-{% payment_color order.payment_status %}">{{ order.get_payment_status_display }}</span>
+      </div>
+      <table class="t" style="min-width:auto">
+        <tr><th style="width:42%">الطريقة</th><td>{{ order.get_payment_method_display }}</td></tr>
+        {% if order.pay_amount %}<tr><th>المبلغ على PayPal</th><td dir="ltr" style="text-align:start"><b>{{ order.pay_amount }} {{ order.pay_currency }}</b></td></tr>{% endif %}
+        {% if order.paid_at %}<tr><th>وقت الدفع</th><td>{{ order.paid_at|date:"Y/m/d H:i" }}</td></tr>{% endif %}
+        {% if order.payment_reference %}<tr><th>رقم العملية (من العميل)</th><td dir="ltr" style="text-align:start">{{ order.payment_reference }}</td></tr>{% endif %}
+        {% if order.paypal_capture_id %}<tr><th>PayPal Capture</th><td dir="ltr" style="text-align:start" class="small">{{ order.paypal_capture_id }}</td></tr>{% endif %}
+        {% if order.payer_email %}<tr><th>إيميل الدافع</th><td dir="ltr" style="text-align:start" class="small">{{ order.payer_email }}</td></tr>{% endif %}
+      </table>
+      {% if order.payment_method == 'paypal' and order.payment_status == 'pending' %}
+        <div class="help" style="margin:10px 0">العميل بيقول إنه دفع باللينك — راجع حساب PayPal وبعدين أكّد.</div>
+      {% endif %}
+      {% if not order.is_paid %}
+      <form method="post" action="{% url 'dash_order_payment' order.pk %}" class="pay-actions">
+        {% csrf_token %}
+        <button class="btn btn-block" name="payment_status" value="paid" type="submit">{% include 'partials/icon.html' with name='check' %} تأكيد الدفع</button>
+      </form>
+      {% endif %}
+      <form method="post" action="{% url 'dash_order_payment' order.pk %}" class="pay-actions">
+        {% csrf_token %}
+        <select class="inp select" name="payment_status" onchange="this.form.submit()">
+          <option value="">تغيير حالة الدفع…</option>
+          {% for value, label in payment_statuses %}{% if value != order.payment_status %}<option value="{{ value }}">{{ label }}</option>{% endif %}{% endfor %}
+        </select>
+      </form>
+    </div>
+
     <div class="card">
       <div class="card-head"><h3>بيانات العميل</h3></div>
       <table class="t" style="min-width:auto">
@@ -91,8 +122,11 @@
         <tr><th>المدينة</th><td>{{ order.city|default:'—' }}</td></tr>
         <tr><th>العنوان</th><td>{{ order.address }}</td></tr>
         {% if order.notes %}<tr><th>ملاحظات العميل</th><td>{{ order.notes }}</td></tr>{% endif %}
-        <tr><th>الدفع</th><td>عند الاستلام</td></tr>
+        <tr><th>الدفع</th><td>{{ order.get_payment_method_display }}</td></tr>
       </table>
+      {% if order.user %}
+        <a class="btn btn-block btn-ghost" style="margin-top:12px" href="{% url 'dash_customer_detail' order.user.pk %}">{% include 'partials/icon.html' with name='user' %} ملف العميل</a>
+      {% endif %}
       {% if order.phone %}
       <a class="btn btn-block btn-soft" style="margin-top:12px" href="https://wa.me/2{{ order.phone|cut:' ' }}" target="_blank">واتساب العميل</a>
       {% endif %}

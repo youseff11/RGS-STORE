@@ -1,0 +1,35 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}السياسات{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>السياسات</h2><p>اكتب نص كل سياسة بنفسك — السياسة اللي فيها محتوى بتظهر في الفوتر</p></div>
+  <a class="btn" href="{% url 'dash_policy_new' %}">{% include 'partials/icon.html' with name='plus' %} سياسة جديدة</a>
+</div>
+
+<div class="table-wrap">
+  <table class="t">
+    <thead><tr><th>السياسة</th><th>المحتوى</th><th>الحالة</th><th>آخر تعديل</th><th></th></tr></thead>
+    <tbody>
+      {% for policy in policies %}
+      <tr>
+        <td><b>{{ policy.title_ar }}</b><div class="small muted" dir="ltr" style="text-align:start">/policies/{{ policy.slug }}/</div></td>
+        <td>{% if policy.has_content %}<span class="chip chip-ok">مكتوبة</span>{% else %}<span class="chip chip-warn">فاضية — اكتبها</span>{% endif %}</td>
+        <td>
+          <span class="chip {% if policy.is_active %}chip-ok{% else %}chip-muted{% endif %}">{% if policy.is_active %}منشورة{% else %}مخفية{% endif %}</span>
+          {% if policy.show_in_footer %}<span class="chip chip-muted">في الفوتر</span>{% endif %}
+        </td>
+        <td class="small muted">{{ policy.updated_at|date:"Y/m/d" }}</td>
+        <td><div class="row-actions">
+          <a class="btn btn-sm btn-soft" href="{% url 'dash_policy_edit' policy.pk %}">{% include 'partials/icon.html' with name='edit' %} كتابة / تعديل</a>
+          {% if policy.is_active %}<a class="btn btn-sm btn-ghost" href="{{ policy.get_absolute_url }}" target="_blank" aria-label="عرض">{% include 'partials/icon.html' with name='external' %}</a>{% endif %}
+          <form method="post" action="{% url 'dash_policy_delete' policy.pk %}" data-confirm="حذف «{{ policy.title_ar }}»؟">{% csrf_token %}<button class="btn btn-sm btn-danger" type="submit" aria-label="حذف">{% include 'partials/icon.html' with name='trash' %}</button></form>
+        </div></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5"><div class="empty">لا توجد سياسات</div></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

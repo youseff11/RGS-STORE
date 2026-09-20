@@ -1,0 +1,10 @@
+<div class="section-head {% if center %}center{% else %}between{% endif %}">
+  <div>
+    {% if sec.eyebrow %}<span class="eyebrow">{{ sec.eyebrow }}</span>{% endif %}
+    {% if sec.title %}<h2>{{ sec.title }}</h2>{% endif %}
+    {% if sec.subtitle %}<p>{{ sec.subtitle }}</p>{% endif %}
+  </div>
+  {% if not center and sec.button_text and sec.button_link %}
+    <a class="btn btn-ghost btn-sm" href="{{ sec.button_link }}">{{ sec.button_text }} {% include 'partials/icon.html' with name='arrow' %}</a>
+  {% endif %}
+</div>
