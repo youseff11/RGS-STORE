@@ -598,14 +598,14 @@ html[dir="rtl"] .hero-slide::after {
 .filter-list a:hover { background: var(--surface-2); color: var(--text); }
 .filter-list a.is-active { background: var(--accent-soft); color: var(--accent-text); font-weight: 700; }
 .filter-list small { color: var(--muted); font-size: 11.5px; }
-.size-chips { display: flex; flex-wrap: wrap; gap: 7px; }
-.size-chip {
-  min-width: 42px; padding: 7px 11px; text-align: center;
-  border: 1px solid var(--line); border-radius: 9px;
+.service-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.service-chip {
+  padding: 7px 12px; max-width: 100%;
+  border: 1px solid var(--line); border-radius: 9px; overflow-wrap: anywhere;
   font-size: 13px; font-weight: 700; color: var(--text-2); transition: .18s;
 }
-.size-chip:hover { border-color: var(--accent); color: var(--accent-text); }
-.size-chip.is-active { background: var(--text); color: var(--bg); border-color: var(--text); }
+.service-chip:hover { border-color: var(--accent); color: var(--accent-text); }
+.service-chip.is-active { background: var(--text); color: var(--bg); border-color: var(--text); }
 .price-inputs { display: flex; gap: 8px; }
 .price-inputs input {
   width: 100%; padding: 9px 11px; border-radius: 9px;
@@ -706,15 +706,24 @@ svg.i { width: 1.15em; height: 1.15em; vertical-align: -.2em; flex: none; }
 .color-opt:hover { transform: scale(1.08); }
 .color-opt.is-active { border-color: var(--accent); border-width: 2px; }
 
-.sizes-row { display: flex; gap: 9px; flex-wrap: wrap; }
-.size-opt {
-  min-width: 50px; padding: 10px 14px; border-radius: 10px;
-  border: 1px solid var(--line); font-weight: 700; font-size: 13.5px;
-  color: var(--text-2); transition: .18s;
+/* services (they replaced sizes): name + the extra price under it */
+.services-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 9px; }
+.service-opt {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0;
+  padding: 11px 14px; border-radius: 12px; text-align: start;
+  border: 1px solid var(--line); background: var(--surface);
+  color: var(--text-2); transition: border-color .18s, background .18s, color .18s;
 }
-.size-opt:hover:not(.is-disabled) { border-color: var(--accent); color: var(--accent-text); }
-.size-opt.is-active { background: var(--text); color: var(--bg); border-color: var(--text); }
-.size-opt.is-disabled { opacity: .32; cursor: not-allowed; text-decoration: line-through; }
+.service-opt .so-name { font-weight: 700; font-size: 13.5px; line-height: 1.35; overflow-wrap: anywhere; color: var(--text); }
+.service-opt .so-price { font-size: 12px; color: var(--muted); font-weight: 600; }
+.service-opt .so-price .cur { font-size: .9em; }
+.service-opt:hover:not(.is-disabled) { border-color: var(--accent); }
+.service-opt.is-active { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+.service-opt.is-active .so-price { color: var(--accent-text); }
+.service-opt.is-disabled { opacity: .32; cursor: not-allowed; }
+.service-opt.is-disabled .so-name { text-decoration: line-through; }
+.price-from { font-size: 13px; color: var(--muted); font-weight: 600; }
+.card-price .price-from { font-size: 12px; }
 
 .qty-box { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 100px; overflow: hidden; }
 .qty-box button { width: 40px; height: 44px; font-size: 17px; color: var(--text-2); transition: background .18s; }
@@ -972,6 +981,23 @@ html[dir="rtl"] .footer-links a:hover { transform: translateX(-8px); }
 .contact-line .ico svg { width: 15px; height: 15px; }
 a.contact-line:hover { color: var(--accent-text); }
 a.contact-line:hover .ico { background: var(--accent); color: var(--on-accent); }
+
+/* contact page — same line style as the footer, a bit roomier */
+.contact-list { display: flex; flex-direction: column; gap: 10px; }
+.contact-list .contact-line {
+  gap: 14px; padding: 12px 14px; border-radius: 12px;
+  border: 1px solid var(--line-soft); background: var(--surface-2);
+  font-size: 14.5px; color: var(--text); min-width: 0;
+  transition: border-color .2s, color .2s;
+}
+.contact-list a.contact-line:hover { border-color: var(--accent); }
+.contact-list .contact-line .ico { width: 42px; height: 42px; border-radius: 11px; }
+.contact-list .contact-line .ico svg { width: 19px; height: 19px; }
+.contact-list .cl-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.contact-list .cl-text small { font-size: 12px; color: var(--muted); font-weight: 600; }
+.contact-list .cl-text > span { overflow-wrap: anywhere; font-weight: 600; }
+html[dir="rtl"] .contact-list .cl-text > span[dir="ltr"] { text-align: right; }
+.contact-socials { margin-top: 18px; }
 
 .footer-badge {
   display: inline-flex; align-items: center; gap: 8px;

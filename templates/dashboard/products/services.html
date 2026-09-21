@@ -1,0 +1,73 @@
+{% extends 'base/dashboard_base.html' %}
+{% load store_tags %}
+{% block page_name %}خدمات المنتج{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2>{{ product.name }}</h2>
+    <p>علّم على الخدمات اللي الديزاين ده متاح بيها — الخدمات ملهاش كميات، متاحة دايمًا</p>
+  </div>
+  <a class="btn btn-ghost" href="{% url 'dash_products' %}">رجوع</a>
+</div>
+
+<div class="filters-bar">
+  <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_edit' product.pk %}">١. البيانات</a>
+  <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_media' product.pk %}">٢. الألوان والصور</a>
+  <a class="btn btn-sm" href="{% url 'dash_product_services' product.pk %}">٣. الخدمات</a>
+  <span class="spacer"></span>
+  <a class="btn btn-sm btn-soft" href="{% url 'product_detail' product.slug %}" target="_blank">معاينة</a>
+</div>
+
+{% if not services %}
+<div class="card">
+  <div class="empty">
+    <div class="ico ico-badge">{% include 'partials/icon.html' with name='sparkles' %}</div>
+    لسه ما كتبتش أي خدمات
+    <div class="small" style="margin-top:6px">الديزاين متاح دلوقتي بألوانه من غير اختيار خدمة.</div>
+    <div style="margin-top:14px"><a class="btn" href="{% url 'dash_services' %}">اكتب الخدمات</a></div>
+  </div>
+</div>
+{% else %}
+
+<form method="post">
+  {% csrf_token %}
+  <div class="split">
+    <div class="card">
+      <div class="card-head">
+        <h3>الخدمات المتاحة للديزاين ده</h3>
+        <button type="button" class="btn btn-sm btn-ghost" data-check-all="svc-pick">تحديد الكل</button>
+      </div>
+      <div class="svc-pick" id="svc-pick">
+        {% for service in services %}
+          <label class="svc-item {% if not service.is_active %}is-off{% endif %}">
+            <input type="checkbox" name="services" value="{{ service.id }}" {% if service.id in selected_ids %}checked{% endif %}>
+            <span class="svc-name">{{ service.name_ar }}{% if not service.is_active %} <span class="chip chip-muted">موقوفة</span>{% endif %}</span>
+            <span class="svc-price">{% if service.price %}+ {% price service.price %}{% else %}من غير زيادة{% endif %}</span>
+          </label>
+        {% endfor %}
+      </div>
+      <div class="help" style="margin-top:12px">
+        سعر الخدمة بيتزوّد على سعر الديزاين ({% price product.final_price %}). لو شلت كل الخدمات، الديزاين بيفضل متاح بألوانه من غير خدمة.
+      </div>
+      <button class="btn" type="submit" style="margin-top:16px">حفظ الخدمات</button>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>الألوان</h3></div>
+      {% if colors %}
+        <div class="perm-chips">
+          {% for color in colors %}
+            <span class="chip chip-muted"><span class="swatch-sm" style="background:{{ color.hex_code }}"></span>{{ color.name }}</span>
+          {% endfor %}
+        </div>
+        <div class="help" style="margin-top:10px">كل خدمة بتبقى متاحة بكل الألوان دي.</div>
+      {% else %}
+        <p class="small muted">الديزاين ده مالوش ألوان — <a href="{% url 'dash_product_media' product.pk %}">أضف ألوان</a> لو عندك أكتر من لون.</p>
+      {% endif %}
+      <div style="margin-top:14px"><a class="btn btn-sm btn-ghost" href="{% url 'dash_services' %}">تعديل الخدمات وأسعارها</a></div>
+    </div>
+  </div>
+</form>
+{% endif %}
+{% endblock %}

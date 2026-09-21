@@ -21,13 +21,13 @@ from .forms import (
     AnnouncementForm, BannerForm, CategoryForm, ColorForm, CouponForm,
     CountryForm, GoogleLoginForm, HomeSectionForm, NavLinkForm, NotificationSettingsForm,
     PaymentSettingsForm, PolicyForm, ProductForm, PromotionForm, ReviewForm, SiteSettingsForm,
-    SizeForm, StaffForm, WorkCategoryForm, WorkForm,
+    ServiceForm, StaffForm, WorkCategoryForm, WorkForm,
 )
 from . import google_oauth, mailer
 from .models import (
     Announcement, Banner, Category, ContactMessage, Country, Coupon, CustomerProfile,
-    HomeSection, NavLink, Order, Policy, Product, ProductColor, ProductImage, ProductVariant,
-    PAYMENT_STATUSES, Promotion, Review, STAFF_PERMISSIONS, SiteSettings, Size, StaffProfile,
+    HomeSection, NavLink, Order, OrderItem, Policy, Product, ProductColor, ProductImage,
+    PAYMENT_STATUSES, Promotion, Review, STAFF_PERMISSIONS, Service, SiteSettings, StaffProfile,
     TICKET_MAX_FILES, TICKET_MAX_FILE_MB, TICKET_STATUSES, Ticket, TicketMessage, Work,
     WorkCategory, WorkMedia, ensure_policy_defaults, staff_permissions,
 )
@@ -108,12 +108,10 @@ def index(request):
         status__in=paid_statuses, created_at__gte=month_ago
     ).aggregate(t=Sum('total'))['t'] or Decimal('0')
 
-    site = SiteSettings.load()
-    low_stock = (
-        Product.objects.annotate(stock=Sum('variants__quantity'))
-        .filter(is_active=True)
-        .filter(Q(stock__lte=site.low_stock_threshold) | Q(stock__isnull=True))
-        .order_by('stock')[:8]
+    # services customers order the most (by the name saved on each order line)
+    top_services = (
+        OrderItem.objects.exclude(service_name='').exclude(order__status='cancelled')
+        .values('service_name').annotate(count=Sum('quantity')).order_by('-count')[:6]
     )
 
     # last 7 days chart
@@ -159,7 +157,8 @@ def index(request):
             'week_orders': orders.filter(created_at__gte=week_ago).count(),
         },
         'recent_orders': orders.select_related('country')[:8],
-        'low_stock': low_stock,
+        'top_services': top_services,
+        'services_count': Service.objects.count(),
         'top_products': top_products,
         'chart': chart,
         'active_page': 'index',
@@ -178,7 +177,8 @@ def product_list(request):
     products = (
         Product.objects.select_related('category')
         .prefetch_related('images')
-        .annotate(stock=Sum('variants__quantity'))
+        .annotate(services_count=Count('variants__service', distinct=True))
+        .order_by('ordering', '-created_at')
     )
     if query:
         products = products.filter(
@@ -190,8 +190,8 @@ def product_list(request):
         products = products.filter(is_active=True)
     elif status == 'hidden':
         products = products.filter(is_active=False)
-    elif status == 'out':
-        products = products.filter(Q(stock__isnull=True) | Q(stock=0))
+    elif status == 'no_services':
+        products = products.filter(services_count=0)
 
     context = {
         'page_obj': _paginate(request, products),
@@ -209,6 +209,9 @@ def product_form(request, pk=None):
     form = ProductForm(request.POST or None, instance=product)
     if request.method == 'POST' and form.is_valid():
         obj = form.save()
+        if product is None:
+            # a new design starts with every available service switched on
+            obj.sync_variants(Service.objects.filter(is_active=True).values_list('id', flat=True))
         messages.success(request, 'تم حفظ المنتج بنجاح')
         if 'save_and_media' in request.POST or product is None:
             return redirect('dash_product_media', pk=obj.pk)
@@ -238,6 +241,7 @@ def product_media(request, pk):
                 color = color_form.save(commit=False)
                 color.product = product
                 color.save()
+                product.sync_variants()
                 messages.success(request, 'تمت إضافة اللون')
                 return redirect('dash_product_media', pk=product.pk)
 
@@ -277,66 +281,33 @@ def product_media(request, pk):
 
 
 @perm_required('products')
-def product_stock(request, pk):
-    """Colors x sizes quantity matrix."""
+def product_services(request, pk):
+    """Which services this design is offered with (colour × service, no stock)."""
     product = get_object_or_404(Product, pk=pk)
-    colors = list(product.colors.all())
-    sizes = list(Size.objects.all())
+    services = list(Service.objects.all())
 
     if request.method == 'POST':
-        chosen_sizes = request.POST.getlist('sizes')
-        chosen_ids = [int(s) for s in chosen_sizes if s.isdigit()]
-        kept = set()
-        for color in (colors or [None]):
-            for size in (sizes or [None]):
-                if size is not None and size.id not in chosen_ids:
-                    continue
-                key = f'q_{color.id if color else 0}_{size.id if size else 0}'
-                raw = (request.POST.get(key) or '').strip()
-                if raw == '':
-                    continue
-                try:
-                    qty = max(0, int(raw))
-                except ValueError:
-                    continue
-                variant, _ = ProductVariant.objects.update_or_create(
-                    product=product, color=color, size=size,
-                    defaults={'quantity': qty},
-                )
-                kept.add(variant.pk)
-        product.variants.exclude(pk__in=kept).delete()
-        messages.success(request, 'تم تحديث المخزون')
-        return redirect('dash_product_stock', pk=product.pk)
+        chosen = {int(s) for s in request.POST.getlist('services') if s.isdigit()}
+        product.sync_variants([s.id for s in services if s.id in chosen])
+        messages.success(request, 'تم حفظ خدمات المنتج')
+        return redirect('dash_product_services', pk=product.pk)
 
-    existing = {}
-    active_size_ids = set()
-    for variant in product.variants.all():
-        existing[f'{variant.color_id or 0}-{variant.size_id or 0}'] = variant.quantity
-        if variant.size_id:
-            active_size_ids.add(variant.size_id)
-    if not active_size_ids:
-        active_size_ids = {s.id for s in sizes}
-
-    grid = []
-    for color in (colors or [None]):
-        cells = []
-        for size in (sizes or [None]):
-            cells.append({
-                'size': size,
-                'key': f'q_{color.id if color else 0}_{size.id if size else 0}',
-                'value': existing.get(f'{color.id if color else 0}-{size.id if size else 0}', ''),
-            })
-        grid.append({'color': color, 'cells': cells})
-
+    selected = product.selected_service_ids
     context = {
         'product': product,
-        'sizes': sizes,
-        'grid': grid,
-        'active_size_ids': active_size_ids,
+        'services': services,
+        'selected_ids': selected,
+        'colors': product.colors.all(),
         'active_page': 'products',
         **_pending_counts(),
     }
-    return render(request, 'dashboard/products/stock.html', context)
+    return render(request, 'dashboard/products/services.html', context)
+
+
+@perm_required('products')
+def product_stock_redirect(request, pk):
+    """Old «المقاسات والكميات» link → the design's services page."""
+    return redirect('dash_product_services', pk=pk)
 
 
 @perm_required('products')
@@ -360,8 +331,10 @@ def product_toggle(request, pk):
 @require_POST
 def color_delete(request, pk):
     color = get_object_or_404(ProductColor, pk=pk)
-    product_id = color.product_id
+    product = color.product
     color.delete()
+    product.sync_variants()
+    product_id = product.pk
     messages.info(request, 'تم حذف اللون')
     return redirect('dash_product_media', pk=product_id)
 
@@ -414,26 +387,54 @@ def category_delete(request, pk):
     return redirect('dash_categories')
 
 
-# ===================================================================== sizes
+# ================================================================== services
 @perm_required('products')
-def size_list(request):
-    form = SizeForm(request.POST or None)
+def service_list(request, pk=None):
+    """Malak writes the services here (they replaced the clothing sizes)."""
+    service = get_object_or_404(Service, pk=pk) if pk else None
+    form = ServiceForm(request.POST or None, instance=service)
     if request.method == 'POST' and form.is_valid():
-        form.save()
-        messages.success(request, 'تمت إضافة المقاس')
-        return redirect('dash_sizes')
-    return render(request, 'dashboard/sizes/list.html', {
-        'sizes': Size.objects.all(), 'form': form,
-        'active_page': 'sizes', **_pending_counts(),
+        with transaction.atomic():
+            obj = form.save()
+            if service is None and form.cleaned_data.get('add_to_all'):
+                for product in Product.objects.prefetch_related('colors', 'variants'):
+                    product.sync_variants(product.selected_service_ids | {obj.pk})
+        messages.success(request, 'تم حفظ الخدمة' if service else 'تمت إضافة الخدمة')
+        return redirect('dash_services')
+    services = Service.objects.annotate(
+        designs=Count('variants__product', distinct=True),
+    )
+    return render(request, 'dashboard/services/list.html', {
+        'services': services, 'form': form, 'object': service,
+        'products_total': Product.objects.count(),
+        'active_page': 'services', **_pending_counts(),
     })
 
 
 @perm_required('products')
 @require_POST
-def size_delete(request, pk):
-    get_object_or_404(Size, pk=pk).delete()
-    messages.info(request, 'تم حذف المقاس')
-    return redirect('dash_sizes')
+def service_toggle(request, pk):
+    service = get_object_or_404(Service, pk=pk)
+    service.is_active = not service.is_active
+    service.save(update_fields=['is_active'])
+    return redirect('dash_services')
+
+
+@perm_required('products')
+@require_POST
+def service_delete(request, pk):
+    service = get_object_or_404(Service, pk=pk)
+    products = list(Product.objects.filter(variants__service=service).distinct())
+    with transaction.atomic():
+        service.delete()
+        for product in products:
+            product.sync_variants()  # a design left with no service stays orderable by colour
+    messages.info(request, 'تم حذف الخدمة')
+    return redirect('dash_services')
+
+
+def sizes_redirect(request, pk=None):
+    return redirect('dash_services')
 
 
 # ==================================================================== orders
@@ -483,7 +484,6 @@ def order_status(request, pk):
     order = get_object_or_404(Order, pk=pk)
     status = request.POST.get('status')
     if status in dict(Order.STATUSES):
-        previous = order.status
         order.status = status
         fields = ['status', 'updated_at']
         # cash is collected on delivery → the order counts as paid
@@ -492,10 +492,6 @@ def order_status(request, pk):
             order.paid_at = timezone.now()
             fields += ['payment_status', 'paid_at']
         order.save(update_fields=fields)
-        if status == 'cancelled' and previous != 'cancelled':
-            order.restore_stock()
-        elif previous == 'cancelled' and status != 'cancelled':
-            order.take_stock_again()
         messages.success(request, 'تم تحديث حالة الطلب')
     return redirect(request.META.get('HTTP_REFERER') or 'dash_orders')
 

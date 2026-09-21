@@ -167,20 +167,23 @@
   <div>
     {% if 'products' in perms %}
     <div class="card">
-      <div class="card-head"><h3>مخزون على وشك النفاد</h3></div>
-      {% if low_stock %}
-        {% for product in low_stock %}
+      <div class="card-head"><h3>الخدمات الأكثر طلبًا</h3><a class="btn btn-sm btn-ghost" href="{% url 'dash_services' %}">الخدمات</a></div>
+      {% if top_services %}
+        {% for row in top_services %}
         <div class="flex" style="padding:9px 0;{% if not forloop.last %}border-bottom:1px solid var(--line-soft){% endif %}">
-          {% if product.main_image %}<img src="{{ product.main_image.url }}" class="thumb" style="width:38px;height:48px;border-radius:8px;object-fit:cover">{% endif %}
-          <div style="min-width:0;flex:1">
-            <div class="small" style="font-weight:700">{{ product.name }}</div>
-            <div class="small muted">{{ product.stock|default:0 }} قطعة متبقية</div>
-          </div>
-          <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_stock' product.pk %}">تعديل</a>
+          <span class="chip chip-accent">{{ forloop.counter }}</span>
+          <div style="min-width:0;flex:1" class="small"><b>{{ row.service_name }}</b></div>
+          <span class="chip chip-muted">{{ row.count }} طلب</span>
         </div>
         {% endfor %}
+      {% elif not services_count %}
+        <div class="empty" style="padding:26px">
+          <div class="ico ico-badge">{% include 'partials/icon.html' with name='sparkles' %}</div>
+          لسه ما كتبتش الخدمات
+          <div style="margin-top:12px"><a class="btn btn-sm" href="{% url 'dash_services' %}">أضف الخدمات</a></div>
+        </div>
       {% else %}
-        <div class="empty" style="padding:26px"><div class="ico ico-badge ok">{% include 'partials/icon.html' with name='check-circle' %}</div>المخزون بحالة جيدة</div>
+        <div class="empty" style="padding:26px"><div class="ico ico-badge">{% include 'partials/icon.html' with name='sparkles' %}</div>لسه مفيش طلبات على الخدمات</div>
       {% endif %}
     </div>
 

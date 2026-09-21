@@ -24,11 +24,12 @@ from .middleware import COOKIE as LANG_COOKIE, COOKIE_AGE as LANG_COOKIE_AGE
 from .i18n import LANGS
 from .models import (
     Banner, Category, ContactMessage, Country, Coupon, CustomerProfile, HomeSection,
-    Order, OrderItem, Policy, Product, ProductVariant, Review, SiteSettings, Size,
+    Order, OrderItem, Policy, Product, ProductVariant, Review, Service, SiteSettings,
     TICKET_EXTS, TICKET_MAX_FILES, TICKET_MAX_FILE_MB, TICKET_STATUSES, TICKET_TOPICS,
     Ticket, TicketAttachment, TicketMessage, Work, WorkCategory, reviewable_orders,
     staff_permissions,
 )
+from .templatetags.store_tags import money as fmt_money
 from .utils import Cart, money, save_ticket_attachments, ticket_uploads
 
 PAGE_SIZE = 12
@@ -192,7 +193,7 @@ def _filtered_products(request, category=None):
     products = _base_products()
     query = (request.GET.get('q') or '').strip()
     cat_slug = request.GET.get('category') or ''
-    size_id = request.GET.get('size') or ''
+    service_id = request.GET.get('service') or ''
     min_price = _dec(request.GET.get('min'))
     max_price = _dec(request.GET.get('max'))
     sort = request.GET.get('sort') or 'new'
@@ -209,8 +210,8 @@ def _filtered_products(request, category=None):
             | Q(description_ar__icontains=query) | Q(description_en__icontains=query)
             | Q(sku__icontains=query)
         )
-    if size_id.isdigit():
-        products = products.filter(variants__size_id=int(size_id), variants__quantity__gt=0)
+    if service_id.isdigit():
+        products = products.filter(variants__service_id=int(service_id), variants__service__is_active=True)
     if min_price is not None:
         products = products.filter(price__gte=min_price)
     if max_price is not None:
@@ -232,12 +233,19 @@ def _filtered_products(request, category=None):
     return result, {
         'q': query,
         'category': cat_slug,
-        'size': size_id,
+        'service': service_id,
         'min': request.GET.get('min') or '',
         'max': request.GET.get('max') or '',
         'sort': sort,
         'sale': on_sale,
     }
+
+
+def _shop_services():
+    """Services offered on at least one visible design (for the shop filter)."""
+    return Service.objects.filter(
+        is_active=True, variants__product__is_active=True,
+    ).distinct().order_by('ordering', 'id')
 
 
 def shop(request):
@@ -249,7 +257,7 @@ def shop(request):
         'products': page.object_list,
         'total_count': paginator.count,
         'categories': Category.objects.filter(is_active=True),
-        'sizes': Size.objects.all(),
+        'services': _shop_services(),
         'active': active,
         'page_title': t('shop'),
     }
@@ -267,7 +275,7 @@ def category_detail(request, slug):
         'products': page.object_list,
         'total_count': paginator.count,
         'categories': Category.objects.filter(is_active=True),
-        'sizes': Size.objects.all(),
+        'services': _shop_services(),
         'active': active,
         'page_title': category.name,
     }
@@ -278,15 +286,28 @@ def category_detail(request, slug):
 def product_detail(request, slug):
     product = get_object_or_404(
         Product.objects.select_related('category')
-        .prefetch_related('images', 'colors__images', 'variants__size', 'variants__color'),
+        .prefetch_related('images', 'colors__images', 'variants__service', 'variants__color'),
         slug=slug, is_active=True,
     )
     Product.objects.filter(pk=product.pk).update(views=product.views + 1)
 
+    # services have no stock: every colour × service variant is orderable,
+    # and the service's extra price is added to the design's price
     variant_map = {}
+    services = {}
+    old_price = product.old_price
     for variant in product.variants.all():
-        key = f'{variant.color_id or 0}-{variant.size_id or 0}'
-        variant_map[key] = {'id': variant.id, 'qty': variant.quantity}
+        if variant.service_id and not variant.service.is_active:
+            continue
+        extra = variant.service.price if variant.service_id else Decimal('0')
+        key = f'{variant.color_id or 0}-{variant.service_id or 0}'
+        variant_map[key] = {
+            'id': variant.id,
+            'price': fmt_money(product.final_price + extra),
+            'old': fmt_money(old_price + extra) if old_price else '',
+        }
+        if variant.service_id:
+            services[variant.service_id] = variant.service
 
     images = list(product.images.all())
     related = (
@@ -299,15 +320,13 @@ def product_detail(request, slug):
         'product': product,
         'images': images,
         'colors': product.colors.all(),
-        'sizes': Size.objects.filter(variants__product=product).distinct(),
+        'services': sorted(services.values(), key=lambda s: (s.ordering, s.id)),
         'variant_map': variant_map,
         'related': related,
         'pd_strings': {
             'choose': t('choose_options'),
-            'out': t('out_of_stock'),
-            'in': t('in_stock'),
-            'only': t('only_left'),
-            'left': t('pieces_left'),
+            'out': t('unavailable'),
+            'in': t('available'),
         },
         'page_title': product.name,
         'og_image': product.main_image.url if product.main_image else '',
@@ -336,11 +355,14 @@ def cart_add(request):
     except (TypeError, ValueError):
         quantity = 1
 
-    variant = ProductVariant.objects.filter(id=variant_id).select_related('product').first()
-    if not variant or not variant.product.is_active or variant.quantity <= 0:
+    variant = (
+        ProductVariant.objects.filter(id=variant_id).select_related('product', 'service').first()
+        if str(variant_id or '').isdigit() else None
+    )
+    if not variant or not variant.is_available:
         if _is_ajax(request):
-            return JsonResponse({'ok': False, 'message': t('out_of_stock')}, status=400)
-        messages.error(request, t('out_of_stock'))
+            return JsonResponse({'ok': False, 'message': t('unavailable')}, status=400)
+        messages.error(request, t('unavailable'))
         return redirect(request.META.get('HTTP_REFERER', reverse('shop')))
 
     cart = Cart(request)
@@ -849,14 +871,11 @@ def checkout(request):
                         variant=variant,
                         product_name=row['product'].name,
                         color_name=row['color'].name if row['color'] else '',
-                        size_name=row['size'].label if row['size'] else '',
+                        service_name=row['service'].name if row['service'] else '',
                         image_url=row['image'].url if row['image'] else '',
                         unit_price=row['unit_price'],
                         quantity=row['quantity'],
                         line_total=row['line_total'],
-                    )
-                    ProductVariant.objects.filter(pk=variant.pk).update(
-                        quantity=max(0, variant.quantity - row['quantity'])
                     )
                 if totals['coupon']:
                     Coupon.objects.filter(pk=totals['coupon'].pk).update(

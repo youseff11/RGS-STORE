@@ -9,7 +9,6 @@ from decimal import ROUND_UP, Decimal
 from django.conf import settings
 from django.core.validators import FileExtensionValidator, MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models.functions import Greatest
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
@@ -64,7 +63,6 @@ class SiteSettings(models.Model):
         max_digits=10, decimal_places=2, default=Decimal('2000.00'),
         help_text='0 = لا يوجد شحن مجاني / 0 disables free shipping',
     )
-    low_stock_threshold = models.PositiveIntegerField(default=5)
     orders_enabled = models.BooleanField(default=True)
 
     # payments
@@ -328,21 +326,39 @@ class Category(models.Model):
         return self.products.filter(is_active=True).count()
 
 
-# ====================================================================== sizes
-class Size(models.Model):
-    name = models.CharField(max_length=20, unique=True)
-    name_ar = models.CharField(max_length=20, blank=True, default='')
+# =================================================================== services
+class Service(models.Model):
+    """A graphic service the customer picks on a design (it replaced clothing sizes).
+
+    Malak writes the services himself from the dashboard. Each one can add an
+    extra price on top of the design's price, and services have no stock —
+    a design is orderable in every colour × service that's switched on for it.
+    """
+
+    name_ar = models.CharField(max_length=120)
+    name_en = models.CharField(max_length=120, blank=True, default='')
+    price = models.DecimalField(
+        max_digits=10, decimal_places=2, default=ZERO,
+        help_text='بيتزوّد على سعر الديزاين — 0 = من غير زيادة',
+    )
+    is_active = models.BooleanField(default=True)
     ordering = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ['ordering', 'id']
 
     def __str__(self):
-        return self.name
+        return self.name_ar or self.name_en
 
     @property
-    def label(self):
-        return pick(self.name_ar or self.name, self.name)
+    def name(self):
+        return pick(self.name_ar, self.name_en)
+
+    label = name
+
+    @property
+    def products_count(self):
+        return self.variants.values('product').distinct().count()
 
 
 # =================================================================== products
@@ -411,14 +427,14 @@ class Product(models.Model):
         imgs = list(self.images.all()[:2])
         return imgs[1].image if len(imgs) > 1 else None
 
-    # -- stock
-    @property
-    def total_stock(self):
-        return self.variants.aggregate(t=models.Sum('quantity'))['t'] or 0
+    # -- availability (services have no stock)
+    def live_variants(self):
+        """Variants the customer can order: no service, or a service that's switched on."""
+        return self.variants.filter(models.Q(service__isnull=True) | models.Q(service__is_active=True))
 
     @property
     def in_stock(self):
-        return self.total_stock > 0
+        return self.live_variants().exists()
 
     # -- pricing
     @property
@@ -463,11 +479,56 @@ class Product(models.Model):
             return 0
         return int(round((old - self.final_price) / old * 100))
 
-    # -- options
+    # -- services
     @property
-    def available_sizes(self):
-        ids = self.variants.filter(quantity__gt=0).values_list('size_id', flat=True)
-        return Size.objects.filter(id__in=[i for i in ids if i])
+    def selected_service_ids(self):
+        return set(self.variants.exclude(service=None).values_list('service_id', flat=True))
+
+    @property
+    def available_services(self):
+        return Service.objects.filter(
+            is_active=True, variants__product=self,
+        ).distinct().order_by('ordering', 'id')
+
+    @property
+    def price_from(self):
+        """Lowest price a customer can pay for this design (design + cheapest service)."""
+        extras = [s.price for s in self.available_services]
+        return self.final_price + (min(extras) if extras else ZERO)
+
+    @property
+    def old_price_from(self):
+        """The crossed-out price that goes with `price_from`."""
+        old = self.old_price
+        return old + (self.price_from - self.final_price) if old else None
+
+    @property
+    def has_price_range(self):
+        extras = {s.price for s in self.available_services}
+        return len(extras) > 1
+
+    def sync_variants(self, service_ids=None):
+        """Keep exactly one variant per colour × chosen service.
+
+        `service_ids=None` keeps the services already chosen for this design.
+        No chosen services → one variant per colour (the design is still orderable).
+        """
+        if service_ids is None:
+            service_ids = self.selected_service_ids
+        services = list(Service.objects.filter(id__in=service_ids)) or [None]
+        colors = list(self.colors.all()) or [None]
+        existing = {}
+        for variant in self.variants.all():
+            existing.setdefault((variant.color_id, variant.service_id), variant)
+        keep = set()
+        for color in colors:
+            for service in services:
+                key = (color.id if color else None, service.id if service else None)
+                variant = existing.get(key)
+                if variant is None:
+                    variant = ProductVariant.objects.create(product=self, color=color, service=service)
+                keep.add(variant.pk)
+        self.variants.exclude(pk__in=keep).delete()
 
 
 class ProductColor(models.Model):
@@ -492,9 +553,6 @@ class ProductColor(models.Model):
         img = self.images.first()
         return img.image if img else None
 
-    @property
-    def stock(self):
-        return self.variants.aggregate(t=models.Sum('quantity'))['t'] or 0
 
 
 class ProductImage(models.Model):
@@ -514,36 +572,45 @@ class ProductImage(models.Model):
 
 
 class ProductVariant(models.Model):
-    """One sellable combination: product + color + size, with its own quantity."""
+    """One orderable combination: design + colour + service (no stock — always available)."""
 
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
     color = models.ForeignKey(
         ProductColor, on_delete=models.CASCADE, null=True, blank=True, related_name='variants'
     )
-    size = models.ForeignKey(
-        Size, on_delete=models.CASCADE, null=True, blank=True, related_name='variants'
+    service = models.ForeignKey(
+        Service, on_delete=models.CASCADE, null=True, blank=True, related_name='variants'
     )
-    quantity = models.PositiveIntegerField(default=0)
     sku = models.CharField(max_length=60, blank=True, default='')
 
     class Meta:
-        ordering = ['color__ordering', 'size__ordering', 'id']
+        ordering = ['color__ordering', 'service__ordering', 'id']
         constraints = [
             models.UniqueConstraint(
-                fields=['product', 'color', 'size'], name='uniq_product_color_size'
+                fields=['product', 'color', 'service'], name='uniq_product_color_service'
             )
         ]
 
     def __str__(self):
-        return f'{self.product} / {self.color_label} / {self.size_label}'
+        return f'{self.product} / {self.color_label} / {self.service_label}'
 
     @property
     def color_label(self):
         return self.color.name if self.color else '—'
 
     @property
-    def size_label(self):
-        return self.size.label if self.size else '—'
+    def service_label(self):
+        return self.service.name if self.service else '—'
+
+    @property
+    def is_available(self):
+        return self.product.is_active and (self.service is None or self.service.is_active)
+
+    @property
+    def unit_price(self):
+        """Design price (after any running offer) + the service's extra price."""
+        extra = self.service.price if self.service else ZERO
+        return self.product.final_price + extra
 
     @property
     def image(self):
@@ -817,7 +884,6 @@ class Order(models.Model):
         max_length=120, blank=True, default='',
         help_text='رقم العملية اللي كتبه العميل بعد الدفع باللينك',
     )
-    stock_restored = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -862,30 +928,6 @@ class Order(models.Model):
         if save:
             self.save(update_fields=['payment_status', 'paid_at', 'status', 'updated_at'])
 
-    def restore_stock(self):
-        """Give the reserved pieces back once (used when an order is cancelled)."""
-        if self.stock_restored:
-            return
-        for item in self.items.select_related('variant'):
-            if item.variant_id:
-                ProductVariant.objects.filter(pk=item.variant_id).update(
-                    quantity=models.F('quantity') + item.quantity
-                )
-        self.stock_restored = True
-        self.save(update_fields=['stock_restored', 'updated_at'])
-
-    def take_stock_again(self):
-        """Re-reserve stock if a cancelled order is brought back."""
-        if not self.stock_restored:
-            return
-        for item in self.items.select_related('variant'):
-            if item.variant_id:
-                ProductVariant.objects.filter(pk=item.variant_id).update(
-                    quantity=Greatest(models.F('quantity') - item.quantity, 0)
-                )
-        self.stock_restored = False
-        self.save(update_fields=['stock_restored', 'updated_at'])
-
     def save(self, *args, **kwargs):
         if not self.order_number:
             self.order_number = self.generate_number()
@@ -917,7 +959,7 @@ class OrderItem(models.Model):
     )
     product_name = models.CharField(max_length=200)
     color_name = models.CharField(max_length=60, blank=True, default='')
-    size_name = models.CharField(max_length=40, blank=True, default='')
+    service_name = models.CharField(max_length=160, blank=True, default='')
     image_url = models.CharField(max_length=300, blank=True, default='')
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, default=ZERO)
     quantity = models.PositiveIntegerField(default=1)
@@ -1168,7 +1210,7 @@ class TicketAttachment(models.Model):
 STAFF_PERMISSIONS = [
     ('orders', 'الطلبات'),
     ('customers', 'العملاء'),
-    ('products', 'المنتجات والأقسام والمقاسات'),
+    ('products', 'المنتجات والأقسام والخدمات'),
     ('marketing', 'أكواد الخصم والعروض'),
     ('portfolio', 'أعمالنا'),
     ('reviews', 'تقييمات العملاء'),

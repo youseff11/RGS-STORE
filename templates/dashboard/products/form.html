@@ -5,7 +5,7 @@
 <div class="page-head">
   <div>
     <h2>{% if product %}تعديل: {{ product.name }}{% else %}إضافة منتج جديد{% endif %}</h2>
-    <p>البيانات الأساسية — الألوان والصور والمخزون في خطوات تالية · اكتب بالعربي، والإنجليزي اختياري</p>
+    <p>البيانات الأساسية — الألوان والصور والخدمات في خطوات تالية · اكتب بالعربي، والإنجليزي اختياري</p>
   </div>
   <a class="btn btn-ghost" href="{% url 'dash_products' %}">رجوع</a>
 </div>
@@ -14,7 +14,7 @@
 <div class="filters-bar">
   <a class="btn btn-sm" href="{% url 'dash_product_edit' product.pk %}">١. البيانات</a>
   <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_media' product.pk %}">٢. الألوان والصور</a>
-  <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_stock' product.pk %}">٣. المقاسات والكميات</a>
+  <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_services' product.pk %}">٣. الخدمات</a>
   <span class="spacer"></span>
   <a class="btn btn-sm btn-soft" href="{% url 'product_detail' product.slug %}" target="_blank">معاينة في المتجر</a>
 </div>

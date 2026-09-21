@@ -13,7 +13,7 @@
     <div class="card-badges">
       {% if product.is_new %}<span class="badge badge-new">{% t 'new_badge' %}</span>{% endif %}
       {% if product.discount_percent %}<span class="badge badge-sale">-{{ product.discount_percent }}%</span>{% endif %}
-      {% if not product.in_stock %}<span class="badge badge-out">{% t 'out_of_stock' %}</span>{% endif %}
+      {% if not product.in_stock %}<span class="badge badge-out">{% t 'unavailable' %}</span>{% endif %}
     </div>
 
     <div class="card-quick">
@@ -25,9 +25,10 @@
     {% if product.category %}<div class="card-cat">{{ product.category.name }}</div>{% endif %}
     <h3 class="card-title"><a href="{% url 'product_detail' product.slug %}">{{ product.name }}</a></h3>
     <div class="card-price">
-      <span class="price-now">{% price product.final_price %}</span>
+      {% if product.has_price_range %}<span class="price-from">{% t 'price_from' %}</span>{% endif %}
+      <span class="price-now">{% price product.price_from %}</span>
       {% if product.old_price %}
-        <span class="price-old">{{ product.old_price|money }}</span>
+        <span class="price-old">{{ product.old_price_from|money }}</span>
         <span class="price-off">-{{ product.discount_percent }}%</span>
       {% endif %}
     </div>

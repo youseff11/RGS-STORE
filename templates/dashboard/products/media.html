@@ -13,7 +13,7 @@
 <div class="filters-bar">
   <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_edit' product.pk %}">١. البيانات</a>
   <a class="btn btn-sm" href="{% url 'dash_product_media' product.pk %}">٢. الألوان والصور</a>
-  <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_stock' product.pk %}">٣. المقاسات والكميات</a>
+  <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_services' product.pk %}">٣. الخدمات</a>
   <span class="spacer"></span>
   <a class="btn btn-sm btn-soft" href="{% url 'product_detail' product.slug %}" target="_blank">معاينة</a>
 </div>
@@ -90,7 +90,7 @@
           <span class="dot" style="background:{{ color.hex_code }}"></span>
           <div style="flex:1;min-width:0">
             <div class="n">{{ color.name }}</div>
-            <div class="s">{{ color.images.count }} صورة · {{ color.stock }} قطعة</div>
+            <div class="s">{{ color.images.count }} صورة</div>
           </div>
           <form method="post" action="{% url 'dash_color_delete' color.pk %}" data-confirm="حذف اللون وصوره؟">
             {% csrf_token %}<button class="btn btn-sm btn-danger" type="submit">حذف</button>
@@ -117,7 +117,7 @@
     </div>
 
     <div class="card">
-      <a class="btn btn-block" href="{% url 'dash_product_stock' product.pk %}">التالي: المقاسات والكميات ←</a>
+      <a class="btn btn-block" href="{% url 'dash_product_services' product.pk %}">التالي: الخدمات ←</a>
     </div>
   </div>
 </div>

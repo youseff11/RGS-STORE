@@ -82,15 +82,6 @@
     });
   });
 
-  /* stock matrix: fill a whole row / column quickly */
-  $$('[data-fill-row]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const value = window.prompt('الكمية لكل المقاسات في الصف ده؟', '10');
-      if (value === null) return;
-      $$('input', btn.closest('tr')).forEach((input) => { input.value = value; });
-    });
-  });
-
   /* scope toggle on the promotion form */
   const scope = $('#id_scope');
   if (scope) {

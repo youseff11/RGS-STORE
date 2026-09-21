@@ -113,61 +113,72 @@
     };
     const variantMap = readJSON('variant-data', {});
     const colorBtns = $$('[data-color]', pd);
-    const sizeBtns  = $$('[data-size]', pd);
+    const serviceBtns = $$('[data-service]', pd);
     const variantInput = $('#variant-id', pd);
     const addBtn = $('[data-add-btn]', pd);
     const stockLine = $('[data-stock-line]', pd);
     const qtyInput = $('.qty-box input', pd);
     const mainImg = $('[data-main-img]', pd);
+    const priceNow = $('[data-price-now]', pd);
+    const priceOld = $('[data-price-old]', pd);
+    const priceFrom = $('[data-price-from]', pd);
     const strings = readJSON('pd-strings', {});
 
     let colorId = colorBtns.length ? (colorBtns[0].dataset.color || '0') : '0';
-    let sizeId = '0';
+    let serviceId = '0';
 
     colorBtns.forEach((b) => b.classList.toggle('is-active', b.dataset.color === colorId));
 
-    function stockFor(cId, sId) {
-      const entry = variantMap[cId + '-' + sId];
-      return entry ? entry.qty : 0;
+    function pickService(btn) {
+      serviceId = btn.dataset.service;
+      serviceBtns.forEach((b) => b.classList.toggle('is-active', b === btn));
+      const label = $('[data-service-label]', pd);
+      if (label) label.textContent = btn.dataset.name || '';
+    }
+    // a design with a single service doesn't make the customer pick it
+    if (serviceBtns.length === 1) pickService(serviceBtns[0]);
+
+    function showPrice(entry) {
+      // services add their own price on top of the design's price
+      if (priceNow) priceNow.textContent = entry ? entry.price : priceNow.dataset.initial;
+      if (priceOld) priceOld.textContent = entry ? (entry.old || priceOld.dataset.initial) : priceOld.dataset.initial;
+      if (priceFrom) priceFrom.hidden = !!entry;
     }
 
     function refresh() {
-      // sizes availability for the active color
-      sizeBtns.forEach((btn) => {
-        const qty = stockFor(colorId, btn.dataset.size);
-        btn.classList.toggle('is-disabled', qty <= 0);
-        if (qty <= 0 && btn.dataset.size === sizeId) {
-          sizeId = '0';
+      // services offered for the active colour (no stock — a service is on or off)
+      serviceBtns.forEach((btn) => {
+        const ok = !!variantMap[colorId + '-' + btn.dataset.service];
+        btn.classList.toggle('is-disabled', !ok);
+        if (!ok && btn.dataset.service === serviceId) {
+          serviceId = '0';
           btn.classList.remove('is-active');
         }
       });
 
-      const entry = variantMap[colorId + '-' + sizeId];
-      const needsSize = sizeBtns.length > 0 && sizeId === '0';
+      const entry = variantMap[colorId + '-' + serviceId];
+      const needsService = serviceBtns.length > 0 && serviceId === '0';
 
       if (variantInput) variantInput.value = entry ? entry.id : '';
       const buyInput = document.getElementById('variant-id-buy');
       if (buyInput) buyInput.value = entry ? entry.id : '';
-      if (qtyInput && entry) qtyInput.max = entry.qty;
+      showPrice(entry);
 
       if (stockLine) {
-        if (needsSize) {
+        if (needsService) {
           stockLine.className = 'stock-line';
           stockLine.innerHTML = '<span class="dot"></span>' + (strings.choose || '');
-        } else if (!entry || entry.qty <= 0) {
+        } else if (!entry) {
           stockLine.className = 'stock-line stock-no';
           stockLine.innerHTML = '<span class="dot"></span>' + (strings.out || '');
-        } else if (entry.qty <= 5) {
-          stockLine.className = 'stock-line stock-low';
-          stockLine.innerHTML = '<span class="dot"></span>' + (strings.only || '') + ' ' + entry.qty + ' ' + (strings.left || '');
         } else {
           stockLine.className = 'stock-line stock-ok';
           stockLine.innerHTML = '<span class="dot"></span>' + (strings.in || '');
         }
       }
 
-      if (addBtn) addBtn.classList.toggle('is-disabled', !entry || entry.qty <= 0);
-      $$('[data-buy-btn]', pd).forEach((b) => b.classList.toggle('is-disabled', !entry || entry.qty <= 0));
+      if (addBtn) addBtn.classList.toggle('is-disabled', !entry);
+      $$('[data-buy-btn]', pd).forEach((b) => b.classList.toggle('is-disabled', !entry));
     }
 
     colorBtns.forEach((btn) => btn.addEventListener('click', () => {
@@ -181,12 +192,9 @@
       refresh();
     }));
 
-    sizeBtns.forEach((btn) => btn.addEventListener('click', () => {
+    serviceBtns.forEach((btn) => btn.addEventListener('click', () => {
       if (btn.classList.contains('is-disabled')) return;
-      sizeId = btn.dataset.size;
-      sizeBtns.forEach((b) => b.classList.toggle('is-active', b === btn));
-      const label = $('[data-size-label]', pd);
-      if (label) label.textContent = btn.dataset.name || '';
+      pickService(btn);
       refresh();
     }));
 

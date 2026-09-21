@@ -1,4 +1,7 @@
-"""Seed the store with sensible defaults: settings, countries, sizes, categories."""
+"""Seed the store with sensible defaults: settings, countries, categories.
+
+Services (they replaced clothing sizes) are not seeded — Malak writes them from the dashboard.
+"""
 
 from decimal import Decimal
 
@@ -6,7 +9,7 @@ from django.core.management.base import BaseCommand
 
 from dashboard.countries_data import COUNTRIES
 from dashboard.models import (
-    Announcement, Category, Country, HomeSection, NavLink, SiteSettings, Size,
+    Announcement, Category, Country, HomeSection, NavLink, SiteSettings,
     ensure_policy_defaults,
 )
 
@@ -15,13 +18,11 @@ CATEGORIES_AR = {
     'Shoes': 'أحذية', 'Accessories': 'إكسسوارات',
 }
 
-SIZES = ['S', 'M', 'L', 'XL', '2XL', '3XL']
-
 CATEGORIES = ['T-Shirts', 'Shirts', 'Pants', 'Jackets', 'Shoes', 'Accessories']
 
 
 class Command(BaseCommand):
-    help = 'Seed RGS TOWER with default settings, countries, sizes and categories.'
+    help = 'Seed RGS TOWER with default settings, countries and categories.'
 
     def handle(self, *args, **options):
         site = SiteSettings.load()
@@ -43,10 +44,6 @@ class Command(BaseCommand):
         ]
         Country.objects.bulk_create(new)
         self.stdout.write(self.style.SUCCESS(f'OK  {len(new)} countries added ({len(known)} already there)'))
-
-        for index, name in enumerate(SIZES):
-            Size.objects.get_or_create(name=name, defaults={'ordering': index})
-        self.stdout.write(self.style.SUCCESS(f'OK  {len(SIZES)} sizes'))
 
         for index, name in enumerate(CATEGORIES):
             Category.objects.get_or_create(

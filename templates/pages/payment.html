@@ -65,7 +65,7 @@
           <div class="thumb">{% if item.image_url %}<img src="{{ item.image_url }}" alt="">{% endif %}</div>
           <div>
             <div class="n">{{ item.product_name }}</div>
-            <div class="o">{{ item.color_name }} {% if item.size_name %}· {{ item.size_name }}{% endif %} · ×{{ item.quantity }}</div>
+            <div class="o">{{ item.color_name }} {% if item.service_name %}· {{ item.service_name }}{% endif %} · ×{{ item.quantity }}</div>
           </div>
           <div class="p">{% price item.line_total %}</div>
         </div>

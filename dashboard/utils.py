@@ -8,6 +8,7 @@ from .models import (
 )
 
 CART_KEY = 'rgs_cart'
+MAX_QTY = 99  # services have no stock — just a sane cap per line
 COUPON_KEY = 'rgs_coupon'
 ZERO = Decimal('0.00')
 
@@ -34,7 +35,7 @@ class Cart:
         key = str(variant.id)
         current = int(self.cart.get(key, 0))
         new_qty = quantity if replace else current + quantity
-        new_qty = max(1, min(int(new_qty), variant.quantity))
+        new_qty = max(1, min(int(new_qty), MAX_QTY))
         self.cart[key] = new_qty
         self.save()
         return new_qty
@@ -47,10 +48,7 @@ class Cart:
         if quantity <= 0:
             self.remove(variant_id)
             return
-        variant = ProductVariant.objects.filter(id=variant_id).first()
-        if variant:
-            quantity = min(quantity, variant.quantity)
-        self.cart[key] = max(1, quantity)
+        self.cart[key] = max(1, min(quantity, MAX_QTY))
         self.save()
 
     def remove(self, variant_id):
@@ -81,34 +79,31 @@ class Cart:
         variants = (
             ProductVariant.objects
             .filter(id__in=ids)
-            .select_related('product', 'product__category', 'color', 'size')
+            .select_related('product', 'product__category', 'color', 'service')
             .prefetch_related('product__images', 'color__images')
         )
         stale = False
         for variant in variants:
             qty = int(self.cart.get(str(variant.id), 0))
-            if qty <= 0 or not variant.product.is_active:
+            if qty <= 0 or not variant.is_available:
                 stale = True
                 self.cart.pop(str(variant.id), None)
                 continue
-            if qty > variant.quantity:
-                qty = variant.quantity
+            if qty > MAX_QTY:
+                qty = MAX_QTY
                 stale = True
-                if qty <= 0:
-                    self.cart.pop(str(variant.id), None)
-                    continue
                 self.cart[str(variant.id)] = qty
-            unit = money(variant.product.final_price)
+            unit = money(variant.unit_price)
             rows.append({
                 'variant': variant,
                 'product': variant.product,
                 'color': variant.color,
-                'size': variant.size,
+                'service': variant.service,
                 'image': variant.image,
                 'unit_price': unit,
                 'quantity': qty,
                 'line_total': money(unit * qty),
-                'max_quantity': variant.quantity,
+                'max_quantity': MAX_QTY,
             })
         found_ids = {v.id for v in variants}
         for key in list(self.cart.keys()):

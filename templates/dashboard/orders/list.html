@@ -38,7 +38,7 @@
           <div class="small muted" dir="ltr">{{ order.phone }}</div>
           <div class="small muted">{{ order.country.name|default:'' }}</div>
         </td>
-        <td class="small muted">{{ order.items_count }} قطعة</td>
+        <td class="small muted">{{ order.items_count }} عنصر</td>
         <td><b>{% price order.total %}</b></td>
         <td>
           <span class="chip chip-{% payment_color order.payment_status %}">{{ order.get_payment_status_display }}</span>

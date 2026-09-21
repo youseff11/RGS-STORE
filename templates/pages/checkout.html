@@ -118,7 +118,7 @@
               <div class="n">{{ row.product.name }}</div>
               <div class="o">
                 {% if row.color %}{{ row.color.name }}{% endif %}
-                {% if row.size %}· {{ row.size.label }}{% endif %} · ×{{ row.quantity }}
+                {% if row.service %}· {{ row.service.name }}{% endif %} · ×{{ row.quantity }}
               </div>
             </div>
             <div class="p">{% price row.line_total %}</div>

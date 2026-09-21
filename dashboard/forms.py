@@ -12,7 +12,7 @@ from django.contrib.auth.password_validation import validate_password
 
 from .models import (
     Announcement, Banner, Category, Country, Coupon, HomeSection, NavLink, Policy,
-    Product, ProductColor, Promotion, Review, STAFF_PERMISSIONS, SiteSettings, Size,
+    Product, ProductColor, Promotion, Review, STAFF_PERMISSIONS, Service, SiteSettings,
     Work, WorkCategory,
 )
 
@@ -117,11 +117,37 @@ class ColorForm(StyledForm):
         labels = {'name_ar': 'اسم اللون', 'name_en': 'اسم اللون', 'hex_code': 'الكود اللوني'}
 
 
-class SizeForm(StyledForm):
+class ServiceForm(StyledForm):
+    """A service the customer picks on a design — Malak writes them himself."""
+
+    #: only used when adding: attach the new service to every existing design
+    add_to_all = forms.BooleanField(
+        required=False, initial=True, label='ضيفها لكل الديزاينات الموجودة',
+        help_text='تقدر تشيلها بعد كده من أي ديزاين من صفحة «الخدمات» بتاعته',
+    )
+
     class Meta:
-        model = Size
-        fields = ['name', 'ordering']
-        labels = {'name': 'المقاس', 'ordering': 'الترتيب'}
+        model = Service
+        fields = ['name_ar', 'name_en', 'price', 'is_active', 'ordering']
+        labels = {
+            'name_ar': 'اسم الخدمة', 'name_en': 'اسم الخدمة',
+            'price': 'سعر إضافي', 'is_active': 'متاحة للعملاء', 'ordering': 'الترتيب',
+        }
+        help_texts = {
+            'price': 'بيتزوّد على سعر الديزاين — سيبه 0 لو الخدمة من غير زيادة',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['price'].widget.attrs.update({'min': '0', 'step': '0.01'})
+        if self.instance.pk:
+            self.fields.pop('add_to_all')
+
+    def clean_price(self):
+        price = self.cleaned_data.get('price')
+        if price is not None and price < 0:
+            raise forms.ValidationError('السعر الإضافي ما ينفعش يبقى بالسالب')
+        return price
 
 
 # ================================================================== marketing
@@ -338,7 +364,7 @@ class SiteSettingsForm(StyledForm):
             'phone', 'whatsapp', 'email', 'address_ar', 'address_en',
             'facebook_url', 'instagram_url', 'tiktok_url', 'youtube_url',
             'currency_ar', 'currency_en', 'shipping_fee', 'free_shipping_threshold',
-            'low_stock_threshold', 'orders_enabled', 'reviews_auto_publish',
+            'orders_enabled', 'reviews_auto_publish',
         ]
         widgets = {
             'about_ar': forms.Textarea(attrs={'rows': 6}),
@@ -355,7 +381,7 @@ class SiteSettingsForm(StyledForm):
             'facebook_url': 'فيسبوك', 'instagram_url': 'إنستجرام', 'tiktok_url': 'تيك توك',
             'youtube_url': 'يوتيوب', 'currency_ar': 'العملة', 'currency_en': 'العملة',
             'shipping_fee': 'سعر الشحن العام', 'free_shipping_threshold': 'شحن مجاني فوق مبلغ (عام)',
-            'low_stock_threshold': 'تنبيه المخزون القليل عند', 'orders_enabled': 'استقبال الطلبات',
+            'orders_enabled': 'استقبال الطلبات',
             'reviews_auto_publish': 'نشر تقييمات العملاء تلقائيًا من غير مراجعة',
         }
         help_texts = {

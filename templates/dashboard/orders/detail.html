@@ -18,12 +18,12 @@
   <div>
     <div class="card">
       <div class="card-head">
-        <h3>المنتجات ({{ order.items_count }} قطعة)</h3>
+        <h3>المنتجات ({{ order.items_count }} عنصر)</h3>
         <span class="chip chip-{% status_color order.status %}">{{ order.status_label_local }}</span>
       </div>
       <div class="table-wrap" style="border:0">
         <table class="t">
-          <thead><tr><th>المنتج</th><th>اللون</th><th>المقاس</th><th>السعر</th><th>الكمية</th><th>الإجمالي</th></tr></thead>
+          <thead><tr><th>المنتج</th><th>اللون</th><th>الخدمة</th><th>السعر</th><th>الكمية</th><th>الإجمالي</th></tr></thead>
           <tbody>
             {% for item in order.items.all %}
             <tr>
@@ -34,7 +34,7 @@
                 </div>
               </td>
               <td class="small">{{ item.color_name|default:'—' }}</td>
-              <td class="small">{{ item.size_name|default:'—' }}</td>
+              <td class="small">{{ item.service_name|default:'—' }}</td>
               <td class="small">{% price item.unit_price %}</td>
               <td><span class="chip chip-muted">×{{ item.quantity }}</span></td>
               <td><b>{% price item.line_total %}</b></td>

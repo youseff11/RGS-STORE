@@ -49,13 +49,16 @@
           {% if product.sku %}<span>{% t 'sku' %}: {{ product.sku }}</span>{% endif %}
         </div>
 
-        <div class="pd-price">
-          <span class="price-now">{% price product.final_price %}</span>
+        {% with start=product.price_from %}
+        <div class="pd-price" data-price-box>
+          {% if product.has_price_range %}<span class="price-from" data-price-from>{% t 'price_from' %}</span>{% endif %}
+          <span class="price-now"><span data-price-now data-initial="{{ start|money }}">{{ start|money }}</span> <span class="cur">{{ CURRENCY }}</span></span>
           {% if product.old_price %}
-            <span class="price-old">{{ product.old_price|money }}</span>
+            <span class="price-old" data-price-old data-initial="{{ product.old_price_from|money }}">{{ product.old_price_from|money }}</span>
             <span class="price-off">-{{ product.discount_percent }}%</span>
           {% endif %}
         </div>
+        {% endwith %}
 
         {% if product.short %}<p class="pd-desc">{{ product.short }}</p>{% endif %}
 
@@ -79,12 +82,15 @@
           </div>
           {% endif %}
 
-          {% if sizes %}
+          {% if services %}
           <div class="opt-group">
-            <div class="opt-label">{% t 'size' %}: <b data-size-label>—</b></div>
-            <div class="sizes-row">
-              {% for size in sizes %}
-                <button type="button" class="size-opt" data-size="{{ size.id }}" data-name="{{ size.label }}">{{ size.name }}</button>
+            <div class="opt-label">{% t 'service' %}: <b data-service-label>—</b></div>
+            <div class="services-row">
+              {% for service in services %}
+                <button type="button" class="service-opt" data-service="{{ service.id }}" data-name="{{ service.name }}">
+                  <span class="so-name">{{ service.name }}</span>
+                  <span class="so-price">{% if service.price %}+ {% price service.price %}{% else %}{% t 'no_extra' %}{% endif %}</span>
+                </button>
               {% endfor %}
             </div>
           </div>

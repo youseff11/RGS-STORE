@@ -20,7 +20,7 @@
   <tr>
     <td style="padding:8px 0;border-bottom:1px solid #F0E9E3;font-size:13px;color:#3C3430;">
       {{ item.product_name }}
-      <span style="color:#8A7D74;font-size:12px;">{% if item.color_name %}· {{ item.color_name }}{% endif %}{% if item.size_name %} · {{ item.size_name }}{% endif %} · ×{{ item.quantity }}</span>
+      <span style="color:#8A7D74;font-size:12px;">{% if item.color_name %}· {{ item.color_name }}{% endif %}{% if item.service_name %} · {{ item.service_name }}{% endif %} · ×{{ item.quantity }}</span>
     </td>
     <td style="padding:8px 0;border-bottom:1px solid #F0E9E3;font-size:13px;color:#14110F;font-weight:700;white-space:nowrap;" align="left" dir="ltr">{{ item.line_total|money }} {{ site.currency_ar }}</td>
   </tr>

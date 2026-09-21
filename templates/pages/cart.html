@@ -34,7 +34,7 @@
               <h4><a href="{% url 'product_detail' row.product.slug %}">{{ row.product.name }}</a></h4>
               <div class="opts">
                 {% if row.color %}<span>{% t 'color' %}: {{ row.color.name }}</span>{% endif %}
-                {% if row.size %}<span>{% t 'size' %}: {{ row.size.label }}</span>{% endif %}
+                {% if row.service %}<span>{% t 'service' %}: {{ row.service.name }}</span>{% endif %}
                 <span>{% price row.unit_price %}</span>
               </div>
               <div class="qty-box">

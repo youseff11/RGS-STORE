@@ -67,7 +67,8 @@ urlpatterns = [
     path('dashboard/products/<int:pk>/delete/', dv.product_delete, name='dash_product_delete'),
     path('dashboard/products/<int:pk>/toggle/', dv.product_toggle, name='dash_product_toggle'),
     path('dashboard/products/<int:pk>/media/', dv.product_media, name='dash_product_media'),
-    path('dashboard/products/<int:pk>/stock/', dv.product_stock, name='dash_product_stock'),
+    path('dashboard/products/<int:pk>/services/', dv.product_services, name='dash_product_services'),
+    path('dashboard/products/<int:pk>/stock/', dv.product_stock_redirect),  # old link
     path('dashboard/colors/<int:pk>/delete/', dv.color_delete, name='dash_color_delete'),
     path('dashboard/images/<int:pk>/delete/', dv.image_delete, name='dash_image_delete'),
     path('dashboard/images/<int:pk>/main/', dv.image_main, name='dash_image_main'),
@@ -78,9 +79,12 @@ urlpatterns = [
     path('dashboard/categories/<int:pk>/edit/', dv.category_form, name='dash_category_edit'),
     path('dashboard/categories/<int:pk>/delete/', dv.category_delete, name='dash_category_delete'),
 
-    # sizes
-    path('dashboard/sizes/', dv.size_list, name='dash_sizes'),
-    path('dashboard/sizes/<int:pk>/delete/', dv.size_delete, name='dash_size_delete'),
+    # services (they replaced the clothing sizes)
+    path('dashboard/services/', dv.service_list, name='dash_services'),
+    path('dashboard/services/<int:pk>/edit/', dv.service_list, name='dash_service_edit'),
+    path('dashboard/services/<int:pk>/toggle/', dv.service_toggle, name='dash_service_toggle'),
+    path('dashboard/services/<int:pk>/delete/', dv.service_delete, name='dash_service_delete'),
+    path('dashboard/sizes/', dv.sizes_redirect),  # old link
 
     # orders
     path('dashboard/orders/', dv.order_list, name='dash_orders'),

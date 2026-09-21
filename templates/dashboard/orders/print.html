@@ -62,13 +62,13 @@
   </div>
 
   <table>
-    <thead><tr><th>المنتج</th><th>اللون</th><th>المقاس</th><th>السعر</th><th>الكمية</th><th>الإجمالي</th></tr></thead>
+    <thead><tr><th>المنتج</th><th>اللون</th><th>الخدمة</th><th>السعر</th><th>الكمية</th><th>الإجمالي</th></tr></thead>
     <tbody>
       {% for item in order.items.all %}
       <tr>
         <td>{{ item.product_name }}</td>
         <td>{{ item.color_name|default:'—' }}</td>
-        <td>{{ item.size_name|default:'—' }}</td>
+        <td>{{ item.service_name|default:'—' }}</td>
         <td>{{ item.unit_price|money }}</td>
         <td>{{ item.quantity }}</td>
         <td>{{ item.line_total|money }}</td>

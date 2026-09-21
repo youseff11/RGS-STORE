@@ -26,7 +26,7 @@
     <option value="">كل الحالات</option>
     <option value="active" {% if status == 'active' %}selected{% endif %}>معروض</option>
     <option value="hidden" {% if status == 'hidden' %}selected{% endif %}>مخفي</option>
-    <option value="out" {% if status == 'out' %}selected{% endif %}>نفد المخزون</option>
+    <option value="no_services" {% if status == 'no_services' %}selected{% endif %}>من غير خدمات</option>
   </select>
   <button class="btn btn-sm" type="submit">بحث</button>
   <a class="btn btn-sm btn-ghost" href="{% url 'dash_products' %}">مسح</a>
@@ -36,7 +36,7 @@
 <div class="table-wrap">
   <table class="t">
     <thead>
-      <tr><th>المنتج</th><th>القسم</th><th>السعر</th><th>المخزون</th><th>الحالة</th><th></th></tr>
+      <tr><th>المنتج</th><th>القسم</th><th>السعر</th><th>الخدمات</th><th>الحالة</th><th></th></tr>
     </thead>
     <tbody>
       {% for product in page_obj %}
@@ -60,11 +60,9 @@
           {% if product.old_price %}<div class="small muted" style="text-decoration:line-through">{{ product.old_price|money }}</div>{% endif %}
         </td>
         <td>
-          {% if product.stock %}
-            <span class="chip {% if product.stock <= 5 %}chip-warn{% else %}chip-ok{% endif %}">{{ product.stock }}</span>
-          {% else %}
-            <span class="chip chip-bad">0</span>
-          {% endif %}
+          <a href="{% url 'dash_product_services' product.pk %}" class="chip {% if product.services_count %}chip-ok{% else %}chip-muted{% endif %}">
+            {% if product.services_count %}{{ product.services_count }} خدمة{% else %}من غير خدمات{% endif %}
+          </a>
         </td>
         <td>
           <a href="{% url 'dash_product_toggle' product.pk %}" class="chip {% if product.is_active %}chip-ok{% else %}chip-muted{% endif %}">
@@ -73,7 +71,7 @@
         </td>
         <td>
           <div class="row-actions">
-            <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_stock' product.pk %}" title="المخزون" aria-label="المخزون">{% include 'partials/icon.html' with name='box' %}</a>
+            <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_services' product.pk %}" title="الخدمات" aria-label="الخدمات">{% include 'partials/icon.html' with name='sparkles' %}</a>
             <a class="btn btn-sm btn-ghost" href="{% url 'dash_product_media' product.pk %}" title="الألوان والصور" aria-label="الألوان والصور">{% include 'partials/icon.html' with name='palette' %}</a>
             <a class="btn btn-sm btn-soft" href="{% url 'dash_product_edit' product.pk %}">تعديل</a>
             <form method="post" action="{% url 'dash_product_delete' product.pk %}" data-confirm="حذف «{{ product.name }}» نهائيًا؟" style="display:inline">

@@ -1,0 +1,71 @@
+{% extends 'base/dashboard_base.html' %}
+{% load store_tags %}
+{% block page_name %}الخدمات{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2>الخدمات</h2>
+    <p>اكتب الخدمات اللي العميل بيختار منها على كل ديزاين — ولكل خدمة سعر إضافي لو حابب</p>
+  </div>
+</div>
+
+<div class="split">
+  <div class="card">
+    <div class="card-head"><h3>الخدمات ({{ services|length }})</h3></div>
+    {% if services %}
+    <div class="table-wrap" style="border:0">
+      <table class="t svc-table">
+        <thead><tr><th>الخدمة</th><th>سعر إضافي</th><th>الديزاينات</th><th>الحالة</th><th></th></tr></thead>
+        <tbody>
+          {% for service in services %}
+          <tr {% if object and object.pk == service.pk %}class="is-editing"{% endif %}>
+            <td>
+              <b>{{ service.name_ar }}</b>
+              {% if service.name_en %}<div class="small muted" dir="ltr">{{ service.name_en }}</div>{% endif %}
+            </td>
+            <td class="small">{% if service.price %}+ {% price service.price %}{% else %}<span class="muted">—</span>{% endif %}</td>
+            <td class="small muted">{{ service.designs }} / {{ products_total }}</td>
+            <td>
+              <form method="post" action="{% url 'dash_service_toggle' service.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="chip {% if service.is_active %}chip-ok{% else %}chip-muted{% endif %}" style="border:0;cursor:pointer">
+                  {% if service.is_active %}متاحة{% else %}موقوفة{% endif %}
+                </button>
+              </form>
+            </td>
+            <td>
+              <div class="row-actions">
+                <a class="btn btn-sm btn-soft" href="{% url 'dash_service_edit' service.pk %}">تعديل</a>
+                <form method="post" action="{% url 'dash_service_delete' service.pk %}" data-confirm="حذف الخدمة «{{ service.name_ar }}»؟ هتتشال من كل الديزاينات (الطلبات القديمة بتفضل زي ما هي).">
+                  {% csrf_token %}<button class="btn btn-sm btn-danger" type="submit">حذف</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="help" style="margin-top:10px">«موقوفة» = مش بتظهر للعملاء، بس بتفضل محفوظة على الديزاينات لحد ما ترجّعها.</div>
+    {% else %}
+      <div class="empty">
+        <div class="ico ico-badge">{% include 'partials/icon.html' with name='sparkles' %}</div>
+        لسه مفيش خدمات — اكتب أول خدمة من الفورم
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>{% if object %}تعديل «{{ object.name_ar }}»{% else %}إضافة خدمة{% endif %}</h3>
+      {% if object %}<a class="btn btn-sm btn-ghost" href="{% url 'dash_services' %}">إلغاء</a>{% endif %}
+    </div>
+    <form method="post" action="{% if object %}{% url 'dash_service_edit' object.pk %}{% else %}{% url 'dash_services' %}{% endif %}">
+      {% csrf_token %}
+      {% include 'dashboard/_form_fields.html' %}
+      <button class="btn btn-block" type="submit">{% if object %}حفظ{% else %}إضافة{% endif %}</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

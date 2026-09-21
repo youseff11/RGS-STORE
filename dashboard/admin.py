@@ -5,7 +5,7 @@ from django.contrib import admin
 from .models import (
     Announcement, Banner, Category, ContactMessage, Coupon, Country, CustomerProfile,
     HomeSection, NavLink, Order, OrderItem, Policy, Product, ProductColor, ProductImage,
-    ProductVariant, Promotion, Review, SiteSettings, Size, StaffProfile, Work, WorkCategory,
+    ProductVariant, Promotion, Review, Service, SiteSettings, StaffProfile, Work, WorkCategory,
     WorkMedia,
 )
 
@@ -27,7 +27,7 @@ class ProductVariantInline(admin.TabularInline):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name_ar', 'category', 'price', 'total_stock', 'is_active', 'is_featured')
+    list_display = ('name_ar', 'category', 'price', 'is_active', 'is_featured')
     list_filter = ('is_active', 'is_featured', 'is_new', 'category')
     search_fields = ('name_ar', 'name_en', 'sku')
     inlines = [ProductColorInline, ProductImageInline, ProductVariantInline]
@@ -89,9 +89,15 @@ class CustomerProfileAdmin(admin.ModelAdmin):
 
 
 admin.site.register([
-    Announcement, Banner, Size, SiteSettings, ContactMessage,
+    Announcement, Banner, SiteSettings, ContactMessage,
     WorkCategory, HomeSection, NavLink, Policy, StaffProfile,
 ])
+
+@admin.register(Service)
+class ServiceAdmin(admin.ModelAdmin):
+    list_display = ('name_ar', 'name_en', 'price', 'is_active', 'ordering')
+    list_editable = ('price', 'is_active', 'ordering')
+
 
 @admin.register(Country)
 class CountryAdmin(admin.ModelAdmin):

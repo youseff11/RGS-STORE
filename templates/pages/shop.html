@@ -37,13 +37,13 @@
         </div>
         {% endif %}
 
-        {% if sizes %}
+        {% if services %}
         <div class="filter-block">
-          <h4>{% t 'sizes' %}</h4>
-          <div class="size-chips">
-            {% for size in sizes %}
-              <a class="size-chip {% if active.size == size.id|stringformat:'s' %}is-active{% endif %}"
-                 href="{% if active.size == size.id|stringformat:'s' %}{% qs size=None %}{% else %}{% qs size=size.id %}{% endif %}">{{ size.name }}</a>
+          <h4>{% t 'services' %}</h4>
+          <div class="service-chips">
+            {% for service in services %}
+              <a class="service-chip {% if active.service == service.id|stringformat:'s' %}is-active{% endif %}"
+                 href="{% if active.service == service.id|stringformat:'s' %}{% qs service=None %}{% else %}{% qs service=service.id %}{% endif %}">{{ service.name }}</a>
             {% endfor %}
           </div>
         </div>

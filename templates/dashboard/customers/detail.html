@@ -31,7 +31,7 @@
           <tbody>
           {% for order in orders %}
             <tr>
-              <td><b>{{ order.order_number }}</b><div class="small muted">{{ order.items_count }} قطعة</div></td>
+              <td><b>{{ order.order_number }}</b><div class="small muted">{{ order.items_count }} عنصر</div></td>
               <td><b>{% price order.total %}</b></td>
               <td><span class="chip chip-{% payment_color order.payment_status %}">{{ order.get_payment_status_display }}</span><div class="small muted">{% if order.payment_method == 'paypal' %}PayPal{% else %}عند الاستلام{% endif %}</div></td>
               <td><span class="chip chip-{% status_color order.status %}">{{ order.status_label_local }}</span></td>
