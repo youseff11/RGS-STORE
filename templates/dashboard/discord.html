@@ -1,0 +1,103 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}الدخول بديسكورد{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2>الدخول بحساب ديسكورد</h2>
+    <p>خلّي العميل يعمل حساب ويسجّل دخول بضغطة واحدة من حساب ديسكورد بتاعه</p>
+  </div>
+  <div class="flex">
+    <span class="mail-state {% if site.discord_ready %}is-on{% endif %}">
+      <span class="dot"></span>{% if site.discord_ready %}شغال{% else %}متوقف{% endif %}
+    </span>
+  </div>
+</div>
+
+<div class="split">
+  <form method="post" autocomplete="off">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="alert">{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div>{% endif %}
+
+    <div class="card">
+      <div class="card-head"><h3>{% include 'partials/icon.html' with name='chat' %} تشغيل الخدمة</h3></div>
+      <div class="switch">{{ form.discord_login_enabled }}<label for="{{ form.discord_login_enabled.id_for_label }}">{{ form.discord_login_enabled.label }}</label></div>
+      <div class="help" style="margin:-4px 0 0">لما تشغّلها بيظهر زرار «الدخول بحساب ديسكورد» في صفحتي التسجيل وتسجيل الدخول (تحت زرار جوجل لو شغال).</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>{% include 'partials/icon.html' with name='lock' %} مفاتيح Discord</h3></div>
+      <div class="field">
+        <label for="{{ form.discord_client_id.id_for_label }}">{{ form.discord_client_id.label }}</label>
+        {{ form.discord_client_id }}
+        <div class="help">{{ form.discord_client_id.help_text }}</div>
+        {% for e in form.discord_client_id.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.discord_client_secret.id_for_label }}">{{ form.discord_client_secret.label }}</label>
+        {{ form.discord_client_secret }}
+        <div class="help">{{ form.discord_client_secret.help_text }}</div>
+        {% for e in form.discord_client_secret.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}
+      </div>
+      <button class="btn" type="submit" style="margin-top:6px">حفظ الإعدادات</button>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>{% include 'partials/icon.html' with name='link' %} اللينك اللي ديسكورد هيطلبه</h3></div>
+      <p class="small muted" style="margin-top:0">الصقه في OAuth2 ← Redirects زي ما هو بالظبط — أي حرف زيادة أو ناقص وديسكورد هيرفض.</p>
+
+      <div class="field">
+        <label for="d-redirect">Redirect</label>
+        <div class="copy-row">
+          <input class="inp" id="d-redirect" type="text" dir="ltr" value="{{ redirect_uri }}" readonly>
+          <button class="btn btn-soft btn-sm" type="button" data-copy="#d-redirect">نسخ</button>
+        </div>
+        <div class="help">ده اللينك اللي ديسكورد بيرجّع العميل عليه بعد ما يوافق.</div>
+      </div>
+
+      <p class="small muted" style="margin-bottom:0">
+        اللينك ده متولّد من اللينك اللي انت فيه دلوقتي. لما ترفع الموقع على الدومين بتاعه،
+        افتح الصفحة دي من الدومين (أو اكتب لينك المتجر في «الإشعارات والإيميل») وضيف النسخة الجديدة
+        في ديسكورد كمان — ديسكورد بيقبل أكتر من Redirect، فالمحلي والدومين يشتغلوا مع بعض.
+      </p>
+    </div>
+  </form>
+
+  <div>
+    <div class="card">
+      <div class="card-head"><h3>خطوة بخطوة</h3></div>
+      <ol class="mail-steps">
+        <li><span>افتح <b dir="ltr">discord.com/developers/applications</b> بحساب ديسكورد بتاعك واضغط <b dir="ltr">New Application</b>، وسمّيه باسم المتجر.</span></li>
+        <li><span>من القايمة اللي على الجنب ادخل <b dir="ltr">OAuth2</b>.</span></li>
+        <li><span>من <b dir="ltr">Client information</b> انسخ الـ <b dir="ltr">Client ID</b>، واضغط <b dir="ltr">Reset Secret</b> وانسخ الـ <b dir="ltr">Client Secret</b>.</span></li>
+        <li><span>في <b dir="ltr">Redirects</b> اضغط <b dir="ltr">Add Redirect</b> والصق اللينك اللي جنبك، وبعدين <b dir="ltr">Save Changes</b>.</span></li>
+        <li><span>حط الـ Client ID والـ Client secret هنا واحفظ، وشغّل السويتش.</span></li>
+      </ol>
+      <p class="small muted" style="margin:10px 0 0">مش محتاج Bot ولا تختار صلاحيات — المتجر بيطلب <b dir="ltr">identify · email</b> لوحده.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>إزاي بيشتغل</h3></div>
+      <ol class="small" style="line-height:2;margin:0;padding-inline-start:18px;color:var(--text-2)">
+        <li>العميل يضغط الزرار ← يوافق على شاشة ديسكورد ← يرجع للمتجر مسجّل دخول.</li>
+        <li>الاسم والإيميل بيتسجلوا في «العملاء» أوتوماتيك، والموبايل والعنوان بيتطلبوا منه وقت الطلب.</li>
+        <li>لو الإيميل ده كان عامل حساب قبل كده (بكلمة مرور أو بجوجل)، الحسابات بتتربط — مفيش حساب مكرر.</li>
+        <li>لازم يكون إيميل ديسكورد متأكَّد منه (Verified)، غير كده بنطلب منه يأكّده أو يسجّل بالإيميل — علشان محدش يدخل على حساب حد تاني بإيميله.</li>
+        <li>حساب ديسكورد مالوش كلمة مرور عندنا؛ العميل يقدر يضيف واحدة من «حسابي ← كلمة المرور» لو حب.</li>
+      </ol>
+      <p class="small muted" style="margin:12px 0 0">
+        عملاء داخلين بديسكورد دلوقتي: <b>{{ discord_users }}</b>
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>لو الزرار مش ظاهر أو الدخول بيفشل</h3></div>
+      <ul class="small muted" style="line-height:2;margin:0;padding-inline-start:18px">
+        <li>السويتش لازم يكون مفتوح والـ Client ID والـ secret الاتنين محفوظين.</li>
+        <li>رسالة <b dir="ltr">Invalid OAuth2 redirect_uri</b> من ديسكورد معناها إن اللينك المسجّل عنده مش مطابق للي جنبك.</li>
+        <li>لو عملت <b dir="ltr">Reset Secret</b> تاني، الـ secret القديم بيبطل — الصق الجديد هنا.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

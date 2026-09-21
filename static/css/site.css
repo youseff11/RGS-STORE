@@ -1464,6 +1464,11 @@ html[dir="rtl"] .gal-item .work-play { transform: translate(50%, -50%); }
 .btn-google { --btn-bg: #FFFFFF; --btn-fg: #1F1F1F; --btn-bd: #FFFFFF; gap: 11px; }
 .btn-google:hover { --btn-bg: #EDE7E1; --btn-bd: #EDE7E1; }
 .btn-google .g-logo { width: 18px; height: 18px; flex: none; }
+/* «الدخول بحساب ديسكورد» — لون ديسكورد (blurple) */
+.btn-discord { --btn-bg: #5865F2; --btn-fg: #FFFFFF; --btn-bd: #5865F2; gap: 10px; }
+.btn-discord:hover { --btn-bg: #4752C4; --btn-bd: #4752C4; }
+.btn-discord svg { width: 20px; height: 20px; flex: none; }
+.social-buttons { display: flex; flex-direction: column; gap: 10px; }
 .auth-or {
   display: flex; align-items: center; gap: 12px;
   margin: 18px 0; color: var(--muted); font-size: 12.5px;

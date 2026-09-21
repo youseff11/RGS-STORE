@@ -8,7 +8,7 @@
     <h1>{% t 'register_title' %}</h1>
     <p class="auth-sub">{% t 'register_sub' %}</p>
 
-    {% include 'partials/google_button.html' %}
+    {% include 'partials/social_buttons.html' %}
 
     <form method="post" novalidate>
       {% csrf_token %}

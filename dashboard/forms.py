@@ -352,6 +352,59 @@ class GoogleLoginForm(StyledForm):
         return data
 
 
+class DiscordLoginForm(StyledForm):
+    """«الدخول بديسكورد» — مفاتيح OAuth2 من Discord Developer Portal."""
+
+    discord_client_secret = forms.CharField(
+        label='Client secret', required=False,
+        widget=forms.PasswordInput(render_value=False, attrs={'autocomplete': 'new-password', 'dir': 'ltr'}),
+        help_text='سيبه فاضي علشان يفضل المحفوظ زي ما هو',
+    )
+
+    class Meta:
+        model = SiteSettings
+        fields = ['discord_login_enabled', 'discord_client_id', 'discord_client_secret']
+        labels = {
+            'discord_login_enabled': 'تفعيل الدخول بحساب ديسكورد',
+            'discord_client_id': 'Client ID',
+        }
+        help_texts = {
+            'discord_client_id': 'رقم طويل من OAuth2 ← Client information (هو نفسه الـ Application ID)',
+        }
+        widgets = {
+            'discord_client_id': forms.TextInput(attrs={
+                'dir': 'ltr', 'autocomplete': 'off', 'inputmode': 'numeric',
+                'placeholder': '123456789012345678',
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.discord_client_secret:
+            self.fields['discord_client_secret'].widget.attrs['placeholder'] = '•••••••• (محفوظ)'
+
+    def clean_discord_client_id(self):
+        value = (self.cleaned_data.get('discord_client_id') or '').strip()
+        if value and not value.isdigit():
+            raise forms.ValidationError('الـ Client ID بتاع ديسكورد أرقام بس — انسخه من صفحة OAuth2')
+        return value
+
+    def clean_discord_client_secret(self):
+        """Blank means «keep the saved one» — the field never shows it back."""
+        value = (self.cleaned_data.get('discord_client_secret') or '').strip()
+        return value or self.instance.discord_client_secret
+
+    def clean(self):
+        data = super().clean()
+        if data.get('discord_login_enabled') and not (
+            data.get('discord_client_id') and data.get('discord_client_secret')
+        ):
+            raise forms.ValidationError(
+                'علشان تشغّل الدخول بديسكورد لازم تحط الـ Client ID والـ Client secret الأول'
+            )
+        return data
+
+
 # =================================================================== settings
 class SiteSettingsForm(StyledForm):
     REQUIRED = ('brand_name_ar',)

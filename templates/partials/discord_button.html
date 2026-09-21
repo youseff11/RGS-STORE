@@ -1,0 +1,12 @@
+{% load store_tags %}
+{% comment %}
+«الدخول بحساب ديسكورد» — بيظهر بس لما الأدمن يشغّله من «الدخول بديسكورد» في الداشبورد
+ويحط الـ Client ID والـ Secret. (بيتضاف من partials/social_buttons.html)
+{% endcomment %}
+{% if SITE.discord_ready %}
+<a class="btn btn-lg btn-block btn-discord"
+   href="{% url 'discord_login' %}{% if next %}?next={{ next|urlencode }}{% endif %}">
+  {% include 'partials/icon.html' with name='chat' %}
+  <span>{% t 'continue_with_discord' %}</span>
+</a>
+{% endif %}

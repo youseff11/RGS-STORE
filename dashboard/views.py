@@ -18,7 +18,7 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
-from . import google_oauth, mailer, paypal
+from . import discord_oauth, google_oauth, mailer, paypal
 from .i18n import pick, t
 from .middleware import COOKIE as LANG_COOKIE, COOKIE_AGE as LANG_COOKIE_AGE
 from .i18n import LANGS
@@ -467,9 +467,9 @@ def account_login(request):
             return redirect(_safe_next(request, 'account'))
         if user is not None and not user.is_active and user.check_password(password):
             error = t('account_disabled')
-        elif user is not None and not user.has_usable_password() and _has_google(user):
-            # signed up with the Google button — there is no password to type
-            error = t('use_google_login')
+        elif user is not None and not user.has_usable_password() and _social_providers(user):
+            # signed up with the Google / Discord button — there is no password to type
+            error = t(_social_login_hint(user))
         else:
             error = t('login_failed')
     return render(request, 'pages/account/login.html', {
@@ -536,13 +536,43 @@ def account_logout(request):
     return redirect('home')
 
 
-# ------------------------------------------------------- sign in with Google
+# ------------------------------------------- sign in with Google / Discord
 GOOGLE_SESSION_KEY = 'google_oauth'
+DISCORD_SESSION_KEY = 'discord_oauth'
+
+#: provider → (CustomerProfile id field, CustomerProfile picture field)
+SOCIAL_FIELDS = {
+    'google': ('google_id', 'google_picture'),
+    'discord': ('discord_id', 'discord_avatar'),
+}
+
+
+def _social_providers(user):
+    profile = getattr(user, 'customer', None)
+    return profile.social_providers if profile else []
 
 
 def _has_google(user):
-    profile = getattr(user, 'customer', None)
-    return bool(profile and profile.google_id)
+    return 'google' in _social_providers(user)
+
+
+def _password_hint(user):
+    """«حسابي ← كلمة المرور» for an account that has no password yet."""
+    providers = _social_providers(user)
+    if providers == ['discord']:
+        return 'set_password_hint_discord'
+    if len(providers) > 1:
+        return 'set_password_hint_social'
+    return 'set_password_hint'
+
+
+def _social_login_hint(user):
+    providers = _social_providers(user)
+    if providers == ['google']:
+        return 'use_google_login'
+    if providers == ['discord']:
+        return 'use_discord_login'
+    return 'use_social_login'
 
 
 def _free_username(email):
@@ -557,14 +587,16 @@ def _free_username(email):
     return username
 
 
-def _google_account(info):
-    """The shopper behind a verified Google profile — found, linked or created.
+def _social_account(provider, info):
+    """The shopper behind a verified Google / Discord profile — found, linked or created.
 
-    Google has already proven the email belongs to whoever is signing in, so an
-    account registered earlier with the same email is linked instead of
-    duplicated; `sub` is stored because it survives a Gmail rename.
+    The provider has already proven the email belongs to whoever is signing in,
+    so an account registered earlier with the same email is linked instead of
+    duplicated; the provider's user id is stored because it survives an email
+    change. (Discord emails are only used here when Discord marks them verified.)
     """
-    profile = CustomerProfile.objects.select_related('user').filter(google_id=info['sub']).first()
+    id_field, picture_field = SOCIAL_FIELDS[provider]
+    profile = CustomerProfile.objects.select_related('user').filter(**{id_field: info['sub']}).first()
     created = False
 
     if profile is not None:
@@ -578,7 +610,7 @@ def _google_account(info):
             first = info['given_name'] or info['name'].partition(' ')[0]
             last = info['family_name'] or info['name'].partition(' ')[2]
             with transaction.atomic():
-                # no password at all — the Google button is the way in, and
+                # no password at all — the social button is the way in, and
                 # «حسابي ← كلمة المرور» can add one later
                 user = User.objects.create_user(
                     username=_free_username(info['email']), email=info['email'],
@@ -588,13 +620,13 @@ def _google_account(info):
         else:
             profile = CustomerProfile.for_user(user)
 
-    profile.google_id = info['sub']
+    setattr(profile, id_field, info['sub'])
     if info['picture']:
-        profile.google_picture = info['picture']
-    profile.save(update_fields=['google_id', 'google_picture', 'updated_at'])
+        setattr(profile, picture_field, info['picture'])
+    profile.save(update_fields=[id_field, picture_field, 'updated_at'])
 
     fields = []
-    if not user.email:
+    if not user.email and info['email'] and info.get('verified', True):
         user.email = info['email']
         fields.append('email')
     if not user.first_name and (info['given_name'] or info['name']):
@@ -603,6 +635,27 @@ def _google_account(info):
     if fields:
         user.save(update_fields=fields)
     return user, created
+
+
+def _google_account(info):
+    return _social_account('google', info)
+
+
+def _discord_account(info):
+    return _social_account('discord', info)
+
+
+def _social_signed_in(request, user, created, target):
+    """Shared ending of both callbacks: log in (unless the account is switched off)."""
+    if not user.is_active:
+        messages.error(request, t('account_disabled'))
+        return redirect('account_login')
+    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+    if created:
+        messages.success(request, t('account_created'))
+    else:
+        messages.success(request, t('welcome_user', name=user.first_name or user.get_username()))
+    return redirect(target)
 
 
 def google_login(request):
@@ -656,16 +709,62 @@ def google_callback(request):
         return redirect(back)
 
     user, created = _google_account(info)
-    if not user.is_active:
-        messages.error(request, t('account_disabled'))
+    return _social_signed_in(request, user, created, target)
+
+
+def discord_login(request):
+    """Step 1 — hand the customer over to Discord's approval screen."""
+    site = SiteSettings.load()
+    target = _safe_next(request, 'account')
+    if request.user.is_authenticated:
+        return redirect(target)
+    if not site.discord_ready:
+        messages.error(request, t('discord_unavailable'))
         return redirect('account_login')
 
-    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-    if created:
-        messages.success(request, t('account_created'))
-    else:
-        messages.success(request, t('welcome_user', name=user.first_name or user.get_username()))
-    return redirect(target)
+    state = discord_oauth.random_token()
+    request.session[DISCORD_SESSION_KEY] = {'state': state, 'next': target}
+    return redirect(discord_oauth.auth_url(site, discord_oauth.redirect_uri(request, site), state))
+
+
+def discord_callback(request):
+    """Step 2 — Discord sends the customer back with a one-time code."""
+    site = SiteSettings.load()
+    saved = request.session.pop(DISCORD_SESSION_KEY, None) or {}
+    target = saved.get('next') or reverse('account')
+    back = f"{reverse('account_login')}?next={quote(target)}"
+
+    if request.user.is_authenticated:
+        return redirect(target)
+    if not site.discord_ready:
+        messages.error(request, t('discord_unavailable'))
+        return redirect('account_login')
+
+    if request.GET.get('error'):
+        # «Cancel» on Discord's screen
+        messages.info(request, t('discord_cancelled'))
+        return redirect(back)
+
+    code = request.GET.get('code') or ''
+    state = request.GET.get('state') or ''
+    if not code or not state or not saved.get('state') or state != saved['state']:
+        messages.error(request, t('discord_failed'))
+        return redirect(back)
+
+    try:
+        info = discord_oauth.fetch_profile(site, code, discord_oauth.redirect_uri(request, site))
+    except discord_oauth.DiscordError:
+        messages.error(request, t('discord_failed'))
+        return redirect(back)
+
+    known = CustomerProfile.objects.filter(discord_id=info['sub']).exists()
+    if not known and not (info['email'] and info['verified']):
+        # a new Discord account needs a verified email to become a store account
+        messages.error(request, t('discord_no_email'))
+        return redirect(back)
+
+    user, created = _discord_account(info)
+    return _social_signed_in(request, user, created, target)
 
 
 def _public_name(user, fallback=''):
@@ -741,6 +840,7 @@ def account(request):
         'tab': tab,
         'errors': errors,
         'has_password': user.has_usable_password(),
+        'password_hint': _password_hint(user),
         'countries': shipping_countries(include=profile.country),
         'can_review': reviewable_orders(user).exists(),
         'page_title': t('account'),

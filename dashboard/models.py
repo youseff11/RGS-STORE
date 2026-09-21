@@ -92,6 +92,17 @@ class SiteSettings(models.Model):
         help_text='الـ Client secret من نفس الشاشة — بيتحفظ عندنا ومش بيظهر تاني',
     )
 
+    # ---- Discord sign-in (OAuth 2.0) ----
+    discord_login_enabled = models.BooleanField(default=False)
+    discord_client_id = models.CharField(
+        max_length=64, blank=True, default='',
+        help_text='من Discord Developer Portal ← OAuth2 — رقم طويل',
+    )
+    discord_client_secret = models.CharField(
+        max_length=255, blank=True, default='',
+        help_text='الـ Client secret من نفس الشاشة — بيتحفظ عندنا ومش بيظهر تاني',
+    )
+
     # reviews + sharing
     reviews_auto_publish = models.BooleanField(default=False)
     share_image = models.ImageField(upload_to='site/', blank=True, null=True)
@@ -186,6 +197,18 @@ class SiteSettings(models.Model):
         return bool(
             self.google_login_enabled and self.google_client_id and self.google_client_secret
         )
+
+    # -- sign in with Discord
+    @property
+    def discord_ready(self):
+        """The «Continue with Discord» button only shows with both keys saved."""
+        return bool(
+            self.discord_login_enabled and self.discord_client_id and self.discord_client_secret
+        )
+
+    @property
+    def social_login_ready(self):
+        return self.google_ready or self.discord_ready
 
     # -- payments
     @property
@@ -1005,6 +1028,9 @@ class CustomerProfile(models.Model):
     # Gmail address, so it — not the email — is what identifies the account.
     google_id = models.CharField(max_length=64, blank=True, default='', db_index=True)
     google_picture = models.URLField(max_length=500, blank=True, default='')
+    # Discord sign-in: the numeric user id, for the same reason
+    discord_id = models.CharField(max_length=32, blank=True, default='', db_index=True)
+    discord_avatar = models.URLField(max_length=500, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -1021,6 +1047,20 @@ class CustomerProfile(models.Model):
     @property
     def uses_google(self):
         return bool(self.google_id)
+
+    @property
+    def uses_discord(self):
+        return bool(self.discord_id)
+
+    @property
+    def social_providers(self):
+        """Names of the social accounts this customer signs in with (for messages)."""
+        names = []
+        if self.google_id:
+            names.append('google')
+        if self.discord_id:
+            names.append('discord')
+        return names
 
     @classmethod
     def for_user(cls, user):

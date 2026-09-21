@@ -1,0 +1,9 @@
+{% load store_tags %}
+{# زراير الدخول بجوجل / ديسكورد فوق فورم الدخول والتسجيل — كل زرار بيظهر لما يتشغّل من الداشبورد #}
+{% if SITE.social_login_ready %}
+<div class="social-buttons">
+  {% include 'partials/google_button.html' %}
+  {% include 'partials/discord_button.html' %}
+</div>
+<div class="auth-or"><span>{% t 'or_divider' %}</span></div>
+{% endif %}

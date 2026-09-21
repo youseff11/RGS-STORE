@@ -19,11 +19,11 @@ from django.views.decorators.http import require_POST
 
 from .forms import (
     AnnouncementForm, BannerForm, CategoryForm, ColorForm, CouponForm,
-    CountryForm, GoogleLoginForm, HomeSectionForm, NavLinkForm, NotificationSettingsForm,
+    CountryForm, DiscordLoginForm, GoogleLoginForm, HomeSectionForm, NavLinkForm, NotificationSettingsForm,
     PaymentSettingsForm, PolicyForm, ProductForm, PromotionForm, ReviewForm, SiteSettingsForm,
     ServiceForm, StaffForm, WorkCategoryForm, WorkForm,
 )
-from . import google_oauth, mailer
+from . import discord_oauth, google_oauth, mailer
 from .models import (
     Announcement, Banner, Category, ContactMessage, Country, Coupon, CustomerProfile,
     HomeSection, NavLink, Order, OrderItem, Policy, Product, ProductColor, ProductImage,
@@ -959,6 +959,24 @@ def google_settings(request):
         'origin': origin,
         'google_users': CustomerProfile.objects.exclude(google_id='').count(),
         'active_page': 'google', **_pending_counts(),
+    })
+
+
+@perm_required('settings')
+def discord_settings(request):
+    """«الدخول بديسكورد» — المفاتيح + لينك الـ Redirect اللي ديسكورد محتاجه."""
+    site = SiteSettings.load()
+    form = DiscordLoginForm(request.POST or None, instance=site)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'تم حفظ إعدادات الدخول بديسكورد')
+        return redirect('dash_discord')
+
+    return render(request, 'dashboard/discord.html', {
+        'form': form, 'site': site,
+        'redirect_uri': discord_oauth.redirect_uri(request, site),
+        'discord_users': CustomerProfile.objects.exclude(discord_id='').count(),
+        'active_page': 'discord', **_pending_counts(),
     })
 
 

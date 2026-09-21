@@ -114,6 +114,9 @@
   <a class="sb-link {% if active_page == 'google' %}is-active{% endif %}" href="{% url 'dash_google' %}">
     {% include 'partials/icon.html' with name='user' %} الدخول بجوجل
   </a>
+  <a class="sb-link {% if active_page == 'discord' %}is-active{% endif %}" href="{% url 'dash_discord' %}">
+    {% include 'partials/icon.html' with name='chat' %} الدخول بديسكورد
+  </a>
   <a class="sb-link {% if active_page == 'settings' %}is-active{% endif %}" href="{% url 'dash_settings' %}">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5V21a2 2 0 11-4 0v-.1A1.6 1.6 0 008 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.6 1.6 0 00.3-1.8 1.6 1.6 0 00-1.5-1H2a2 2 0 110-4h.1A1.6 1.6 0 003.6 8a1.6 1.6 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 008 3.7 1.6 1.6 0 009 2.2V2a2 2 0 114 0v.1A1.6 1.6 0 0016 3.6a1.6 1.6 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 00-.3 1.8V8a1.6 1.6 0 001.5 1H22a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg>
     إعدادات المتجر

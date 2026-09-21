@@ -76,7 +76,7 @@
             {% if errors.current_password %}<div class="err">{{ errors.current_password }}</div>{% endif %}
           </div>
           {% else %}
-          <p class="help" style="margin-top:-6px">{% t 'set_password_hint' %}</p>
+          <p class="help" style="margin-top:-6px">{% t password_hint %}</p>
           {% endif %}
           <div class="field {% if errors.new_password %}has-error{% endif %}">
             <label>{% t 'new_password' %}</label>
