@@ -621,7 +621,7 @@ class HomeSectionForm(StyledForm):
                 self.fields.pop(name, None)
             for name in ('eyebrow_en', 'title_en', 'subtitle_en', 'button_text_en'):
                 self.fields[name].help_text = ''
-            self.fields['title_en'].help_text = 'سطرين: السطر التاني (بعد Enter) بيظهر ملوّن — مثال: WEAR YOUR ↵ CONFIDENCE'
+            self.fields['title_en'].help_text = 'سطرين: السطر التاني (بعد Enter) بيظهر ملوّن — مثال: DESIGN YOUR ↵ IDENTITY'
 
 
 class NavLinkForm(StyledForm):

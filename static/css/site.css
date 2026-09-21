@@ -309,7 +309,9 @@ html[dir="rtl"] .drawer-panel { transform: translateX(102%); }
 
 .hero-title { margin: 0 0 18px; line-height: .96; }
 .hero-title .line-1 {
-  display: block;
+  /* one line like the coloured line under it — «DESIGN YOUR» is a bit wider than the old
+     «WEAR YOUR», so it's allowed past the 560px copy box instead of breaking in two */
+  display: block; width: max-content; max-width: 92vw;
   font-family: 'Archivo Black', 'Jost', sans-serif;
   font-size: clamp(38px, 5.6vw, 74px);
   letter-spacing: -.005em;

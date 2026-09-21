@@ -1549,10 +1549,10 @@ HOME_SECTIONS = [
 
 # key: (eyebrow ar/en, title ar/en, subtitle ar/en, button ar/en, link, limit)
 HOME_SECTION_DEFAULTS = {
-    'hero': ('موسم جديد', 'NEW SEASON', 'البس\nثقتك', 'WEAR YOUR\nCONFIDENCE',
-             'خامات ممتازة. ستايلات مودرن. معمولة عشانك.',
-             'Premium quality. Modern styles. Made for you.',
-             'تسوّق الآن', 'SHOP NOW', '/shop/', 0),
+    'hero': ('استوديو جرافيك', 'CREATIVE STUDIO', 'صمّم\nهويتك', 'DESIGN YOUR\nIDENTITY',
+             'لوجوهات وسوشيال ميديا وتصميمات طباعة — بألوانك وعلى ذوقك.',
+             'Logos, social media & print — designed in your colors.',
+             'اكتشف التصميمات', 'EXPLORE DESIGNS', '/shop/', 0),
     'banners': ('', '', '', '', '', '', '', '', '', 0),
     'features': ('', '', '', '', '', '', '', '', '', 4),
     'categories': ('الأقسام', 'Categories', 'تصفح الأقسام', 'Browse categories',
