@@ -83,6 +83,14 @@
             <label class="perm-item">{{ choice.tag }}<span>{{ choice.choice_label }}</span></label>
           {% endfor %}
         </div>
+        <div class="auto-counts" data-auto-counts>
+          <div class="help" style="margin-bottom:6px">مع «أرقام تلقائية»: سيب الخانة فاضية علشان يظهر الرقم الحقيقي، أو اكتب الرقم اللي عايزه.</div>
+          <div class="grid g3">
+            <div class="field"><label>{{ p.customers_override.label }}</label>{{ p.customers_override }}<div class="help">الحقيقي: {{ real_counts.customers }}</div>{% for e in p.customers_override.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+            <div class="field"><label>{{ p.products_override.label }}</label>{{ p.products_override }}<div class="help">الحقيقي: {{ real_counts.products }}</div>{% for e in p.products_override.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+            <div class="field"><label>{{ p.works_override.label }}</label>{{ p.works_override }}<div class="help">الحقيقي: {{ real_counts.works }}</div>{% for e in p.works_override.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+          </div>
+        </div>
         <div class="switch">{{ p.stats_on_home }}<label for="{{ p.stats_on_home.id_for_label }}">{{ p.stats_on_home.label }}</label></div>
         <div class="switch">{{ p.stats_on_page }}<label for="{{ p.stats_on_page.id_for_label }}">{{ p.stats_on_page.label }}</label></div>
         {% if page.stats_mode == 'custom' %}<a class="small" href="#stats" style="color:var(--accent-text)">اكتب أرقامك من تحت ↓</a>{% endif %}
@@ -148,4 +156,17 @@
   </div>
 </div>
 {% endwith %}
+<script>
+(function () {
+  var box = document.querySelector('[data-auto-counts]');
+  var radios = document.querySelectorAll('input[name="page-stats_mode"]');
+  if (!box || !radios.length) return;
+  var sync = function () {
+    var on = document.querySelector('input[name="page-stats_mode"]:checked');
+    box.hidden = !(on && on.value === 'auto');
+  };
+  radios.forEach(function (r) { r.addEventListener('change', sync); });
+  sync();
+})();
+</script>
 {% endblock %}

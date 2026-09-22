@@ -707,6 +707,11 @@ def about_editor(request):
         'section': section, 'page': page, 'site': site,
         'block_form': block_form, 'story_form': story_form, 'page_form': page_form,
         'stat_form': stat_form, 'edit_stat': edit_stat, 'stats': AboutStat.objects.all(),
+        'real_counts': {
+            'customers': User.objects.filter(is_staff=False).count(),
+            'products': Product.objects.filter(is_active=True).count(),
+            'works': Work.objects.filter(is_active=True).count(),
+        },
         'active_page': 'about', **_pending_counts(),
     })
 

@@ -1279,6 +1279,8 @@ html[dir="rtl"] .work-play svg { margin-inline-start: 0; margin-inline-end: 2px;
 .work-facts svg { width: 15px; height: 15px; color: var(--accent-text); }
 
 .work-layout { display: grid; grid-template-columns: 1fr 330px; gap: 34px; align-items: start; }
+.work-layout.is-single { grid-template-columns: minmax(0, 1fr); }
+.work-nav-bottom { margin-top: 22px; }
 .work-desc { color: var(--text-2); font-size: 15.5px; line-height: 1.95; margin-bottom: 28px; max-width: 75ch; }
 .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
 .gal-item {

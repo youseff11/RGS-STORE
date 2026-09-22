@@ -787,6 +787,7 @@ class AboutPageForm(StyledForm):
         model = AboutPage
         fields = [
             'tag_ar', 'tag_en', 'show_tag', 'stats_mode', 'stats_on_home', 'stats_on_page',
+            'customers_override', 'products_override', 'works_override',
             'page_title_ar', 'page_title_en', 'page_subtitle_ar', 'page_subtitle_en', 'page_image',
             'button1_text_ar', 'button1_text_en', 'button1_link',
             'button2_text_ar', 'button2_text_en', 'button2_link',
@@ -794,6 +795,9 @@ class AboutPageForm(StyledForm):
         widgets = {
             'stats_mode': forms.RadioSelect(attrs={'class': 'radio-input'}),
             'page_image': forms.FileInput(attrs={'class': 'inp file', 'accept': 'image/*'}),
+            'customers_override': forms.NumberInput(attrs={'min': 0, 'placeholder': 'الحقيقي', 'dir': 'ltr'}),
+            'products_override': forms.NumberInput(attrs={'min': 0, 'placeholder': 'الحقيقي', 'dir': 'ltr'}),
+            'works_override': forms.NumberInput(attrs={'min': 0, 'placeholder': 'الحقيقي', 'dir': 'ltr'}),
             'button1_link': forms.TextInput(attrs={'dir': 'ltr'}),
             'button2_link': forms.TextInput(attrs={'dir': 'ltr'}),
         }
@@ -802,6 +806,8 @@ class AboutPageForm(StyledForm):
             'show_tag': 'إظهار الكلمة اللي على الصورة',
             'stats_mode': 'الأرقام', 'stats_on_home': 'الأرقام تظهر في الصفحة الرئيسية',
             'stats_on_page': 'الأرقام تظهر في صفحة «من نحن»',
+            'customers_override': 'عدد العملاء', 'products_override': 'عدد الديزاينات',
+            'works_override': 'عدد الأعمال',
             'page_title_ar': 'عنوان الصفحة', 'page_title_en': 'عنوان الصفحة',
             'page_subtitle_ar': 'السطر تحت العنوان', 'page_subtitle_en': 'السطر تحت العنوان',
             'page_image': 'صورة الصفحة',

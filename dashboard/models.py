@@ -1829,6 +1829,10 @@ class AboutPage(models.Model):
     stats_mode = models.CharField(max_length=10, choices=ABOUT_STATS_MODES, default='auto')
     stats_on_home = models.BooleanField(default=True)
     stats_on_page = models.BooleanField(default=True)
+    # «أرقام تلقائية»: leave empty for the real number, or write your own
+    customers_override = models.PositiveIntegerField(null=True, blank=True)
+    products_override = models.PositiveIntegerField(null=True, blank=True)
+    works_override = models.PositiveIntegerField(null=True, blank=True)
     # the /about/ page
     page_title_ar = models.CharField(max_length=160, blank=True, default='')
     page_title_en = models.CharField(max_length=160, blank=True, default='')

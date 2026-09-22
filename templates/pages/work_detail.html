@@ -21,7 +21,7 @@
 </section>
 
 <section class="section-sm">
-  <div class="wrap work-layout">
+  <div class="wrap work-layout is-single">
     <div>
       {% if work.description %}
         <div class="work-desc">{{ work.description|linebreaks }}</div>
@@ -56,38 +56,14 @@
         {% endfor %}
       </div>
       {% endif %}
-    </div>
-
-    <aside class="work-side">
-      <div class="form-card share-card">
-        <h3>{% include 'partials/icon.html' with name='share' %} {% t 'share' %}</h3>
-        <div class="share-row">
-          <a class="share-btn wa" href="https://wa.me/?text={{ work.title|urlencode }}%20{{ share_url|urlencode }}" target="_blank" rel="noopener" aria-label="WhatsApp">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.16-.17.2-.35.22-.64.08-.3-.15-1.26-.47-2.4-1.48-.88-.79-1.48-1.76-1.65-2.06-.17-.3-.02-.46.13-.6.13-.14.3-.35.45-.53.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.61-.91-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.03 1.02-1.03 2.48s1.06 2.87 1.21 3.07c.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.7.62.7.23 1.36.2 1.87.12.57-.09 1.75-.72 2-1.41.25-.7.25-1.29.18-1.42-.08-.12-.28-.2-.58-.34M12.05 21.8a9.87 9.87 0 01-5.03-1.38l-.36-.21-3.74.98 1-3.65-.24-.37a9.86 9.86 0 01-1.51-5.26C2.17 6.45 6.6 2.02 12.05 2.02a9.82 9.82 0 016.99 2.9 9.83 9.83 0 012.9 6.99c0 5.45-4.44 9.88-9.89 9.88m8.42-18.3A11.82 11.82 0 0012.05 0C5.5 0 .16 5.34.16 11.89c0 2.1.55 4.14 1.59 5.95L.06 24l6.3-1.65a11.88 11.88 0 005.69 1.45c6.55 0 11.89-5.34 11.89-11.9a11.82 11.82 0 00-3.47-8.4"/></svg>
-          </a>
-          <a class="share-btn fb" href="https://www.facebook.com/sharer/sharer.php?u={{ share_url|urlencode }}" target="_blank" rel="noopener" aria-label="Facebook">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.96h-1.51c-1.49 0-1.96.93-1.96 1.89v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/></svg>
-          </a>
-          <a class="share-btn x" href="https://twitter.com/intent/tweet?url={{ share_url|urlencode }}&text={{ work.title|urlencode }}" target="_blank" rel="noopener" aria-label="X">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.9 2H22l-7.2 8.2L23.3 22h-6.7l-5.2-6.8L5.4 22H2.3l7.7-8.8L1.8 2h6.8l4.7 6.2zM17.7 20h1.7L7.2 3.9H5.4z"/></svg>
-          </a>
-          <button type="button" class="share-btn copy" data-copy="{{ share_url }}" data-copied="{% t 'link_copied' %}" aria-label="{% t 'copy_link' %}">
-            {% include 'partials/icon.html' with name='link' %}
-          </button>
-        </div>
-        <div class="share-preview">
-          <img src="{{ work.cover.url }}" alt="">
-          <div><b>{{ work.title }}</b><span dir="ltr">{{ request.get_host }}</span></div>
-        </div>
-      </div>
 
       {% if prev_work or next_work %}
-      <div class="work-nav">
+      <div class="work-nav work-nav-bottom">
         {% if prev_work %}<a href="{{ prev_work.get_absolute_url }}">{% include 'partials/icon.html' with name='arrow-back' %}<span><small>{% t 'prev' %}</small>{{ prev_work.title }}</span></a>{% else %}<span></span>{% endif %}
         {% if next_work %}<a class="is-next" href="{{ next_work.get_absolute_url }}"><span><small>{% t 'next' %}</small>{{ next_work.title }}</span>{% include 'partials/icon.html' with name='arrow' %}</a>{% endif %}
       </div>
       {% endif %}
-    </aside>
+    </div>
   </div>
 </section>
 

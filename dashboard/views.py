@@ -192,11 +192,18 @@ def _story_stats(where):
 
 def _about_stats():
     summary = Review.summary()
+    page = AboutPage.load()
+
+    def pick_num(override, real):  # a number written in the dashboard wins over the real one
+        return override if override is not None else real
+
     stats = [
-        {'value': User.objects.filter(is_staff=False).count(), 'label': t('stat_customers'), 'plus': True},
-        {'value': Product.objects.filter(is_active=True).count(), 'label': t('stat_products'), 'plus': True},
+        {'value': pick_num(page.customers_override, User.objects.filter(is_staff=False).count()),
+         'label': t('stat_customers'), 'plus': True},
+        {'value': pick_num(page.products_override, Product.objects.filter(is_active=True).count()),
+         'label': t('stat_products'), 'plus': True},
     ]
-    works = Work.objects.filter(is_active=True).count()
+    works = pick_num(page.works_override, Work.objects.filter(is_active=True).count())
     if works:
         stats.append({'value': works, 'label': t('stat_works'), 'plus': True})
     if summary['count']:
