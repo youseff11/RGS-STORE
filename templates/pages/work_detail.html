@@ -30,6 +30,15 @@
       {% if media %}
       <div class="gallery" data-gallery>
         {% for item in media %}
+          {% if item.is_iframe %}
+          {# video links play right here in the page #}
+          <figure class="gal-embed{% if item.is_tall %} is-tall{% endif %}">
+            <iframe src="{{ item.inline_src }}" title="{{ item.caption|default:work.title }}" loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            {% if item.caption %}<figcaption>{{ item.caption }}</figcaption>{% endif %}
+          </figure>
+          {% else %}
           <button type="button" class="gal-item{% if item.is_video %} is-video{% endif %}"
                   data-index="{{ forloop.counter0 }}" data-kind="{{ item.play_kind }}" data-src="{{ item.full_url }}"
                   data-caption="{{ item.caption }}" aria-label="{{ item.caption|default:work.title }}">
@@ -43,6 +52,7 @@
             {% if item.is_video %}<span class="work-play">{% include 'partials/icon.html' with name='play' %}</span>{% endif %}
             {% if item.caption %}<span class="gal-cap">{{ item.caption }}</span>{% endif %}
           </button>
+          {% endif %}
         {% endfor %}
       </div>
       {% endif %}

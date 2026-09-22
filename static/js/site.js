@@ -417,6 +417,7 @@
       } else {
         node = document.createElement('iframe');
         node.src = src;
+        node.referrerPolicy = 'strict-origin-when-cross-origin';
         node.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media';
         node.allowFullscreen = true;
         node.title = item.dataset.caption || 'video';

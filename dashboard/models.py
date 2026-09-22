@@ -1610,6 +1610,22 @@ class WorkMedia(models.Model):
         return info['src'] if info else self.embed_url
 
     @property
+    def inline_src(self):
+        """The player for an iframe shown right in the page (no autoplay)."""
+        src = self.embed_src
+        return src.replace('?autoplay=1&', '?').replace('?autoplay=1', '').replace('&autoplay=1', '').replace('&autoplay=true', '')
+
+    @property
+    def is_iframe(self):
+        return self.play_kind == 'embed'
+
+    @property
+    def is_tall(self):
+        """Instagram / TikTok players are portrait."""
+        src = self.embed_src or ''
+        return 'instagram.com' in src or 'tiktok.com' in src
+
+    @property
     def play_kind(self):
         """How the lightbox plays it: image | video (a file) | embed (a player in an iframe)."""
         if self.kind == 'embed':

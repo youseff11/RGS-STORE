@@ -126,3 +126,7 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+# YouTube's player refuses to load inside an iframe when the page sends no Referer
+# (Django's default is «same-origin», which strips it → «Error 153»).
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'

@@ -1300,6 +1300,11 @@ html[dir="rtl"] .gal-item .work-play { transform: translate(50%, -50%); }
   opacity: 0; transition: opacity .3s;
 }
 .gal-item:hover .gal-cap { opacity: 1; }
+.gal-embed { grid-column: 1 / -1; margin: 0; border-radius: var(--radius); overflow: hidden; background: #000; border: 1px solid var(--line-soft); }
+.gal-embed iframe { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; }
+.gal-embed.is-tall { grid-column: auto; grid-row: span 2; }
+.gal-embed.is-tall iframe { aspect-ratio: 9 / 16; height: 100%; }
+.gal-embed figcaption { padding: 10px 14px; font-size: 13px; color: var(--text-2); background: var(--surface); }
 
 .work-side { position: sticky; top: calc(var(--header-h) + 18px); display: grid; gap: 16px; }
 .share-card h3 { display: flex; align-items: center; gap: 8px; }
