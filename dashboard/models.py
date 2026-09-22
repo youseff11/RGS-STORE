@@ -83,6 +83,7 @@ class SiteSettings(models.Model):
 
     # ---- Google sign-in (OAuth 2.0 / OpenID Connect) ----
     google_login_enabled = models.BooleanField(default=False)
+    google_button_icon = models.ImageField(upload_to='site/', blank=True, null=True)
     google_client_id = models.CharField(
         max_length=255, blank=True, default='',
         help_text='من Google Cloud Console — بينتهي بـ .apps.googleusercontent.com',
@@ -94,6 +95,7 @@ class SiteSettings(models.Model):
 
     # ---- Discord sign-in (OAuth 2.0) ----
     discord_login_enabled = models.BooleanField(default=False)
+    discord_button_icon = models.ImageField(upload_to='site/', blank=True, null=True)
     discord_client_id = models.CharField(
         max_length=64, blank=True, default='',
         help_text='من Discord Developer Portal ← OAuth2 — رقم طويل',

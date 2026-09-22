@@ -349,13 +349,15 @@ class GoogleLoginForm(StyledForm):
 
     class Meta:
         model = SiteSettings
-        fields = ['google_login_enabled', 'google_client_id', 'google_client_secret']
+        fields = ['google_login_enabled', 'google_client_id', 'google_client_secret', 'google_button_icon']
         labels = {
             'google_login_enabled': 'تفعيل الدخول بحساب جوجل',
             'google_client_id': 'Client ID',
+            'google_button_icon': 'أيقونة الزرار',
         }
         help_texts = {
             'google_client_id': 'بينتهي بـ .apps.googleusercontent.com',
+            'google_button_icon': 'صورة مربعة صغيرة (PNG أو SVG بخلفية شفافة) — نزّل شعار جوجل الرسمي من صفحة Google Branding Guidelines وارفعه هنا',
         }
         widgets = {
             'google_client_id': forms.TextInput(attrs={
@@ -399,13 +401,15 @@ class DiscordLoginForm(StyledForm):
 
     class Meta:
         model = SiteSettings
-        fields = ['discord_login_enabled', 'discord_client_id', 'discord_client_secret']
+        fields = ['discord_login_enabled', 'discord_client_id', 'discord_client_secret', 'discord_button_icon']
         labels = {
             'discord_login_enabled': 'تفعيل الدخول بحساب ديسكورد',
             'discord_client_id': 'Client ID',
+            'discord_button_icon': 'أيقونة الزرار',
         }
         help_texts = {
             'discord_client_id': 'رقم طويل من OAuth2 ← Client information (هو نفسه الـ Application ID)',
+            'discord_button_icon': 'صورة مربعة صغيرة (PNG أو SVG بخلفية شفافة) — نزّل شعار ديسكورد الرسمي من صفحة Discord Branding وارفعه هنا',
         }
         widgets = {
             'discord_client_id': forms.TextInput(attrs={

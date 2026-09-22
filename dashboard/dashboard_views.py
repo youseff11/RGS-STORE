@@ -1101,7 +1101,7 @@ def payment_settings(request):
 def google_settings(request):
     """«الدخول بجوجل» — المفاتيح + اللينكات اللي Google Cloud محتاجها."""
     site = SiteSettings.load()
-    form = GoogleLoginForm(request.POST or None, instance=site)
+    form = GoogleLoginForm(request.POST or None, request.FILES or None, instance=site)
     if request.method == 'POST' and form.is_valid():
         form.save()
         messages.success(request, 'تم حفظ إعدادات الدخول بجوجل')
@@ -1122,7 +1122,7 @@ def google_settings(request):
 def discord_settings(request):
     """«الدخول بديسكورد» — المفاتيح + لينك الـ Redirect اللي ديسكورد محتاجه."""
     site = SiteSettings.load()
-    form = DiscordLoginForm(request.POST or None, instance=site)
+    form = DiscordLoginForm(request.POST or None, request.FILES or None, instance=site)
     if request.method == 'POST' and form.is_valid():
         form.save()
         messages.success(request, 'تم حفظ إعدادات الدخول بديسكورد')

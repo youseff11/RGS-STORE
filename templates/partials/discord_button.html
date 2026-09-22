@@ -6,7 +6,13 @@
 {% if SITE.discord_ready %}
 <a class="btn btn-lg btn-block btn-discord"
    href="{% url 'discord_login' %}{% if next %}?next={{ next|urlencode }}{% endif %}">
-  {% include 'partials/icon.html' with name='chat' %}
+  <span class="soc-logo">
+    {% if SITE.discord_button_icon %}
+      <img src="{{ SITE.discord_button_icon.url }}" alt="" width="20" height="20">
+    {% else %}
+      {% include 'partials/icon.html' with name='chat' %}
+    {% endif %}
+  </span>
   <span>{% t 'continue_with_discord' %}</span>
 </a>
 {% endif %}

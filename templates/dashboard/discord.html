@@ -15,7 +15,7 @@
 </div>
 
 <div class="split">
-  <form method="post" autocomplete="off">
+  <form method="post" autocomplete="off" enctype="multipart/form-data">
     {% csrf_token %}
     {% if form.non_field_errors %}<div class="alert">{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div>{% endif %}
 
@@ -23,6 +23,18 @@
       <div class="card-head"><h3>{% include 'partials/icon.html' with name='chat' %} تشغيل الخدمة</h3></div>
       <div class="switch">{{ form.discord_login_enabled }}<label for="{{ form.discord_login_enabled.id_for_label }}">{{ form.discord_login_enabled.label }}</label></div>
       <div class="help" style="margin:-4px 0 0">لما تشغّلها بيظهر زرار «الدخول بحساب ديسكورد» في صفحتي التسجيل وتسجيل الدخول (تحت زرار جوجل لو شغال).</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>{% include 'partials/icon.html' with name='image' %} أيقونة الزرار</h3></div>
+      <div class="flex" style="align-items:flex-end;gap:14px">
+        <span class="soc-icon-prev">{% if site.discord_button_icon %}<img src="{{ site.discord_button_icon.url }}" alt="">{% else %}<span class="small muted">مفيش</span>{% endif %}</span>
+        <div class="field" style="flex:1;margin:0">
+          {{ form.discord_button_icon }}
+          <div class="help">{{ form.discord_button_icon.help_text }}</div>
+          {% for e in form.discord_button_icon.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}
+        </div>
+      </div>
     </div>
 
     <div class="card">

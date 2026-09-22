@@ -1495,11 +1495,17 @@ html[dir="rtl"] .gal-item .work-play { transform: translate(50%, -50%); }
 /* «الدخول بحساب جوجل» — زرار فاتح علشان يبان على الخلفية الغامقة */
 .btn-google { --btn-bg: #FFFFFF; --btn-fg: #1F1F1F; --btn-bd: #FFFFFF; gap: 11px; }
 .btn-google:hover { --btn-bg: #EDE7E1; --btn-bd: #EDE7E1; }
-.btn-google .g-logo { width: 18px; height: 18px; flex: none; }
+/* the logo box keeps its space whether the picture loads or not — no flicker, no jumping */
+.soc-logo { width: 20px; height: 20px; flex: none; display: grid; place-items: center; }
+.soc-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.soc-logo svg { width: 20px; height: 20px; }
+.soc-logo b { display: none; font-family: 'Jost', sans-serif; font-size: 15px; font-weight: 800; }
+.soc-logo.is-fallback b { display: block; }
 /* «الدخول بحساب ديسكورد» — لون ديسكورد (blurple) */
 .btn-discord { --btn-bg: #5865F2; --btn-fg: #FFFFFF; --btn-bd: #5865F2; gap: 10px; }
 .btn-discord:hover { --btn-bg: #4752C4; --btn-bd: #4752C4; }
-.btn-discord svg { width: 20px; height: 20px; flex: none; }
+.btn-discord .soc-logo svg { width: 20px; height: 20px; }
+.btn-google, .btn-discord { justify-content: center; }
 .social-buttons { display: flex; flex-direction: column; gap: 10px; }
 .auth-or {
   display: flex; align-items: center; gap: 12px;

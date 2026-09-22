@@ -7,8 +7,16 @@
 {% if SITE.google_ready %}
 <a class="btn btn-lg btn-block btn-google"
    href="{% url 'google_login' %}{% if next %}?next={{ next|urlencode }}{% endif %}">
-  <img class="g-logo" src="https://developers.google.com/identity/images/g-logo.png"
-       alt="" width="18" height="18" loading="lazy" onerror="this.remove()">
+  <span class="soc-logo">
+    {% if SITE.google_button_icon %}
+      <img src="{{ SITE.google_button_icon.url }}" alt="" width="20" height="20">
+    {% else %}
+      {# لو مرفعتش أيقونة من الداشبورد: شعار جوجل من عندهم، وحرف G لو ما اتحمّلش #}
+      <img src="https://developers.google.com/identity/images/g-logo.png" alt="" width="20" height="20"
+           referrerpolicy="no-referrer" onerror="this.closest('.soc-logo').classList.add('is-fallback');this.remove()">
+      <b aria-hidden="true">G</b>
+    {% endif %}
+  </span>
   <span>{% t 'continue_with_google' %}</span>
 </a>
 {% endif %}
