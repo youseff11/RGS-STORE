@@ -58,7 +58,11 @@
         <td>
           <div class="row-actions">
             <a class="btn btn-sm btn-soft" href="{% url 'dash_order_detail' order.pk %}">تفاصيل</a>
+            <a class="btn btn-sm btn-ghost" href="{% url 'dash_order_edit' order.pk %}" title="تعديل" aria-label="تعديل">{% include 'partials/icon.html' with name='edit' %}</a>
             <a class="btn btn-sm btn-ghost" href="{% url 'dash_order_print' order.pk %}" target="_blank" title="طباعة" aria-label="طباعة">{% include 'partials/icon.html' with name='printer' %}</a>
+            <form method="post" action="{% url 'dash_order_delete' order.pk %}" data-confirm="حذف الطلب {{ order.order_number }} نهائيًا؟">{% csrf_token %}
+              <button class="btn btn-sm btn-danger" type="submit" title="حذف" aria-label="حذف">{% include 'partials/icon.html' with name='trash' %}</button>
+            </form>
           </div>
         </td>
       </tr>

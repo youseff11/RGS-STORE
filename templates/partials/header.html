@@ -30,16 +30,23 @@
       {% if user.is_authenticated %}
         <div class="acct" data-menu>
           <button class="icon-btn acct-btn" type="button" aria-haspopup="true" aria-expanded="false"
-                  aria-label="{% t 'account' %}{% if TICKETS_UNREAD %} — {{ TICKETS_UNREAD }} {% t 'ticket' %}{% endif %}" data-menu-toggle>
-            <span class="acct-av">{{ user.first_name|default:user.get_username|slice:":1"|upper }}</span>
-            {% if TICKETS_UNREAD %}<span class="acct-badge" aria-hidden="true">{{ TICKETS_UNREAD }}</span>{% endif %}
+                  aria-label="{% t 'account' %}{% if ACCT_BADGE %} — {{ ACCT_BADGE }}{% endif %}" data-menu-toggle>
+            <span class="acct-av">{% if USER_PHOTO %}<img src="{{ USER_PHOTO }}" alt="" referrerpolicy="no-referrer">{% else %}{{ user.first_name|default:user.get_username|slice:":1"|upper }}{% endif %}</span>
+            {% if ACCT_BADGE %}<span class="acct-badge" aria-hidden="true">{{ ACCT_BADGE }}</span>{% endif %}
           </button>
           <div class="acct-menu" role="menu">
             <div class="acct-head">
               <b>{{ user.get_full_name|default:user.get_username }}</b>
               <span dir="ltr">{{ user.email }}</span>
             </div>
+            {% if ORDERS_STAFF %}
+            <a role="menuitem" class="acct-tickets" href="{% url 'dash_orders' %}?status=pending" title="{% if LANG == 'ar' %}طلبات جديدة{% else %}New orders{% endif %}">
+              {% include 'partials/icon.html' with name='bag' %} {% if LANG == 'ar' %}الطلبات{% else %}Orders{% endif %}
+              {% if NEW_ORDERS %}<span class="acct-menu-badge">{{ NEW_ORDERS }}</span>{% endif %}
+            </a>
+            {% elif not user.is_staff %}
             <a role="menuitem" href="{% url 'account' %}">{% include 'partials/icon.html' with name='bag' %} {% t 'my_orders' %}</a>
+            {% endif %}
             <a role="menuitem" href="{% url 'account' %}?tab=profile">{% include 'partials/icon.html' with name='user' %} {% t 'my_profile' %}</a>
             <a role="menuitem" class="acct-tickets" href="{% url 'support' %}">
               {% include 'partials/icon.html' with name='chat' %}

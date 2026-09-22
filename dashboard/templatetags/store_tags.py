@@ -114,7 +114,6 @@ def status_color(status):
     return {
         'pending': 'warn',
         'confirmed': 'info',
-        'shipped': 'accent',
         'delivered': 'ok',
         'cancelled': 'bad',
     }.get(status, 'muted')

@@ -1,0 +1,151 @@
+{% extends 'base/dashboard_base.html' %}
+{% load static %}
+{% block page_name %}حكايتنا{% endblock %}
+
+{% block content %}
+{% with b=block_form p=page_form s=story_form %}
+<div class="page-head">
+  <div>
+    <h2>حكايتنا (من نحن)</h2>
+    <p>كل حاجة في قسم «حكايتنا» في الصفحة الرئيسية وفي صفحة «من نحن» — النص والصورة والأرقام والأزرار</p>
+  </div>
+  <div class="flex">
+    <a class="btn btn-ghost" href="{% url 'home' %}#about" target="_blank">الرئيسية {% include 'partials/icon.html' with name='external' %}</a>
+    <a class="btn btn-ghost" href="{% url 'about' %}" target="_blank">صفحة من نحن {% include 'partials/icon.html' with name='external' %}</a>
+  </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" id="about-main">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="save">
+  <div class="split">
+    <div>
+      {# ------------------------------------------------ homepage block #}
+      <div class="card">
+        <div class="card-head"><h3>{% include 'partials/icon.html' with name='home' %} القسم في الصفحة الرئيسية</h3></div>
+        <div class="switch">{{ b.is_active }}<label for="{{ b.is_active.id_for_label }}">{{ b.is_active.label }}</label></div>
+        {% include 'dashboard/_pair.html' with ar=b.eyebrow_ar en=b.eyebrow_en %}
+        {% include 'dashboard/_pair.html' with ar=b.title_ar en=b.title_en %}
+        {% include 'dashboard/_pair.html' with ar=b.subtitle_ar en=b.subtitle_en help=b.subtitle_ar.help_text %}
+        {% include 'dashboard/_pair.html' with ar=b.button_text_ar en=b.button_text_en help=b.button_text_ar.help_text %}
+        <div class="field"><label>{{ b.button_link.label }}</label>{{ b.button_link }}<div class="help">مثلاً /about/ علشان يفتح صفحة «من نحن»</div></div>
+      </div>
+
+      {# ------------------------------------------------------- story #}
+      <div class="card">
+        <div class="card-head"><h3>{% include 'partials/icon.html' with name='file' %} الحكاية الكاملة</h3></div>
+        {% include 'dashboard/_pair.html' with ar=s.about_ar en=s.about_en help=s.about_ar.help_text %}
+      </div>
+
+      {# -------------------------------------------------- about page #}
+      <div class="card">
+        <div class="card-head"><h3>{% include 'partials/icon.html' with name='layout' %} صفحة «من نحن»</h3></div>
+        {% include 'dashboard/_pair.html' with ar=p.page_title_ar en=p.page_title_en help=p.page_title_ar.help_text %}
+        {% include 'dashboard/_pair.html' with ar=p.page_subtitle_ar en=p.page_subtitle_en help=p.page_subtitle_ar.help_text %}
+        {% include 'dashboard/_pair.html' with ar=p.button1_text_ar en=p.button1_text_en help=p.button1_text_ar.help_text %}
+        <div class="field"><label>{{ p.button1_link.label }}</label>{{ p.button1_link }}</div>
+        {% include 'dashboard/_pair.html' with ar=p.button2_text_ar en=p.button2_text_en %}
+        <div class="field"><label>{{ p.button2_link.label }}</label>{{ p.button2_link }}</div>
+      </div>
+    </div>
+
+    <div>
+      {# ------------------------------------------------------ images #}
+      <div class="card">
+        <div class="card-head"><h3>{% include 'partials/icon.html' with name='image' %} الصور</h3></div>
+        <div class="field">
+          <label>صورة القسم في الرئيسية</label>
+          <div class="about-img-prev">
+            {% if section.image %}<img src="{{ section.image.url }}" alt="">{% else %}<span class="muted small">مفيش صورة — بيظهر اللوجو</span>{% endif %}
+          </div>
+          {{ b.image }}
+          {% for e in b.image.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}
+          {% if section.image %}<label class="small muted" style="display:flex;gap:6px;align-items:center;margin-top:6px"><input type="checkbox" name="clear_block_image" value="1"> حذف الصورة</label>{% endif %}
+        </div>
+        <div class="field">
+          <label>صورة صفحة «من نحن»</label>
+          <div class="about-img-prev">
+            {% if page.page_image %}<img src="{{ page.page_image.url }}" alt="">{% elif section.image %}<img src="{{ section.image.url }}" alt="" style="opacity:.55"><span class="small muted">نفس صورة الرئيسية</span>{% else %}<span class="muted small">مفيش صورة — بيظهر اللوجو</span>{% endif %}
+          </div>
+          {{ p.page_image }}
+          <div class="help">{{ p.page_image.help_text }}</div>
+          {% if page.page_image %}<label class="small muted" style="display:flex;gap:6px;align-items:center;margin-top:6px"><input type="checkbox" name="clear_page_image" value="1"> حذف الصورة</label>{% endif %}
+        </div>
+        <div class="switch">{{ p.show_tag }}<label for="{{ p.show_tag.id_for_label }}">{{ p.show_tag.label }}</label></div>
+        {% include 'dashboard/_pair.html' with ar=p.tag_ar en=p.tag_en help=p.tag_ar.help_text %}
+      </div>
+
+      {# ----------------------------------------------------- numbers #}
+      <div class="card">
+        <div class="card-head"><h3>{% include 'partials/icon.html' with name='trend' %} الأرقام</h3></div>
+        <div class="radio-list">
+          {% for choice in p.stats_mode %}
+            <label class="perm-item">{{ choice.tag }}<span>{{ choice.choice_label }}</span></label>
+          {% endfor %}
+        </div>
+        <div class="switch">{{ p.stats_on_home }}<label for="{{ p.stats_on_home.id_for_label }}">{{ p.stats_on_home.label }}</label></div>
+        <div class="switch">{{ p.stats_on_page }}<label for="{{ p.stats_on_page.id_for_label }}">{{ p.stats_on_page.label }}</label></div>
+        {% if page.stats_mode == 'custom' %}<a class="small" href="#stats" style="color:var(--accent-text)">اكتب أرقامك من تحت ↓</a>{% endif %}
+      </div>
+
+      <button class="btn btn-block about-save" type="submit">حفظ كل التعديلات</button>
+    </div>
+  </div>
+</form>
+
+{# --------------------------------------------------------- custom numbers #}
+<div class="card" id="stats">
+  <div class="card-head">
+    <h3>أرقامك ({{ stats|length }})</h3>
+    <span class="small muted">بتظهر لما تختار «أرقام أنا اللي بكتبها»</span>
+  </div>
+  <div class="split">
+    <div>
+      {% if stats %}
+      <div class="about-stat-list">
+        {% for st in stats %}
+        <div class="about-stat-row{% if not st.is_active %} is-off{% endif %}{% if edit_stat and edit_stat.pk == st.pk %} is-editing{% endif %}">
+          <b dir="ltr">{{ st.value }}{{ st.suffix }}{% if st.show_star %} ★{% endif %}</b>
+          <span>{{ st.label_ar }}{% if st.label_en %} <small class="muted" dir="ltr">· {{ st.label_en }}</small>{% endif %}</span>
+          {% if not st.is_active %}<span class="chip chip-muted">مخفي</span>{% endif %}
+          <div class="row-actions">
+            <a class="btn btn-sm btn-soft" href="?stat={{ st.pk }}#stats">{% include 'partials/icon.html' with name='edit' %} تعديل</a>
+            <form method="post" action="{% url 'dash_about_stat_delete' st.pk %}" data-confirm="حذف الرقم ده؟">{% csrf_token %}
+              <button class="btn btn-sm btn-danger" type="submit" aria-label="حذف">{% include 'partials/icon.html' with name='trash' %}</button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+        <div class="empty"><div class="ico ico-badge">{% include 'partials/icon.html' with name='trend' %}</div>لسه مفيش أرقام — ضيف أول رقم من الفورم</div>
+      {% endif %}
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="stat">
+      <div class="between" style="margin-bottom:8px">
+        <b>{% if edit_stat %}تعديل الرقم{% else %}إضافة رقم{% endif %}</b>
+        {% if edit_stat %}<a class="btn btn-sm btn-ghost" href="{% url 'dash_about' %}#stats">إلغاء</a>{% endif %}
+      </div>
+      {% with f=stat_form %}
+      <div class="grid g2">
+        <div class="field"><label>{{ f.value.label }} <span class="req">*</span></label>{{ f.value }}{% for e in f.value.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+        <div class="field"><label>{{ f.suffix.label }}</label>{{ f.suffix }}</div>
+      </div>
+      {% include 'dashboard/_pair.html' with ar=f.label_ar en=f.label_en help=f.label_ar.help_text %}
+      <div class="grid g2">
+        <div class="field"><label>{{ f.ordering.label }}</label>{{ f.ordering }}</div>
+        <div>
+          <div class="switch">{{ f.show_star }}<label for="{{ f.show_star.id_for_label }}">{{ f.show_star.label }}</label></div>
+          <div class="switch">{{ f.is_active }}<label for="{{ f.is_active.id_for_label }}">{{ f.is_active.label }}</label></div>
+        </div>
+      </div>
+      {% endwith %}
+      <button class="btn btn-block" type="submit">{% if edit_stat %}حفظ{% else %}إضافة الرقم{% endif %}</button>
+    </form>
+  </div>
+</div>
+{% endwith %}
+{% endblock %}

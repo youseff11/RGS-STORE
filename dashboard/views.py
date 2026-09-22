@@ -22,11 +22,12 @@ from . import discord_oauth, google_oauth, mailer, paypal
 from .i18n import pick, t
 from .middleware import COOKIE as LANG_COOKIE, COOKIE_AGE as LANG_COOKIE_AGE
 from .i18n import LANGS
+from .models import AboutPage, AboutStat
 from .models import (
     Banner, Category, ContactMessage, Country, Coupon, CustomerProfile, HomeSection,
     Order, OrderItem, Policy, Product, ProductVariant, Review, Service, SiteSettings,
     TICKET_EXTS, TICKET_MAX_FILES, TICKET_MAX_FILE_MB, TICKET_STATUSES, TICKET_TOPICS,
-    Ticket, TicketAttachment, TicketMessage, Work, WorkCategory, reviewable_orders,
+    Ticket, TicketAttachment, TicketMessage, Work, WorkCategory, reviewable_orders, two_part_name,
     staff_permissions,
 )
 from .templatetags.store_tags import money as fmt_money
@@ -123,7 +124,7 @@ def set_language(request, code):
 FEATURES = [
     ('truck', 'feature_delivery', 'feature_delivery_sub'),
     ('lock', 'payments_secure', 'cod_or_paypal'),
-    ('shirt', 'feature_quality', 'feature_quality_sub'),
+    ('pen-tool', 'feature_quality', 'feature_quality_sub'),
     ('chat', 'feature_support', 'feature_support_sub'),
 ]
 
@@ -156,22 +157,37 @@ def home(request):
             featured = list(works.filter(is_featured=True)[:limit])
             block['items'] = featured or list(works[:limit])
         elif key == 'reviews':
-            published = Review.published()
+            # اللي مختارهم من الداشبورد «يظهر في الرئيسية» — ولو مفيش مختار، أحدث التقييمات المنشورة
+            published = Review.published().select_related('user__customer')
             items = list(published.filter(is_featured=True)[:limit])
-            if len(items) < limit:
-                seen = {r.pk for r in items}
-                items += [r for r in published[:limit * 2] if r.pk not in seen][:limit - len(items)]
-            block['items'] = items
+            block['items'] = items or list(published[:limit])
             block['summary'] = Review.summary()
         elif key == 'about':
             block['text'] = site.about
-            block['stats'] = _about_stats()
+            block['stats'] = _story_stats('home')
+            block['story'] = AboutPage.load()
             block['items'] = [1]
         else:  # hero
             block['items'] = [1]
         if block['items']:
             blocks.append(block)
     return render(request, 'pages/home.html', {'blocks': blocks})
+
+
+def _story_stats(where):
+    """Numbers of «حكايتنا» — automatic, the owner's own, or none (chosen in the dashboard)."""
+    page = AboutPage.load()
+    if page.stats_mode == 'hidden' or not (page.stats_on_home if where == 'home' else page.stats_on_page):
+        return []
+    if page.stats_mode == 'custom':
+        return [
+            {'value': s.value, 'suffix': s.suffix, 'star': s.show_star, 'label': s.label}
+            for s in AboutStat.objects.filter(is_active=True)
+        ]
+    return [
+        {'value': s['value'], 'suffix': '+' if s.get('plus') else '', 'star': s.get('star'), 'label': s['label']}
+        for s in _about_stats()
+    ]
 
 
 def _about_stats():
@@ -768,12 +784,8 @@ def discord_callback(request):
 
 
 def _public_name(user, fallback=''):
-    """«أحمد م.» — first name + initial, so full names aren't published."""
-    first = (user.first_name or '').strip()
-    last = (user.last_name or '').strip()
-    if first:
-        return f'{first} {last[:1]}.' if last else first
-    return (fallback or user.get_username()).split('@')[0]
+    """«أحمد محمد» — the customer's name in two parts (first + second name)."""
+    return two_part_name(user.first_name, user.last_name, fallback or user.get_username())
 
 
 def account(request):
@@ -782,6 +794,8 @@ def account(request):
     user = request.user
     profile = CustomerProfile.for_user(user)
     tab = request.GET.get('tab') or 'orders'
+    if user.is_staff and tab == 'orders':  # the store's staff see customers' orders in the dashboard
+        tab = 'profile'
     errors = {}
 
     if request.method == 'POST':
@@ -817,6 +831,27 @@ def account(request):
                 profile.save()
                 messages.success(request, t('profile_saved'))
                 return redirect(f"{reverse('account')}?tab=profile")
+        elif action in ('avatar', 'avatar_remove'):
+            tab = 'profile'
+            if action == 'avatar_remove':
+                if profile.avatar:
+                    profile.avatar.delete(save=False)
+                profile.avatar = None
+                profile.save(update_fields=['avatar', 'updated_at'])
+                messages.success(request, t('photo_removed'))
+                return redirect(f"{reverse('account')}?tab=profile")
+            upload = request.FILES.get('avatar')
+            error = _avatar_error(upload)
+            if error:
+                errors['avatar'] = error
+            else:
+                old = profile.avatar.name if profile.avatar else ''
+                profile.avatar.save(f'{user.pk}.jpg', _square_avatar(upload), save=False)
+                profile.save(update_fields=['avatar', 'updated_at'])
+                if old and old != profile.avatar.name:
+                    profile.avatar.storage.delete(old)
+                messages.success(request, t('photo_saved'))
+                return redirect(f"{reverse('account')}?tab=profile")
         elif action == 'password':
             tab = 'password'
             current = request.POST.get('current_password') or ''
@@ -845,6 +880,38 @@ def account(request):
         'can_review': reviewable_orders(user).exists(),
         'page_title': t('account'),
     })
+
+
+AVATAR_MAX_MB = 5
+AVATAR_SIZE = 400  # px — saved square, center-cropped
+
+
+def _avatar_error(upload):
+    if not upload:
+        return t('required_field')
+    if upload.size > AVATAR_MAX_MB * 1024 * 1024:
+        return t('photo_too_big')
+    try:
+        from PIL import Image
+        with Image.open(upload) as img:
+            img.verify()
+        upload.seek(0)
+    except Exception:
+        return t('photo_invalid')
+    return ''
+
+
+def _square_avatar(upload):
+    """Center-crop to a square and shrink to AVATAR_SIZE — small, fast, same shape everywhere."""
+    from io import BytesIO
+    from django.core.files.base import ContentFile
+    from PIL import Image, ImageOps
+    with Image.open(upload) as img:
+        img = ImageOps.exif_transpose(img).convert('RGB')
+        img = ImageOps.fit(img, (AVATAR_SIZE, AVATAR_SIZE), Image.LANCZOS)
+        out = BytesIO()
+        img.save(out, format='JPEG', quality=86, optimize=True)
+    return ContentFile(out.getvalue())
 
 
 def _owned_order_or_404(request, number):
@@ -1413,10 +1480,13 @@ def support_detail(request, number):
 def about(request):
     HomeSection.ensure_defaults()
     section = HomeSection.objects.filter(key='about').first()
+    page = AboutPage.load()
     return render(request, 'pages/about.html', {
         'sec': section,
-        'stats': _about_stats(),
-        'page_title': t('about'),
+        'story': page,
+        'stats': _story_stats('page'),
+        'page_title': page.page_title or t('about'),
+        'og_description': page.page_subtitle or '',
     })
 
 

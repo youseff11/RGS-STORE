@@ -30,6 +30,7 @@
 {% if page_obj %}
 <div class="country-list">
   {% for ticket in page_obj %}
+  <div class="ticket-admin-row">
   <a class="ticket-admin {% if ticket.admin_unread %}is-new{% endif %}" href="{% url 'dash_ticket_detail' ticket.pk %}">
     <span class="mini-av">{{ ticket.customer_name|slice:":1"|upper }}</span>
     <span class="ticket-admin-main">
@@ -43,6 +44,10 @@
     {% if ticket.admin_unread %}<span class="chip chip-accent">جديد</span>{% endif %}
     <span class="chip {% if ticket.status == 'open' %}chip-warn{% elif ticket.status == 'answered' %}chip-ok{% else %}chip-muted{% endif %}">{{ ticket.status_label }}</span>
   </a>
+  <form method="post" action="{% url 'dash_ticket_delete' ticket.pk %}" data-confirm="حذف التذكرة {{ ticket.number }} وكل مرفقاتها؟">{% csrf_token %}
+    <button class="btn btn-sm btn-danger" type="submit" title="حذف" aria-label="حذف">{% include 'partials/icon.html' with name='trash' %}</button>
+  </form>
+  </div>
   {% endfor %}
 </div>
 {% include 'dashboard/_pager.html' %}

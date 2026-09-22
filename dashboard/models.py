@@ -104,7 +104,7 @@ class SiteSettings(models.Model):
     )
 
     # reviews + sharing
-    reviews_auto_publish = models.BooleanField(default=False)
+    reviews_auto_publish = models.BooleanField(default=True)
     share_image = models.ImageField(upload_to='site/', blank=True, null=True)
 
     # ---- email notifications (Gmail or any SMTP) ----
@@ -846,9 +846,8 @@ PAYMENT_STATUS_LABELS = {
     'refunded': ('مسترد', 'Refunded'),
 }
 ORDER_STATUS_LABELS = {
-    'pending': ('قيد المراجعة', 'Pending'),
-    'confirmed': ('تم التأكيد', 'Confirmed'),
-    'shipped': ('تم الشحن', 'Shipped'),
+    'pending': ('تم استلام طلبك', 'Order received'),
+    'confirmed': ('جاري العمل', 'In progress'),
     'delivered': ('تم التسليم', 'Delivered'),
     'cancelled': ('ملغي', 'Cancelled'),
 }
@@ -856,9 +855,8 @@ ORDER_STATUS_LABELS = {
 
 class Order(models.Model):
     STATUSES = [
-        ('pending', 'قيد المراجعة / Pending'),
-        ('confirmed', 'تم التأكيد / Confirmed'),
-        ('shipped', 'تم الشحن / Shipped'),
+        ('pending', 'تم استلام طلبك / Order received'),
+        ('confirmed', 'جاري العمل / In progress'),
         ('delivered', 'تم التسليم / Delivered'),
         ('cancelled', 'ملغي / Cancelled'),
     ]
@@ -946,10 +944,9 @@ class Order(models.Model):
         self.payment_status = 'paid'
         if not self.paid_at:
             self.paid_at = timezone.now()
-        if self.status == 'pending':
-            self.status = 'confirmed'
+        # بعد الدفع الطلب بيفضل «تم استلام طلبك» لحد ما الأدمن يحوّله «جاري العمل»
         if save:
-            self.save(update_fields=['payment_status', 'paid_at', 'status', 'updated_at'])
+            self.save(update_fields=['payment_status', 'paid_at', 'updated_at'])
 
     def save(self, *args, **kwargs):
         if not self.order_number:
@@ -1024,6 +1021,8 @@ class CustomerProfile(models.Model):
     city = models.CharField(max_length=120, blank=True, default='')
     address = models.TextField(blank=True, default='')
     admin_note = models.TextField(blank=True, default='')
+    # picture the customer uploads from «بياناتي» — wins over the Google / Discord one
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     # Google sign-in: `sub` never changes, even when the customer renames their
     # Gmail address, so it — not the email — is what identifies the account.
     google_id = models.CharField(max_length=64, blank=True, default='', db_index=True)
@@ -1053,6 +1052,16 @@ class CustomerProfile(models.Model):
         return bool(self.discord_id)
 
     @property
+    def photo_url(self):
+        """The customer's picture: uploaded one → Google → Discord → '' (initial letter is shown)."""
+        if self.avatar:
+            try:
+                return self.avatar.url
+            except ValueError:
+                pass
+        return self.google_picture or self.discord_avatar or ''
+
+    @property
     def social_providers(self):
         """Names of the social accounts this customer signs in with (for messages)."""
         names = []
@@ -1077,20 +1086,20 @@ def ticket_upload_to(instance, filename):
 
 
 TICKET_TOPICS = [
-    ('order', 'استفسار عن طلب'),
-    ('product', 'سؤال عن منتج'),
-    ('shipping', 'الشحن والتوصيل'),
-    ('payment', 'الدفع'),
-    ('return', 'استبدال أو استرجاع'),
-    ('other', 'موضوع آخر'),
+    ('buy_product', 'شراء منتج'),
+    ('service', 'طلب خدمة'),
+    ('partnership', 'شراكة | إعلانات'),
+    ('paid_delivery', 'استلام منتج مدفوع'),
+    ('inquiry', 'استفسارات'),
+    ('other', 'أخرى'),
 ]
 TICKET_TOPIC_LABELS = {
-    'order': ('استفسار عن طلب', 'About an order'),
-    'product': ('سؤال عن منتج', 'About a product'),
-    'shipping': ('الشحن والتوصيل', 'Shipping & delivery'),
-    'payment': ('الدفع', 'Payment'),
-    'return': ('استبدال أو استرجاع', 'Return or exchange'),
-    'other': ('موضوع آخر', 'Something else'),
+    'buy_product': ('شراء منتج', 'Buy a product'),
+    'service': ('طلب خدمة', 'Request a service'),
+    'partnership': ('شراكة | إعلانات', 'Partnership | Ads'),
+    'paid_delivery': ('استلام منتج مدفوع', 'Receive a paid product'),
+    'inquiry': ('استفسارات', 'Inquiries'),
+    'other': ('أخرى', 'Other'),
 }
 TICKET_STATUSES = [
     ('open', 'مفتوحة'),
@@ -1337,6 +1346,12 @@ class Review(models.Model):
     def initial(self):
         return (self.name or '?').strip()[:1].upper()
 
+    @property
+    def avatar_url(self):
+        """The customer's picture (uploaded / Google / Discord), if they have one."""
+        profile = getattr(self.user, 'customer', None) if self.user_id else None
+        return profile.photo_url if profile else ''
+
     @classmethod
     def published(cls):
         return cls.objects.filter(is_approved=True)
@@ -1355,6 +1370,16 @@ class Review(models.Model):
         ]
         return {'count': count, 'avg': round(avg, 1), 'bars': bars,
                 'avg_pct': round(avg * 20) if count else 0}
+
+
+def two_part_name(first='', last='', fallback=''):
+    """First two words of a person's name: «أحمد محمد علي» → «أحمد محمد»."""
+    words = f'{first or ""} {last or ""}'.split()
+    if len(words) < 2:
+        backup = (fallback or '').split('@')[0].split()
+        if len(backup) > len(words):
+            words = backup
+    return ' '.join(words[:2])
 
 
 def reviewable_orders(user):
@@ -1455,21 +1480,91 @@ class Work(models.Model):
         return self.media.filter(kind__in=['video', 'embed']).exists()
 
 
+VIDEO_FILE_EXTS = ('mp4', 'webm', 'mov', 'm4v', 'ogg', 'ogv')
+VIDEO_SITES = 'يوتيوب، فيميو، جوجل درايف، فيسبوك، إنستجرام، تيك توك، ديلي موشن، Streamable، أو لينك مباشر لملف فيديو (mp4)'
+
+
+def clean_video_url(url):
+    """Trim the link and add https:// when it was pasted without it (e.g. «youtu.be/abc»)."""
+    url = (url or '').strip().strip('<>"\'')
+    if url and not re.match(r'^https?://', url, re.I):
+        url = 'https://' + url.lstrip('/')
+    return url
+
+
 def _youtube_id(url):
-    match = re.search(r'(?:youtu\.be/|youtube\.com/(?:watch\?(?:.*&)?v=|embed/|shorts/|live/))([\w-]{6,})', url or '')
+    match = re.search(
+        r'(?:youtu\.be/|youtube(?:-nocookie)?\.com/(?:watch\?(?:.*&)?v=|embed/|shorts/|live/|v/|e/))([\w-]{11})',
+        url or '', re.I,
+    )
     return match.group(1) if match else ''
 
 
 def _vimeo_id(url):
-    match = re.search(r'vimeo\.com/(?:video/)?(\d+)', url or '')
-    return match.group(1) if match else ''
+    match = re.search(r'vimeo\.com/(?:.*?/)?(?:video/)?(\d{6,})(?:/([\da-f]{6,}))?', url or '', re.I)
+    if not match:
+        return ''
+    vid, hash_ = match.groups()
+    return f'{vid}?h={hash_}' if hash_ else vid
+
+
+def video_embed(url):
+    """What a pasted video link turns into on the site.
+
+    Returns {'kind': 'iframe' | 'file', 'src': ..., 'thumb': ...} or None when the link
+    isn't a video we can play inside the page.
+    """
+    from urllib.parse import quote, urlsplit
+    url = clean_video_url(url)
+    if not url:
+        return None
+    host = (urlsplit(url).hostname or '').lower()
+    path = urlsplit(url).path or ''
+
+    yt = _youtube_id(url)
+    if yt:
+        return {'kind': 'iframe', 'src': f'https://www.youtube-nocookie.com/embed/{yt}?autoplay=1&rel=0',
+                'thumb': f'https://i.ytimg.com/vi/{yt}/hqdefault.jpg'}
+    vm = _vimeo_id(url)
+    if vm:
+        joiner = '&' if '?' in vm else '?'
+        return {'kind': 'iframe', 'src': f'https://player.vimeo.com/video/{vm}{joiner}autoplay=1', 'thumb': ''}
+    if 'drive.google.com' in host:
+        match = re.search(r'/file/d/([\w-]{10,})', url) or re.search(r'[?&]id=([\w-]{10,})', url)
+        if match:
+            return {'kind': 'iframe', 'src': f'https://drive.google.com/file/d/{match.group(1)}/preview',
+                    'thumb': f'https://drive.google.com/thumbnail?id={match.group(1)}&sz=w800'}
+    if host.endswith('facebook.com') or host == 'fb.watch':
+        return {'kind': 'iframe', 'thumb': '',
+                'src': f'https://www.facebook.com/plugins/video.php?href={quote(url, safe="")}&show_text=false&autoplay=true'}
+    if host.endswith('instagram.com'):
+        match = re.search(r'/(p|reel|reels|tv)/([\w-]+)', path)
+        if match:
+            kind = 'reel' if match.group(1) in ('reel', 'reels') else match.group(1)
+            return {'kind': 'iframe', 'src': f'https://www.instagram.com/{kind}/{match.group(2)}/embed', 'thumb': ''}
+    if host.endswith('tiktok.com'):
+        match = re.search(r'/video/(\d+)', path)
+        if match:
+            return {'kind': 'iframe', 'src': f'https://www.tiktok.com/embed/v2/{match.group(1)}', 'thumb': ''}
+    if host.endswith('dailymotion.com') or host == 'dai.ly':
+        match = re.search(r'(?:/video/|dai\.ly/)([a-z0-9]+)', url, re.I)
+        if match:
+            return {'kind': 'iframe', 'src': f'https://www.dailymotion.com/embed/video/{match.group(1)}?autoplay=1',
+                    'thumb': f'https://www.dailymotion.com/thumbnail/video/{match.group(1)}'}
+    if host.endswith('streamable.com'):
+        match = re.search(r'streamable\.com/(?:e/)?([a-z0-9]+)', url, re.I)
+        if match:
+            return {'kind': 'iframe', 'src': f'https://streamable.com/e/{match.group(1)}?autoplay=1', 'thumb': ''}
+    if path.rsplit('.', 1)[-1].lower() in VIDEO_FILE_EXTS:
+        return {'kind': 'file', 'src': url, 'thumb': ''}
+    return None
 
 
 class WorkMedia(models.Model):
     KINDS = [
         ('image', 'صورة'),
         ('video', 'فيديو مرفوع'),
-        ('embed', 'فيديو يوتيوب / فيميو'),
+        ('embed', 'فيديو من لينك'),
     ]
 
     work = models.ForeignKey(Work, on_delete=models.CASCADE, related_name='media')
@@ -1483,7 +1578,7 @@ class WorkMedia(models.Model):
         upload_to='works/posters/', blank=True, null=True,
         help_text='صورة غلاف للفيديو (اختياري)',
     )
-    embed_url = models.URLField(blank=True, default='')
+    embed_url = models.URLField(max_length=1000, blank=True, default='')
     caption_ar = models.CharField(max_length=200, blank=True, default='')
     caption_en = models.CharField(max_length=200, blank=True, default='')
     ordering = models.PositiveIntegerField(default=0)
@@ -1504,14 +1599,23 @@ class WorkMedia(models.Model):
         return self.kind in ('video', 'embed')
 
     @property
+    def embed_info(self):
+        if not hasattr(self, '_embed_info'):
+            self._embed_info = video_embed(self.embed_url) if self.kind == 'embed' else None
+        return self._embed_info
+
+    @property
     def embed_src(self):
-        yt = _youtube_id(self.embed_url)
-        if yt:
-            return f'https://www.youtube-nocookie.com/embed/{yt}?autoplay=1&rel=0'
-        vm = _vimeo_id(self.embed_url)
-        if vm:
-            return f'https://player.vimeo.com/video/{vm}?autoplay=1'
-        return self.embed_url
+        info = self.embed_info
+        return info['src'] if info else self.embed_url
+
+    @property
+    def play_kind(self):
+        """How the lightbox plays it: image | video (a file) | embed (a player in an iframe)."""
+        if self.kind == 'embed':
+            info = self.embed_info
+            return 'video' if info and info['kind'] == 'file' else 'embed'
+        return self.kind
 
     @property
     def thumb_url(self):
@@ -1519,10 +1623,8 @@ class WorkMedia(models.Model):
             return self.image.url
         if self.poster:
             return self.poster.url
-        yt = _youtube_id(self.embed_url)
-        if yt:
-            return f'https://i.ytimg.com/vi/{yt}/hqdefault.jpg'
-        return ''
+        info = self.embed_info
+        return info['thumb'] if info else ''
 
     @property
     def full_url(self):
@@ -1596,6 +1698,15 @@ class HomeSection(models.Model):
     button_text_en = models.CharField(max_length=60, blank=True, default='')
     button_link = models.CharField(max_length=255, blank=True, default='')
     image = models.ImageField(upload_to='home/', blank=True, null=True)
+    # hero only: a separate picture for phones, where the photo sits in the frame, the handwritten words
+    image_mobile = models.ImageField(upload_to='home/', blank=True, null=True)
+    image_focus = models.PositiveSmallIntegerField(
+        null=True, blank=True, validators=[MaxValueValidator(100)],
+    )
+    image_focus_mobile = models.PositiveSmallIntegerField(
+        null=True, blank=True, validators=[MaxValueValidator(100)],
+    )
+    script_text = models.CharField(max_length=160, blank=True, default='')
     items_limit = models.PositiveSmallIntegerField(default=8)
 
     class Meta:
@@ -1638,6 +1749,11 @@ class HomeSection(models.Model):
         return self.button_text_en or self.button_text_ar
 
     @property
+    def hero_script(self):
+        """The handwritten words on the right of the hero (big screens) — one word per line."""
+        return (self.script_text or '').replace('\\n', '\n').strip()
+
+    @property
     def title_lines(self):
         lines = [line.strip() for line in (self.title or '').replace('\\n', '\n').splitlines()]
         lines = [line for line in lines if line]
@@ -1678,6 +1794,91 @@ class HomeSection(models.Model):
                 subtitle_ar=d[4], subtitle_en=d[5], button_text_ar=d[6], button_text_en=d[7],
                 button_link=d[8], items_limit=d[9] or 8,
             )
+
+
+# ============================================================= about / story
+ABOUT_STATS_MODES = [
+    ('auto', 'أرقام تلقائية (عدد العملاء والديزاينات والأعمال والتقييم)'),
+    ('custom', 'أرقام أنا اللي بكتبها'),
+    ('hidden', 'من غير أرقام'),
+]
+
+
+class AboutPage(models.Model):
+    """Everything in «حكايتنا» that isn't in the homepage block itself (one row)."""
+
+    tag_ar = models.CharField(max_length=80, blank=True, default='')
+    tag_en = models.CharField(max_length=80, blank=True, default='')
+    show_tag = models.BooleanField(default=True)
+    stats_mode = models.CharField(max_length=10, choices=ABOUT_STATS_MODES, default='auto')
+    stats_on_home = models.BooleanField(default=True)
+    stats_on_page = models.BooleanField(default=True)
+    # the /about/ page
+    page_title_ar = models.CharField(max_length=160, blank=True, default='')
+    page_title_en = models.CharField(max_length=160, blank=True, default='')
+    page_subtitle_ar = models.CharField(max_length=300, blank=True, default='')
+    page_subtitle_en = models.CharField(max_length=300, blank=True, default='')
+    page_image = models.ImageField(upload_to='site/', blank=True, null=True)
+    button1_text_ar = models.CharField(max_length=60, blank=True, default='تسوّق الآن')
+    button1_text_en = models.CharField(max_length=60, blank=True, default='Shop now')
+    button1_link = models.CharField(max_length=300, blank=True, default='/shop/')
+    button2_text_ar = models.CharField(max_length=60, blank=True, default='أعمالنا')
+    button2_text_en = models.CharField(max_length=60, blank=True, default='Our work')
+    button2_link = models.CharField(max_length=300, blank=True, default='/works/')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def load(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+    @property
+    def tag(self):
+        return pick(self.tag_ar, self.tag_en)
+
+    @property
+    def page_title(self):
+        return pick(self.page_title_ar, self.page_title_en)
+
+    @property
+    def page_subtitle(self):
+        return pick(self.page_subtitle_ar, self.page_subtitle_en)
+
+    @property
+    def buttons(self):
+        out = []
+        for n, ghost in ((1, False), (2, True)):
+            text = pick(getattr(self, f'button{n}_text_ar'), getattr(self, f'button{n}_text_en'))
+            link = getattr(self, f'button{n}_link')
+            if text and link:
+                out.append({'text': text, 'link': link, 'ghost': ghost})
+        return out
+
+
+class AboutStat(models.Model):
+    """A number the owner writes himself in «حكايتنا» (e.g. 500+ عميل)."""
+
+    value = models.CharField(max_length=20)
+    suffix = models.CharField(max_length=6, blank=True, default='+', help_text='مثلاً + أو % أو K')
+    show_star = models.BooleanField(default=False)
+    label_ar = models.CharField(max_length=60)
+    label_en = models.CharField(max_length=60, blank=True, default='')
+    is_active = models.BooleanField(default=True)
+    ordering = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['ordering', 'id']
+
+    def __str__(self):
+        return f'{self.value}{self.suffix} {self.label_ar}'
+
+    @property
+    def label(self):
+        return pick(self.label_ar, self.label_en)
 
 
 # ==================================================================== navbar
@@ -1751,6 +1952,69 @@ class Policy(models.Model):
     @property
     def has_content(self):
         return bool((self.content_ar or '').strip() or (self.content_en or '').strip())
+
+
+# ============================================================ link previews
+def normalize_site_path(value):
+    """'https://site.com/policies/x/?lang=ar' → '/policies/x/' (what request.path looks like)."""
+    from urllib.parse import unquote, urlsplit
+    value = (value or '').strip()
+    if not value:
+        return '/'
+    parts = urlsplit(value if '://' in value else 'http://x' + ('' if value.startswith('/') else '/') + value)
+    path = unquote(parts.path or '/')
+    if not path.startswith('/'):
+        path = '/' + path
+    if not path.endswith('/') and '.' not in path.rsplit('/', 1)[-1]:
+        path += '/'
+    return path
+
+
+class LinkPreview(models.Model):
+    """The picture / title that shows under a link when it's shared (WhatsApp, Facebook…)."""
+
+    path = models.CharField(max_length=300, unique=True)
+    match_children = models.BooleanField(
+        default=False, help_text='مثلاً /policies/ → كل صفحات السياسات تاخد نفس الصورة'
+    )
+    image = models.ImageField(upload_to='share/')
+    title_ar = models.CharField(max_length=160, blank=True, default='')
+    title_en = models.CharField(max_length=160, blank=True, default='')
+    description_ar = models.CharField(max_length=300, blank=True, default='')
+    description_en = models.CharField(max_length=300, blank=True, default='')
+    is_active = models.BooleanField(default=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['path']
+
+    def __str__(self):
+        return self.path
+
+    def save(self, *args, **kwargs):
+        self.path = normalize_site_path(self.path)
+        super().save(*args, **kwargs)
+
+    @property
+    def title(self):
+        return pick(self.title_ar, self.title_en)
+
+    @property
+    def description(self):
+        return pick(self.description_ar, self.description_en)
+
+    @classmethod
+    def for_path(cls, path):
+        """Exact link first, then the longest parent marked «ينطبق على الصفحات اللي جواه»."""
+        path = normalize_site_path(path)
+        items = list(cls.objects.filter(is_active=True).only(
+            'path', 'match_children', 'image', 'title_ar', 'title_en', 'description_ar', 'description_en',
+        ))
+        exact = next((i for i in items if i.path == path), None)
+        if exact:
+            return exact
+        parents = [i for i in items if i.match_children and path.startswith(i.path)]
+        return max(parents, key=lambda i: len(i.path)) if parents else None
 
 
 class NavLink(models.Model):

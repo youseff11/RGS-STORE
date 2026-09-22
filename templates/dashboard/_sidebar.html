@@ -43,7 +43,7 @@
   {% if 'products' in DASH_PERMS %}
   <div class="sb-label">المتجر</div>
   <a class="sb-link {% if active_page == 'products' %}is-active{% endif %}" href="{% url 'dash_products' %}">
-    {% include 'partials/icon.html' with name='shirt' %} المنتجات
+    {% include 'partials/icon.html' with name='pen-tool' %} المنتجات
   </a>
   <a class="sb-link {% if active_page == 'categories' %}is-active{% endif %}" href="{% url 'dash_categories' %}">
     {% include 'partials/icon.html' with name='grid' %} الأقسام
@@ -59,8 +59,14 @@
   <a class="sb-link {% if active_page == 'homepage' %}is-active{% endif %}" href="{% url 'dash_home' %}">
     {% include 'partials/icon.html' with name='home' %} الصفحة الرئيسية
   </a>
+  <a class="sb-link {% if active_page == 'hero' %}is-active{% endif %}" href="{% url 'dash_home_hero' %}">
+    {% include 'partials/icon.html' with name='image' %} الواجهة (Hero)
+  </a>
   <a class="sb-link {% if active_page == 'navbar' %}is-active{% endif %}" href="{% url 'dash_nav' %}">
     {% include 'partials/icon.html' with name='menu' %} القائمة (الناف بار)
+  </a>
+  <a class="sb-link {% if active_page == 'about' %}is-active{% endif %}" href="{% url 'dash_about' %}">
+    {% include 'partials/icon.html' with name='quote' %} حكايتنا (من نحن)
   </a>
   {% endif %}
   {% if 'portfolio' in DASH_PERMS %}
@@ -83,6 +89,9 @@
   </a>
   <a class="sb-link {% if active_page == 'policies' %}is-active{% endif %}" href="{% url 'dash_policies' %}">
     {% include 'partials/icon.html' with name='file' %} السياسات
+  </a>
+  <a class="sb-link {% if active_page == 'link_previews' %}is-active{% endif %}" href="{% url 'dash_link_previews' %}">
+    {% include 'partials/icon.html' with name='share' %} صور الروابط
   </a>
   {% endif %}
   {% if 'messages' in DASH_PERMS %}

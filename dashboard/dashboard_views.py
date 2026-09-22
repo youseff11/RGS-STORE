@@ -18,18 +18,20 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .forms import (
-    AnnouncementForm, BannerForm, CategoryForm, ColorForm, CouponForm,
-    CountryForm, DiscordLoginForm, GoogleLoginForm, HomeSectionForm, NavLinkForm, NotificationSettingsForm,
-    PaymentSettingsForm, PolicyForm, ProductForm, PromotionForm, ReviewForm, SiteSettingsForm,
+    AboutBlockForm, AboutPageForm, AboutStatForm, AboutStoryForm, AnnouncementForm, BannerForm, DefaultShareImageForm, LinkPreviewForm, CategoryForm, ColorForm, CouponForm,
+    CountryForm, CustomerForm, DiscordLoginForm, GoogleLoginForm, HomeSectionForm, NavLinkForm, NotificationSettingsForm,
+    OrderEditForm, PaymentSettingsForm, PolicyForm, ProductForm, PromotionForm, ReviewCreateForm,
+    ReviewForm, SiteSettingsForm,
     ServiceForm, StaffForm, WorkCategoryForm, WorkForm,
 )
 from . import discord_oauth, google_oauth, mailer
 from .models import (
-    Announcement, Banner, Category, ContactMessage, Country, Coupon, CustomerProfile,
-    HomeSection, NavLink, Order, OrderItem, Policy, Product, ProductColor, ProductImage,
+    AboutPage, AboutStat, Announcement, Banner, Category, ContactMessage, Country, Coupon, CustomerProfile,
+    HomeSection, LinkPreview, NavLink, Order, OrderItem, Policy, Product, ProductColor, ProductImage,
     PAYMENT_STATUSES, Promotion, Review, STAFF_PERMISSIONS, Service, SiteSettings, StaffProfile,
     TICKET_MAX_FILES, TICKET_MAX_FILE_MB, TICKET_STATUSES, Ticket, TicketMessage, Work,
-    WorkCategory, WorkMedia, ensure_policy_defaults, staff_permissions,
+    VIDEO_SITES, WorkCategory, WorkMedia, clean_video_url, ensure_policy_defaults, staff_permissions,
+    video_embed,
 )
 
 from .utils import save_ticket_attachments, ticket_uploads
@@ -102,10 +104,13 @@ def index(request):
     week_ago = now - timedelta(days=7)
 
     orders = Order.objects.all()
-    paid_statuses = ['confirmed', 'shipped', 'delivered']
-    revenue = orders.filter(status__in=paid_statuses).aggregate(t=Sum('total'))['t'] or Decimal('0')
-    month_revenue = orders.filter(
-        status__in=paid_statuses, created_at__gte=month_ago
+    # مدفوع، أو الأدمن بدأ فيه / سلّمه — والملغي مش محسوب
+    earning = orders.exclude(status='cancelled').filter(
+        Q(payment_status='paid') | Q(status__in=['confirmed', 'delivered'])
+    )
+    revenue = earning.aggregate(t=Sum('total'))['t'] or Decimal('0')
+    month_revenue = earning.filter(
+        created_at__gte=month_ago
     ).aggregate(t=Sum('total'))['t'] or Decimal('0')
 
     # services customers order the most (by the name saved on each order line)
@@ -393,20 +398,40 @@ def service_list(request, pk=None):
     """Malak writes the services here (they replaced the clothing sizes)."""
     service = get_object_or_404(Service, pk=pk) if pk else None
     form = ServiceForm(request.POST or None, instance=service)
+    products = list(
+        Product.objects.select_related('category').prefetch_related('images')
+        .order_by('category__ordering', 'category__name_ar', 'name_ar')
+    )
     if request.method == 'POST' and form.is_valid():
+        chosen = {int(v) for v in request.POST.getlist('products') if v.isdigit()}
         with transaction.atomic():
             obj = form.save()
-            if service is None and form.cleaned_data.get('add_to_all'):
-                for product in Product.objects.prefetch_related('colors', 'variants'):
-                    product.sync_variants(product.selected_service_ids | {obj.pk})
+            # the service's own group of designs: add it where it's ticked, remove it elsewhere
+            for product in products:
+                current = product.selected_service_ids
+                has, want = obj.pk in current, product.pk in chosen
+                if has != want:
+                    product.sync_variants(current | {obj.pk} if want else current - {obj.pk})
         messages.success(request, 'تم حفظ الخدمة' if service else 'تمت إضافة الخدمة')
         return redirect('dash_services')
+
+    if request.method == 'POST':  # form error → keep what was ticked
+        selected = {int(v) for v in request.POST.getlist('products') if v.isdigit()}
+    elif service:
+        selected = set(service.variants.values_list('product_id', flat=True))
+    else:
+        selected = set()
+    groups = {}
+    for product in products:
+        key = product.category.name_ar if product.category else 'من غير قسم'
+        groups.setdefault(key, []).append(product)
     services = Service.objects.annotate(
         designs=Count('variants__product', distinct=True),
     )
     return render(request, 'dashboard/services/list.html', {
         'services': services, 'form': form, 'object': service,
-        'products_total': Product.objects.count(),
+        'products_total': len(products), 'product_groups': list(groups.items()),
+        'selected_products': selected,
         'active_page': 'services', **_pending_counts(),
     })
 
@@ -515,6 +540,22 @@ def order_payment(request, pk):
 
 
 @perm_required('orders')
+def order_edit(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+    form = OrderEditForm(request.POST or None, instance=order)
+    if request.method == 'POST' and form.is_valid():
+        order = form.save(commit=False)
+        order.shipping_fee = order.shipping_fee or Decimal('0')
+        order.total = max(Decimal('0'), order.subtotal - order.discount_total) + order.shipping_fee
+        order.save()
+        messages.success(request, 'تم حفظ بيانات الطلب')
+        return redirect('dash_order_detail', pk=order.pk)
+    return render(request, 'dashboard/orders/form.html', {
+        'form': form, 'order': order, 'active_page': 'orders', **_pending_counts(),
+    })
+
+
+@perm_required('orders')
 @require_POST
 def order_delete(request, pk):
     get_object_or_404(Order, pk=pk).delete()
@@ -617,6 +658,116 @@ def announcement_delete(request, pk):
     get_object_or_404(Announcement, pk=pk).delete()
     messages.info(request, 'تم حذف الإعلان')
     return redirect('dash_announcements')
+
+
+# ============================================================= about / story
+@perm_required('content')
+def about_editor(request):
+    """«حكايتنا» — the homepage block, the /about/ page and its numbers, all in one place."""
+    HomeSection.ensure_defaults()
+    section = HomeSection.objects.get(key='about')
+    site = SiteSettings.load()
+    page = AboutPage.load()
+    edit_stat = None
+    if (request.GET.get('stat') or '').isdigit():
+        edit_stat = AboutStat.objects.filter(pk=int(request.GET['stat'])).first()
+
+    action = request.POST.get('action') if request.method == 'POST' else None
+    data = request.POST if action == 'save' else None
+    files = request.FILES if action == 'save' else None
+    block_form = AboutBlockForm(data, files, instance=section, prefix='block')
+    story_form = AboutStoryForm(data, instance=site, prefix='story')
+    page_form = AboutPageForm(data, files, instance=page, prefix='page')
+    stat_form = AboutStatForm(
+        request.POST if action == 'stat' else None, instance=edit_stat, prefix='stat',
+        initial=None if edit_stat else {'suffix': '+', 'ordering': AboutStat.objects.count()},
+    )
+
+    if action == 'save':
+        if block_form.is_valid() and story_form.is_valid() and page_form.is_valid():
+            with transaction.atomic():
+                block = block_form.save(commit=False)
+                if request.POST.get('clear_block_image'):
+                    block.image = None
+                block.save()
+                story_form.save()
+                about_page = page_form.save(commit=False)
+                if request.POST.get('clear_page_image'):
+                    about_page.page_image = None
+                about_page.save()
+            messages.success(request, 'تم حفظ «حكايتنا»')
+            return redirect('dash_about')
+        messages.error(request, 'راجع الخانات اللي عليها علامة حمرا')
+    elif action == 'stat' and stat_form.is_valid():
+        stat_form.save()
+        messages.success(request, 'تم حفظ الرقم')
+        return redirect(f"{reverse('dash_about')}#stats")
+
+    return render(request, 'dashboard/about/editor.html', {
+        'section': section, 'page': page, 'site': site,
+        'block_form': block_form, 'story_form': story_form, 'page_form': page_form,
+        'stat_form': stat_form, 'edit_stat': edit_stat, 'stats': AboutStat.objects.all(),
+        'active_page': 'about', **_pending_counts(),
+    })
+
+
+@perm_required('content')
+@require_POST
+def about_stat_delete(request, pk):
+    get_object_or_404(AboutStat, pk=pk).delete()
+    messages.info(request, 'تم حذف الرقم')
+    return redirect(f"{reverse('dash_about')}#stats")
+
+
+# ============================================================ link previews
+def _site_pages():
+    """Suggestions for the «الرابط» box."""
+    pages = [
+        ('/', 'الصفحة الرئيسية'), ('/shop/', 'المتجر'), ('/works/', 'أعمالنا'),
+        ('/reviews/', 'التقييمات'), ('/about/', 'من نحن'), ('/contact/', 'اتصل بنا'),
+        ('/track/', 'تتبع الطلب'), ('/support/', 'الدعم'), ('/policies/', 'كل صفحات السياسات (فعّل «ينطبق كمان على كل الصفحات اللي جوه»)'),
+    ]
+    pages += [(p.get_absolute_url(), f'سياسة: {p.title_ar}') for p in Policy.objects.all()]
+    pages += [(c.get_absolute_url(), f'قسم: {c.name_ar}') for c in Category.objects.all()
+              if hasattr(c, 'get_absolute_url')]
+    return pages
+
+
+@perm_required('content')
+def link_preview_list(request):
+    site = SiteSettings.load()
+    default_form = DefaultShareImageForm(request.POST or None, request.FILES or None, instance=site)
+    if request.method == 'POST' and default_form.is_valid():
+        default_form.save()
+        messages.success(request, 'تم حفظ الصورة الافتراضية')
+        return redirect('dash_link_previews')
+    return render(request, 'dashboard/link_previews/list.html', {
+        'items': LinkPreview.objects.all(), 'site': site, 'default_form': default_form,
+        'active_page': 'link_previews', **_pending_counts(),
+    })
+
+
+@perm_required('content')
+def link_preview_form(request, pk=None):
+    obj = get_object_or_404(LinkPreview, pk=pk) if pk else None
+    initial = {'path': request.GET.get('path', '')} if not obj else None
+    form = LinkPreviewForm(request.POST or None, request.FILES or None, instance=obj, initial=initial)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'تم حفظ صورة الرابط')
+        return redirect('dash_link_previews')
+    return render(request, 'dashboard/link_previews/form.html', {
+        'form': form, 'object': obj, 'pages': _site_pages(), 'site': SiteSettings.load(),
+        'active_page': 'link_previews', **_pending_counts(),
+    })
+
+
+@perm_required('content')
+@require_POST
+def link_preview_delete(request, pk):
+    get_object_or_404(LinkPreview, pk=pk).delete()
+    messages.info(request, 'تم حذف صورة الرابط — هيرجع للصورة الافتراضية')
+    return redirect('dash_link_previews')
 
 
 # =================================================================== banners
@@ -1067,6 +1218,54 @@ def customer_detail(request, pk):
 
 
 @perm_required('customers')
+def customer_form(request, pk=None):
+    customer = get_object_or_404(User, pk=pk, is_staff=False) if pk else None
+    profile = CustomerProfile.for_user(customer) if customer else None
+    initial = {'is_active': True}
+    if customer:
+        initial = {
+            'full_name': customer.get_full_name(), 'email': customer.email,
+            'phone': profile.phone, 'phone_alt': profile.phone_alt, 'country': profile.country,
+            'city': profile.city, 'address': profile.address, 'admin_note': profile.admin_note,
+            'is_active': customer.is_active,
+        }
+    form = CustomerForm(request.POST or None, instance=customer, initial=initial)
+    if request.method == 'POST' and form.is_valid():
+        data = form.cleaned_data
+        first, _, last = data['full_name'].strip().partition(' ')
+        with transaction.atomic():
+            if customer is None:
+                customer = User(username=_free_customer_username(data['email']))
+            customer.first_name, customer.last_name = first[:150], last[:150]
+            customer.email = data['email']
+            customer.is_active = data['is_active']
+            if data['password']:
+                customer.set_password(data['password'])
+            elif not customer.pk:
+                customer.set_unusable_password()
+            customer.save()
+            profile = CustomerProfile.for_user(customer)
+            for field in ('phone', 'phone_alt', 'country', 'city', 'address', 'admin_note'):
+                setattr(profile, field, data[field])
+            profile.save()
+        messages.success(request, 'تم حفظ بيانات العميل')
+        return redirect('dash_customer_detail', pk=customer.pk)
+    return render(request, 'dashboard/customers/form.html', {
+        'form': form, 'customer': customer, 'active_page': 'customers', **_pending_counts(),
+    })
+
+
+def _free_customer_username(email):
+    base = (email or 'customer').lower()[:150]
+    username, n = base, 1
+    while User.objects.filter(username__iexact=username).exists():
+        n += 1
+        suffix = f'-{n}'
+        username = base[:150 - len(suffix)] + suffix
+    return username
+
+
+@perm_required('customers')
 @require_POST
 def customer_toggle(request, pk):
     customer = get_object_or_404(User, pk=pk, is_staff=False)
@@ -1143,12 +1342,12 @@ def work_media(request, pk):
                 )
                 messages.success(request, 'تم رفع الفيديو')
         elif action == 'add_embed':
-            url = (request.POST.get('embed_url') or '').strip()
+            url = clean_video_url(request.POST.get('embed_url'))[:1000]
             media = WorkMedia(work=work, kind='embed', embed_url=url, ordering=start,
                               caption_ar=(request.POST.get('caption_ar') or '')[:200],
                               caption_en=(request.POST.get('caption_en') or '')[:200])
-            if not url.startswith('http') or not (('youtu' in url) or ('vimeo' in url)):
-                messages.error(request, 'حط لينك يوتيوب أو فيميو صحيح')
+            if not video_embed(url):
+                messages.error(request, f'اللينك ده مش لينك فيديو نقدر نشغّله جوه الموقع — الشغّال: {VIDEO_SITES}')
             else:
                 if request.FILES.get('poster'):
                     media.poster = request.FILES['poster']
@@ -1277,6 +1476,18 @@ def review_list(request):
 
 
 @perm_required('reviews')
+def review_new(request):
+    form = ReviewCreateForm(request.POST or None, initial={'rating': 5, 'is_approved': True})
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'تم إضافة التقييم')
+        return redirect('dash_reviews')
+    return render(request, 'dashboard/reviews/form.html', {
+        'form': form, 'review': None, 'active_page': 'reviews', **_pending_counts(),
+    })
+
+
+@perm_required('reviews')
 def review_edit(request, pk):
     review = get_object_or_404(Review.objects.select_related('user', 'order'), pk=pk)
     form = ReviewForm(request.POST or None, instance=review)
@@ -1306,7 +1517,10 @@ def review_toggle(request, pk, field):
 def review_delete(request, pk):
     get_object_or_404(Review, pk=pk).delete()
     messages.info(request, 'تم حذف التقييم')
-    return redirect(request.META.get('HTTP_REFERER') or 'dash_reviews')
+    back = request.META.get('HTTP_REFERER') or ''
+    if not back or f'/dashboard/reviews/{pk}/' in back:  # deleted from its own edit page
+        return redirect('dash_reviews')
+    return redirect(back)
 
 
 # ============================================================ homepage / nav
@@ -1336,20 +1550,31 @@ def home_sections(request):
 @perm_required('content')
 def home_section_edit(request, pk):
     section = get_object_or_404(HomeSection, pk=pk)
+    if section.key == 'about':  # «حكايتنا» has its own full page
+        return redirect('dash_about')
     form = HomeSectionForm(request.POST or None, request.FILES or None, instance=section)
     if request.method == 'POST':
-        if request.POST.get('clear_image') and section.image:
-            section.image = None
-            section.save(update_fields=['image'])
-            messages.info(request, 'تم حذف الصورة')
-            return redirect('dash_home_edit', pk=section.pk)
+        for field in ('image', 'image_mobile'):
+            if request.POST.get(f'clear_{field}') and getattr(section, field):
+                setattr(section, field, None)
+                section.save(update_fields=[field])
+                messages.info(request, 'تم حذف الصورة')
+                return redirect('dash_home_edit', pk=section.pk)
         if form.is_valid():
             form.save()
             messages.success(request, f'تم حفظ قسم «{section.label}»')
             return redirect('dash_home')
     return render(request, 'dashboard/homepage/form.html', {
-        'form': form, 'section': section, 'active_page': 'homepage', **_pending_counts(),
+        'form': form, 'section': section,
+        'active_page': 'hero' if section.key == 'hero' else 'homepage', **_pending_counts(),
     })
+
+
+@perm_required('content')
+def home_hero_edit(request):
+    """Shortcut from the sidebar straight to the hero."""
+    HomeSection.ensure_defaults()
+    return redirect('dash_home_edit', pk=HomeSection.objects.get(key='hero').pk)
 
 
 @perm_required('content')

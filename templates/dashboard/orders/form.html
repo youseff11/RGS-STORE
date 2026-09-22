@@ -1,0 +1,23 @@
+{% extends 'base/dashboard_base.html' %}
+{% load store_tags %}
+{% block page_name %}تعديل طلب{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>تعديل الطلب {{ order.order_number }}</h2><p>بيانات العميل والتوصيل — المنتجات والدفع بيفضلوا زي ما هم</p></div>
+  <div class="flex">
+    <a class="btn btn-ghost" href="{% url 'dash_order_detail' order.pk %}">رجوع</a>
+    <form method="post" action="{% url 'dash_order_delete' order.pk %}" data-confirm="حذف الطلب نهائيًا؟">{% csrf_token %}
+      <button class="btn btn-danger" type="submit">{% include 'partials/icon.html' with name='trash' %} حذف</button>
+    </form>
+  </div>
+</div>
+<form method="post" style="max-width:820px">
+  {% csrf_token %}
+  <div class="card">
+    {% include 'dashboard/_form_fields.html' %}
+    <div class="help" style="margin-bottom:12px">المنتجات: {% price order.subtotal %}{% if order.discount_total %} · الخصم: {% price order.discount_total %}{% endif %} · الإجمالي الحالي: <b>{% price order.total %}</b></div>
+    <button class="btn" type="submit">حفظ</button>
+  </div>
+</form>
+{% endblock %}

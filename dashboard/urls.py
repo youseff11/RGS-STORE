@@ -93,6 +93,7 @@ urlpatterns = [
     path('dashboard/orders/', dv.order_list, name='dash_orders'),
     path('dashboard/orders/<int:pk>/', dv.order_detail, name='dash_order_detail'),
     path('dashboard/orders/<int:pk>/status/', dv.order_status, name='dash_order_status'),
+    path('dashboard/orders/<int:pk>/edit/', dv.order_edit, name='dash_order_edit'),
     path('dashboard/orders/<int:pk>/delete/', dv.order_delete, name='dash_order_delete'),
     path('dashboard/orders/<int:pk>/print/', dv.order_print, name='dash_order_print'),
 
@@ -115,6 +116,12 @@ urlpatterns = [
     path('dashboard/announcements/<int:pk>/delete/', dv.announcement_delete, name='dash_announcement_delete'),
 
     # banners
+    path('dashboard/about/', dv.about_editor, name='dash_about'),
+    path('dashboard/about/stats/<int:pk>/delete/', dv.about_stat_delete, name='dash_about_stat_delete'),
+    path('dashboard/link-previews/', dv.link_preview_list, name='dash_link_previews'),
+    path('dashboard/link-previews/new/', dv.link_preview_form, name='dash_link_preview_new'),
+    path('dashboard/link-previews/<int:pk>/edit/', dv.link_preview_form, name='dash_link_preview_edit'),
+    path('dashboard/link-previews/<int:pk>/delete/', dv.link_preview_delete, name='dash_link_preview_delete'),
     path('dashboard/banners/', dv.banner_list, name='dash_banners'),
     path('dashboard/banners/new/', dv.banner_form, name='dash_banner_new'),
     path('dashboard/banners/<int:pk>/edit/', dv.banner_form, name='dash_banner_edit'),
@@ -146,6 +153,8 @@ urlpatterns = [
     # customers
     path('dashboard/customers/', dv.customer_list, name='dash_customers'),
     path('dashboard/customers/export/', dv.customer_export, name='dash_customers_export'),
+    path('dashboard/customers/new/', dv.customer_form, name='dash_customer_new'),
+    path('dashboard/customers/<int:pk>/edit/', dv.customer_form, name='dash_customer_edit'),
     path('dashboard/customers/<int:pk>/', dv.customer_detail, name='dash_customer_detail'),
     path('dashboard/customers/<int:pk>/toggle/', dv.customer_toggle, name='dash_customer_toggle'),
     path('dashboard/customers/<int:pk>/delete/', dv.customer_delete, name='dash_customer_delete'),
@@ -167,12 +176,14 @@ urlpatterns = [
 
     # reviews
     path('dashboard/reviews/', dv.review_list, name='dash_reviews'),
+    path('dashboard/reviews/new/', dv.review_new, name='dash_review_new'),
     path('dashboard/reviews/<int:pk>/', dv.review_edit, name='dash_review_edit'),
     path('dashboard/reviews/<int:pk>/toggle/<str:field>/', dv.review_toggle, name='dash_review_toggle'),
     path('dashboard/reviews/<int:pk>/delete/', dv.review_delete, name='dash_review_delete'),
 
     # homepage + navbar + policies
     path('dashboard/homepage/', dv.home_sections, name='dash_home'),
+    path('dashboard/homepage/hero/', dv.home_hero_edit, name='dash_home_hero'),
     path('dashboard/homepage/<int:pk>/', dv.home_section_edit, name='dash_home_edit'),
     path('dashboard/homepage/<int:pk>/move/<str:direction>/', dv.home_section_move, name='dash_home_move'),
     path('dashboard/homepage/<int:pk>/toggle/', dv.home_section_toggle, name='dash_home_toggle'),

@@ -4,7 +4,7 @@
 {% block content %}
 <section class="page-hero">
   <div class="wrap account-hero">
-    <span class="acct-av is-lg">{{ user.first_name|default:user.get_username|slice:":1"|upper }}</span>
+    <span class="acct-av is-lg">{% if profile.photo_url %}<img src="{{ profile.photo_url }}" alt="" referrerpolicy="no-referrer">{% else %}{{ user.first_name|default:user.get_username|slice:":1"|upper }}{% endif %}</span>
     <div>
       <div class="crumbs"><a href="{% url 'home' %}">{% t 'home' %}</a> <span>/</span> <span>{% t 'account' %}</span></div>
       <h1>{{ user.get_full_name|default:user.get_username }}</h1>
@@ -19,6 +19,44 @@
 
     <div>
       {% if tab == 'profile' %}
+        <div class="form-card avatar-card">
+          <span class="acct-av is-xl" data-avatar-preview>{% if profile.photo_url %}<img src="{{ profile.photo_url }}" alt="" referrerpolicy="no-referrer">{% else %}{{ user.first_name|default:user.get_username|slice:":1"|upper }}{% endif %}</span>
+          <div class="avatar-body">
+            <h3>{% t 'profile_photo' %}</h3>
+            <p class="help">{% t 'photo_hint' %}</p>
+            {% if errors.avatar %}<div class="err">{{ errors.avatar }}</div>{% endif %}
+            <div class="avatar-actions">
+              <form method="post" enctype="multipart/form-data" data-avatar-form>
+                {% csrf_token %}
+                <input type="hidden" name="action" value="avatar">
+                <label class="btn btn-sm">
+                  {% include 'partials/icon.html' with name='camera' %} {% if profile.avatar %}{% t 'change_photo' %}{% else %}{% t 'upload_photo' %}{% endif %}
+                  <input type="file" name="avatar" accept="image/jpeg,image/png,image/webp" hidden data-avatar-input>
+                </label>
+              </form>
+              {% if profile.avatar %}
+              <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="avatar_remove">
+                <button class="btn btn-sm btn-ghost" type="submit">{% include 'partials/icon.html' with name='trash' %} {% t 'remove_photo' %}</button>
+              </form>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <script>
+          (function () {
+            var input = document.querySelector('[data-avatar-input]');
+            if (!input) return;
+            input.addEventListener('change', function () {
+              if (!input.files || !input.files[0]) return;
+              var box = document.querySelector('[data-avatar-preview]');
+              if (box) box.innerHTML = '<img src="' + URL.createObjectURL(input.files[0]) + '" alt="">';
+              input.form.submit();
+            });
+          })();
+        </script>
+
         <form class="form-card" method="post" novalidate>
           {% csrf_token %}
           <input type="hidden" name="action" value="profile">

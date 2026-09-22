@@ -1,6 +1,36 @@
 {% extends 'base/dashboard_base.html' %}
 {% load store_tags %}
-{% block page_name %}الخدمات{% endblock %}
+{% block page_name %}الخدمات<script>
+(function () {
+  var list = document.getElementById('svc-product-list');
+  if (!list) return;
+  var boxes = function (root) { return Array.prototype.slice.call((root || list).querySelectorAll('input[type=checkbox]')); };
+  var out = document.querySelector('[data-svc-count]');
+  var count = function () { if (out) out.textContent = '(' + boxes().filter(function (b) { return b.checked; }).length + ' / ' + boxes().length + ')'; };
+  list.addEventListener('change', count);
+  document.querySelectorAll('[data-check-all="svc-product-list"]').forEach(function (b) { b.addEventListener('click', function () { setTimeout(count); }); });
+  list.querySelectorAll('[data-svc-group-all]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var group = boxes(btn.closest('[data-svc-group]'));
+      var allOn = group.every(function (b) { return b.checked; });
+      group.forEach(function (b) { b.checked = !allOn; });
+      count();
+    });
+  });
+  var search = document.querySelector('[data-svc-search]');
+  if (search) search.addEventListener('input', function () {
+    var q = search.value.trim().toLowerCase();
+    list.querySelectorAll('.svc-product').forEach(function (row) {
+      row.hidden = q && row.dataset.name.indexOf(q) === -1;
+    });
+    list.querySelectorAll('[data-svc-group]').forEach(function (g) {
+      g.hidden = !g.querySelector('.svc-product:not([hidden])');
+    });
+  });
+  count();
+})();
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="page-head">
@@ -64,8 +94,71 @@
     <form method="post" action="{% if object %}{% url 'dash_service_edit' object.pk %}{% else %}{% url 'dash_services' %}{% endif %}">
       {% csrf_token %}
       {% include 'dashboard/_form_fields.html' %}
+
+      <div class="field svc-products">
+        <div class="between" style="margin-bottom:8px">
+          <label style="margin:0">المنتجات اللي عليها الخدمة دي <span class="muted small" data-svc-count></span></label>
+          {% if products_total %}<button type="button" class="btn btn-sm btn-ghost" data-check-all="svc-product-list">تحديد الكل</button>{% endif %}
+        </div>
+        {% if products_total %}
+        <input class="inp" type="search" placeholder="دوّر على ديزاين..." data-svc-search style="margin-bottom:8px">
+        <div class="svc-product-list" id="svc-product-list">
+          {% for group, items in product_groups %}
+            <div class="svc-group" data-svc-group>
+              <div class="svc-group-head">
+                <b>{{ group }}</b>
+                <button type="button" class="svc-group-all" data-svc-group-all>الكل</button>
+              </div>
+              {% for p in items %}
+              <label class="svc-product" data-name="{{ p.name_ar|lower }} {{ p.name_en|lower }}">
+                <input type="checkbox" name="products" value="{{ p.pk }}" {% if p.pk in selected_products %}checked{% endif %}>
+                {% with img=p.main_image %}
+                <span class="svc-thumb">{% if img %}<img src="{{ img.url }}" alt="" loading="lazy">{% endif %}</span>
+                {% endwith %}
+                <span class="svc-name">{{ p.name_ar }}{% if not p.is_active %} <small class="muted">(مخفي)</small>{% endif %}</span>
+              </label>
+              {% endfor %}
+            </div>
+          {% endfor %}
+        </div>
+        <div class="help">الخدمة بتظهر للعميل على الديزاينات اللي عليها علامة بس.</div>
+        {% else %}
+        <div class="help">لسه مفيش ديزاينات — ضيف ديزاين الأول وبعدين اختاره هنا.</div>
+        {% endif %}
+      </div>
+
       <button class="btn btn-block" type="submit">{% if object %}حفظ{% else %}إضافة{% endif %}</button>
     </form>
   </div>
 </div>
+<script>
+(function () {
+  var list = document.getElementById('svc-product-list');
+  if (!list) return;
+  var boxes = function (root) { return Array.prototype.slice.call((root || list).querySelectorAll('input[type=checkbox]')); };
+  var out = document.querySelector('[data-svc-count]');
+  var count = function () { if (out) out.textContent = '(' + boxes().filter(function (b) { return b.checked; }).length + ' / ' + boxes().length + ')'; };
+  list.addEventListener('change', count);
+  document.querySelectorAll('[data-check-all="svc-product-list"]').forEach(function (b) { b.addEventListener('click', function () { setTimeout(count); }); });
+  list.querySelectorAll('[data-svc-group-all]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var group = boxes(btn.closest('[data-svc-group]'));
+      var allOn = group.every(function (b) { return b.checked; });
+      group.forEach(function (b) { b.checked = !allOn; });
+      count();
+    });
+  });
+  var search = document.querySelector('[data-svc-search]');
+  if (search) search.addEventListener('input', function () {
+    var q = search.value.trim().toLowerCase();
+    list.querySelectorAll('.svc-product').forEach(function (row) {
+      row.hidden = q && row.dataset.name.indexOf(q) === -1;
+    });
+    list.querySelectorAll('[data-svc-group]').forEach(function (g) {
+      g.hidden = !g.querySelector('.svc-product:not([hidden])');
+    });
+  });
+  count();
+})();
+</script>
 {% endblock %}

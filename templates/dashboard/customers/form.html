@@ -1,0 +1,50 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}{% if customer %}تعديل عميل{% else %}إضافة عميل{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2>{% if customer %}تعديل {{ customer.get_full_name|default:customer.username }}{% else %}إضافة عميل جديد{% endif %}</h2>
+    <p>العميل بيدخل الموقع بالإيميل وكلمة المرور دي</p>
+  </div>
+  <div class="flex">
+    <a class="btn btn-ghost" href="{% if customer %}{% url 'dash_customer_detail' customer.pk %}{% else %}{% url 'dash_customers' %}{% endif %}">رجوع</a>
+    {% if customer %}
+    <form method="post" action="{% url 'dash_customer_delete' customer.pk %}" data-confirm="حذف حساب العميل؟ طلباته هتفضل موجودة.">{% csrf_token %}
+      <button class="btn btn-danger" type="submit">{% include 'partials/icon.html' with name='trash' %} حذف</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<form method="post" autocomplete="off">
+  {% csrf_token %}
+  <div class="split">
+    <div class="card">
+      <div class="card-head"><h3>بيانات الحساب</h3></div>
+      <div class="grid g2">
+        <div class="field"><label>{{ form.full_name.label }} <span class="req">*</span></label>{{ form.full_name }}{% for e in form.full_name.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+        <div class="field"><label>{{ form.email.label }} <span class="req">*</span></label>{{ form.email }}{% for e in form.email.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+      </div>
+      <div class="field"><label>{{ form.password.label }}</label>{{ form.password }}<div class="help">{{ form.password.help_text }}</div>{% for e in form.password.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+      <div class="switch">{{ form.is_active }}<label for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label></div>
+      <div class="field" style="margin-top:12px"><label>{{ form.admin_note.label }}</label>{{ form.admin_note }}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>التواصل والعنوان</h3></div>
+      <div class="grid g2">
+        <div class="field"><label>{{ form.phone.label }}</label>{{ form.phone }}{% for e in form.phone.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+        <div class="field"><label>{{ form.phone_alt.label }}</label>{{ form.phone_alt }}</div>
+      </div>
+      <div class="grid g2">
+        <div class="field"><label>{{ form.country.label }}</label>{{ form.country }}</div>
+        <div class="field"><label>{{ form.city.label }}</label>{{ form.city }}</div>
+      </div>
+      <div class="field"><label>{{ form.address.label }}</label>{{ form.address }}</div>
+      {% if form.non_field_errors %}<div class="alert">{% for e in form.non_field_errors %}{{ e }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</div>{% endif %}
+      <button class="btn btn-block" type="submit" style="margin-top:6px">{% if customer %}حفظ{% else %}إضافة العميل{% endif %}</button>
+    </div>
+  </div>
+</form>
+{% endblock %}

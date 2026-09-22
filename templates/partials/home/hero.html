@@ -1,11 +1,11 @@
 {% load static store_tags %}
 <section class="hero-main">
   <div class="hero-media">
-    {% if sec.image %}
-      <img src="{{ sec.image.url }}" alt="" fetchpriority="high">
-    {% else %}
-      <img src="{% static 'img/hero-dark.webp' %}" alt="" fetchpriority="high">
-    {% endif %}
+    <picture>
+      {% if sec.image_mobile %}<source media="(max-width: 620px)" srcset="{{ sec.image_mobile.url }}">{% endif %}
+      <img src="{% if sec.image %}{{ sec.image.url }}{% else %}{% static 'img/hero-dark.webp' %}{% endif %}" alt="" fetchpriority="high"
+           {% if sec.image_focus != None or sec.image_focus_mobile != None %}style="{% if sec.image_focus != None %}--hero-x:{{ sec.image_focus }}%;{% endif %}{% if sec.image_focus_mobile != None %}--hero-x-m:{{ sec.image_focus_mobile }}%;{% endif %}"{% endif %}>
+    </picture>
   </div>
 
   <div class="hero-wrap">
@@ -28,6 +28,6 @@
     </div>
   </div>
 
-  {% t 'hero_script' as script %}
-  <span class="hero-script" aria-hidden="true">{{ script|linebreaksbr }}</span>
+  {% t 'hero_script' as default_script %}
+  <span class="hero-script" aria-hidden="true">{{ sec.hero_script|default:default_script|linebreaksbr }}</span>
 </section>

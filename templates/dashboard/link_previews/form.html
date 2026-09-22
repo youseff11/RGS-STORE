@@ -1,0 +1,66 @@
+{% extends 'base/dashboard_base.html' %}
+{% load static %}
+{% block page_name %}صورة رابط{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2>{% if object %}تعديل صورة {{ object.path }}{% else %}صورة لرابط معيّن{% endif %}</h2>
+    <p>اختار الرابط، وارفع الصورة اللي عايزها تظهر لما حد يبعته</p>
+  </div>
+  <div class="flex">
+    <a class="btn btn-ghost" href="{% url 'dash_link_previews' %}">رجوع</a>
+    {% if object %}
+    <form method="post" action="{% url 'dash_link_preview_delete' object.pk %}" data-confirm="حذف صورة الرابط؟">{% csrf_token %}
+      <button class="btn btn-danger" type="submit">{% include 'partials/icon.html' with name='trash' %} حذف</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <div class="split">
+    <div class="card">
+      {% include 'dashboard/_form_fields.html' %}
+      <datalist id="site-pages">
+        {% for url, label in pages %}<option value="{{ url }}">{{ label }}</option>{% endfor %}
+      </datalist>
+      <button class="btn" type="submit">حفظ</button>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>شكل الرابط لما يتبعت</h3></div>
+      <div class="lp-preview" data-lp-preview>
+        <div class="lp-preview-img">
+          <img data-lp-img src="{% if object %}{{ object.image.url }}{% elif site.share_image %}{{ site.share_image.url }}{% else %}{% static 'img/hero-dark.webp' %}{% endif %}" alt="">
+        </div>
+        <div class="lp-preview-body">
+          <b data-lp-title>{{ object.title_ar|default:site.brand_name|default:'RGS TOWER' }}</b>
+          <span data-lp-desc>{{ object.description_ar|default:site.tagline|default:'' }}</span>
+          <small dir="ltr">{{ request.get_host }}</small>
+        </div>
+      </div>
+      <div class="help" style="margin-top:10px">واتساب وفيسبوك بيحفظوا الصورة القديمة لفترة — لو الرابط اتبعت قبل كده، الصورة الجديدة ممكن تاخد شوية وقت لحد ما تظهر.</div>
+    </div>
+  </div>
+</form>
+
+<script>
+(function () {
+  var img = document.querySelector('[data-lp-img]');
+  var file = document.querySelector('input[name="image"]');
+  var title = document.querySelector('input[name="title_ar"]');
+  var desc = document.querySelector('input[name="description_ar"]');
+  var tOut = document.querySelector('[data-lp-title]');
+  var dOut = document.querySelector('[data-lp-desc]');
+  var tDefault = tOut ? tOut.textContent : '';
+  var dDefault = dOut ? dOut.textContent : '';
+  if (file && img) file.addEventListener('change', function () {
+    if (file.files && file.files[0]) img.src = URL.createObjectURL(file.files[0]);
+  });
+  if (title && tOut) title.addEventListener('input', function () { tOut.textContent = title.value || tDefault; });
+  if (desc && dOut) desc.addEventListener('input', function () { dOut.textContent = desc.value || dDefault; });
+})();
+</script>
+{% endblock %}

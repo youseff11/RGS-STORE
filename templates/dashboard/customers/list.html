@@ -5,7 +5,10 @@
 {% block content %}
 <div class="page-head">
   <div><h2>العملاء</h2><p>كل اللي عملوا حساب على الموقع — بياناتهم بتتسجل هنا أوتوماتيك مع أول طلب</p></div>
-  <a class="btn btn-ghost" href="{% url 'dash_customers_export' %}">{% include 'partials/icon.html' with name='download' %} تصدير Excel (CSV)</a>
+  <div class="flex">
+    <a class="btn btn-ghost" href="{% url 'dash_customers_export' %}">{% include 'partials/icon.html' with name='download' %} تصدير Excel (CSV)</a>
+    <a class="btn" href="{% url 'dash_customer_new' %}">{% include 'partials/icon.html' with name='plus' %} إضافة عميل</a>
+  </div>
 </div>
 
 <div class="grid g3" style="margin-bottom:16px">
@@ -37,7 +40,7 @@
       <tr>
         <td>
           <div class="flex">
-            <span class="mini-av">{{ c.first_name|default:c.username|slice:":1"|upper }}</span>
+            <span class="mini-av">{% if c.customer.photo_url %}<img src="{{ c.customer.photo_url }}" alt="" referrerpolicy="no-referrer">{% else %}{{ c.first_name|default:c.username|slice:":1"|upper }}{% endif %}</span>
             <div>
               <b>{{ c.get_full_name|default:c.username }}</b>
               {% if not c.is_active %}<div><span class="chip chip-bad">موقوف</span></div>{% endif %}
@@ -50,7 +53,15 @@
         <td><span class="chip chip-muted">{{ c.n_orders }}</span></td>
         <td><b>{% price c.spent|default:0 %}</b></td>
         <td class="small muted">{{ c.date_joined|date:"Y/m/d" }}{% if c.last_order %}<div>آخر طلب {{ c.last_order|date:"Y/m/d" }}</div>{% endif %}</td>
-        <td><div class="row-actions"><a class="btn btn-sm btn-soft" href="{% url 'dash_customer_detail' c.pk %}">الملف</a></div></td>
+        <td>
+          <div class="row-actions">
+            <a class="btn btn-sm btn-soft" href="{% url 'dash_customer_detail' c.pk %}">الملف</a>
+            <a class="btn btn-sm btn-ghost" href="{% url 'dash_customer_edit' c.pk %}" title="تعديل" aria-label="تعديل">{% include 'partials/icon.html' with name='edit' %}</a>
+            <form method="post" action="{% url 'dash_customer_delete' c.pk %}" data-confirm="حذف حساب {{ c.get_full_name|default:c.username }}؟ طلباته هتفضل موجودة.">{% csrf_token %}
+              <button class="btn btn-sm btn-danger" type="submit" title="حذف" aria-label="حذف">{% include 'partials/icon.html' with name='trash' %}</button>
+            </form>
+          </div>
+        </td>
       </tr>
       {% endfor %}
     </tbody>

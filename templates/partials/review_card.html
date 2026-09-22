@@ -1,7 +1,7 @@
 {% load store_tags %}
 <article class="review-card reveal">
   <div class="review-top">
-    <span class="review-av">{{ review.initial }}</span>
+    <span class="review-av">{% if review.avatar_url %}<img src="{{ review.avatar_url }}" alt="" loading="lazy" referrerpolicy="no-referrer">{% else %}{{ review.initial }}{% endif %}</span>
     <div>
       <b>{{ review.name }}</b>
       <span class="review-meta">{% include 'partials/icon.html' with name='shield' %} {% t 'verified_buyer' %} · {{ review.created_at|date:"Y/m/d" }}</span>

@@ -29,7 +29,7 @@
           <div class="help">{{ form.share_image.help_text }}</div>
           {% if site.share_image %}<img src="{{ site.share_image.url }}" style="max-height:90px;margin-top:8px;border-radius:8px">{% endif %}
         </div>
-        {% include 'dashboard/_pair.html' with ar=form.about_ar en=form.about_en label='نبذة عن المتجر (من نحن)' %}
+        <div class="help">نص «من نحن» بقى في صفحة <a href="{% url 'dash_about' %}" style="color:var(--accent-text)">«حكايتنا»</a> مع كل حاجة تانية في القسم ده.</div>
       </div>
 
       <div class="card">

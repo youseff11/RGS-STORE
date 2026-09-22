@@ -1,5 +1,5 @@
 {% load store_tags %}
-<section class="section about-block">
+<section class="section about-block" id="about">
   <div class="wrap about-grid">
     <div class="about-media reveal">
       {% if sec.image %}
@@ -7,19 +7,19 @@
       {% else %}
         <div class="about-mark" aria-hidden="true">{% include 'partials/logo.html' %}</div>
       {% endif %}
-      <span class="about-tag">{{ SITE.brand_name|default:'RGS TOWER' }}</span>
+      {% if block.story.show_tag %}<span class="about-tag">{{ block.story.tag|default:SITE.brand_name|default:'RGS TOWER' }}</span>{% endif %}
     </div>
 
     <div class="about-copy reveal">
       {% if sec.eyebrow %}<span class="eyebrow">{{ sec.eyebrow }}</span>{% endif %}
       <h2>{{ sec.title|default:SITE.brand_name }}</h2>
-      <div class="about-text">{{ sec.subtitle|default:block.text|default:SITE.tagline|linebreaksbr }}</div>
+      <div class="about-text">{% if sec.subtitle %}{{ sec.subtitle|linebreaksbr }}{% elif block.text %}{{ block.text|truncatewords:60|linebreaksbr }}{% else %}{{ SITE.tagline }}{% endif %}</div>
 
       {% if block.stats %}
       <div class="about-stats">
         {% for stat in block.stats %}
           <div class="about-stat">
-            <b>{{ stat.value }}{% if stat.plus %}<i>+</i>{% endif %}{% if stat.star %} {% include 'partials/icon.html' with name='star-fill' %}{% endif %}</b>
+            <b dir="ltr">{{ stat.value }}{% if stat.suffix %}<i>{{ stat.suffix }}</i>{% endif %}{% if stat.star %} {% include 'partials/icon.html' with name='star-fill' %}{% endif %}</b>
             <span>{{ stat.label }}</span>
           </div>
         {% endfor %}

@@ -37,9 +37,9 @@
 
   <form class="card" method="post" enctype="multipart/form-data">
     {% csrf_token %}<input type="hidden" name="action" value="add_embed">
-    <div class="card-head"><h3>{% include 'partials/icon.html' with name='play' %} لينك يوتيوب / فيميو</h3></div>
-    <div class="field"><label>الرابط</label><input class="inp" name="embed_url" dir="ltr" placeholder="https://youtu.be/..." required></div>
-    <div class="field"><label>صورة غلاف (اختياري)</label><input class="inp file" type="file" name="poster" accept="image/*"><div class="help">يوتيوب بيجيب صورة لوحده</div></div>
+    <div class="card-head"><h3>{% include 'partials/icon.html' with name='play' %} فيديو من لينك</h3></div>
+    <div class="field"><label>الرابط</label><input class="inp" name="embed_url" dir="ltr" placeholder="https://youtu.be/..." required><div class="help">يوتيوب، فيميو، جوجل درايف، فيسبوك، إنستجرام (بوست أو ريل)، تيك توك، ديلي موشن، Streamable، أو لينك مباشر لملف mp4 — فيديو جوجل درايف لازم يكون «أي حد معاه اللينك يقدر يشوفه»</div></div>
+    <div class="field"><label>صورة غلاف (اختياري)</label><input class="inp file" type="file" name="poster" accept="image/*"><div class="help">يوتيوب وجوجل درايف وديلي موشن بيجيبوا صورة لوحدهم — باقي المواقع يفضّل ترفع صورة</div></div>
     <div class="lang-pair">
       <div class="field"><label>تعليق <span class="lang-tag ar">عربي</span></label><input class="inp" name="caption_ar" dir="rtl"></div>
       <div class="field"><label>تعليق <span class="lang-tag en">English</span></label><input class="inp" name="caption_en" dir="ltr"></div>

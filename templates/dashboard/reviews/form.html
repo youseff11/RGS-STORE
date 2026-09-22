@@ -1,16 +1,27 @@
 {% extends 'base/dashboard_base.html' %}
-{% block page_name %}تعديل تقييم{% endblock %}
+{% block page_name %}{% if review %}تعديل تقييم{% else %}إضافة تقييم{% endif %}{% endblock %}
 
 {% block content %}
 <div class="page-head">
+  {% if review %}
   <div><h2>تقييم {{ review.name }}</h2><p>{{ review.created_at|date:"Y/m/d H:i" }}{% if review.order %} · طلب {{ review.order.order_number }}{% endif %}</p></div>
-  <a class="btn btn-ghost" href="{% url 'dash_reviews' %}">رجوع</a>
+  {% else %}
+  <div><h2>إضافة تقييم</h2><p>اختار العميل صاحب التقييم — ولو التقييم على طلب معيّن اختاره كمان</p></div>
+  {% endif %}
+  <div class="flex">
+    <a class="btn btn-ghost" href="{% url 'dash_reviews' %}">رجوع</a>
+    {% if review %}
+    <form method="post" action="{% url 'dash_review_delete' review.pk %}" data-confirm="حذف التقييم نهائيًا؟">{% csrf_token %}
+      <button class="btn btn-danger" type="submit">{% include 'partials/icon.html' with name='trash' %} حذف</button>
+    </form>
+    {% endif %}
+  </div>
 </div>
 <form method="post" style="max-width:760px">
   {% csrf_token %}
   <div class="card">
     {% include 'dashboard/_form_fields.html' %}
-    <button class="btn" type="submit">حفظ</button>
+    <button class="btn" type="submit">{% if review %}حفظ{% else %}إضافة التقييم{% endif %}</button>
   </div>
 </form>
 {% endblock %}

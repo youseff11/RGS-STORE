@@ -84,7 +84,13 @@
       <button class="btn btn-sm btn-soft" type="submit">حفظ</button>
     </form>
 
-    <a class="icon-btn country-edit" href="{% url 'dash_country_edit' c.pk %}" title="كل الإعدادات" aria-label="تعديل {{ c.name_ar }}">{% include 'partials/icon.html' with name='edit' %}</a>
+    <div class="country-edit country-actions">
+    <a class="icon-btn" href="{% url 'dash_country_edit' c.pk %}" title="كل الإعدادات" aria-label="تعديل {{ c.name_ar }}">{% include 'partials/icon.html' with name='edit' %}</a>
+    <form method="post" action="{% url 'dash_country_delete' c.pk %}" data-confirm="حذف {{ c.name_ar }}؟">
+      {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <button class="icon-btn icon-btn-danger" type="submit" title="حذف" aria-label="حذف {{ c.name_ar }}">{% include 'partials/icon.html' with name='trash' %}</button>
+    </form>
+    </div>
   </div>
   {% endfor %}
 </div>

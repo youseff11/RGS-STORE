@@ -33,10 +33,9 @@
   {% if order.status != 'cancelled' %}
   <div class="timeline">
     {% with s=order.status %}
-    <div class="tl-step is-done"><span class="bullet">1</span>{% t 'order_received' %}</div>
-    <div class="tl-step {% if s == 'confirmed' or s == 'shipped' or s == 'delivered' %}is-done{% endif %}"><span class="bullet">2</span>{% if LANG == 'ar' %}تم التأكيد{% else %}Confirmed{% endif %}</div>
-    <div class="tl-step {% if s == 'shipped' or s == 'delivered' %}is-done{% endif %}"><span class="bullet">3</span>{% if LANG == 'ar' %}تم الشحن{% else %}Shipped{% endif %}</div>
-    <div class="tl-step {% if s == 'delivered' %}is-done{% endif %}"><span class="bullet">4</span>{% if LANG == 'ar' %}تم التسليم{% else %}Delivered{% endif %}</div>
+    <div class="tl-step is-done"><span class="bullet">1</span>{% if LANG == 'ar' %}تم استلام طلبك{% else %}Order received{% endif %}</div>
+    <div class="tl-step {% if s == 'confirmed' or s == 'delivered' %}is-done{% endif %}"><span class="bullet">2</span>{% if LANG == 'ar' %}جاري العمل{% else %}In progress{% endif %}</div>
+    <div class="tl-step {% if s == 'delivered' %}is-done{% endif %}"><span class="bullet">3</span>{% if LANG == 'ar' %}تم التسليم{% else %}Delivered{% endif %}</div>
     {% endwith %}
   </div>
   {% endif %}

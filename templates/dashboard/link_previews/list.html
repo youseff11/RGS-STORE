@@ -1,0 +1,72 @@
+{% extends 'base/dashboard_base.html' %}
+{% load static %}
+{% block page_name %}صور الروابط{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h2>صور الروابط</h2>
+    <p>الصورة اللي بتظهر تحت الرابط لما تبعته على واتساب أو فيسبوك أو تليجرام</p>
+  </div>
+  <a class="btn" href="{% url 'dash_link_preview_new' %}">{% include 'partials/icon.html' with name='plus' %} صورة لرابط معيّن</a>
+</div>
+
+<div class="split">
+  <div class="card">
+    <div class="card-head"><h3>روابط ليها صورة خاصة ({{ items|length }})</h3></div>
+    {% if items %}
+    <div class="table-wrap" style="border:0">
+      <table class="t">
+        <thead><tr><th></th><th>الرابط</th><th>العنوان</th><th>الحالة</th><th></th></tr></thead>
+        <tbody>
+          {% for item in items %}
+          <tr>
+            <td><img class="lp-thumb" src="{{ item.image.url }}" alt=""></td>
+            <td>
+              <b dir="ltr" style="display:inline-block">{{ item.path }}</b>
+              {% if item.match_children %}<div class="small muted">+ كل الصفحات اللي جواه</div>{% endif %}
+            </td>
+            <td class="small">{{ item.title_ar|default:'—' }}</td>
+            <td><span class="chip {% if item.is_active %}chip-ok{% else %}chip-muted{% endif %}">{% if item.is_active %}مفعّل{% else %}موقوف{% endif %}</span></td>
+            <td>
+              <div class="row-actions">
+                <a class="btn btn-sm btn-ghost" href="{{ item.path }}" target="_blank" title="فتح الصفحة" aria-label="فتح الصفحة">{% include 'partials/icon.html' with name='external' %}</a>
+                <a class="btn btn-sm btn-soft" href="{% url 'dash_link_preview_edit' item.pk %}">{% include 'partials/icon.html' with name='edit' %} تعديل</a>
+                <form method="post" action="{% url 'dash_link_preview_delete' item.pk %}" data-confirm="حذف صورة الرابط {{ item.path }}؟ هيرجع للصورة الافتراضية.">{% csrf_token %}
+                  <button class="btn btn-sm btn-danger" type="submit" title="حذف" aria-label="حذف">{% include 'partials/icon.html' with name='trash' %}</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <div class="empty">
+        <div class="ico ico-badge">{% include 'partials/icon.html' with name='share' %}</div>
+        مفيش روابط ليها صورة خاصة — كلها بتاخد الصورة الافتراضية
+      </div>
+    {% endif %}
+    <div class="help" style="margin-top:12px">الترتيب: صورة الرابط الخاصة ← صورة الديزاين أو العمل نفسه (في صفحاتهم) ← الصورة الافتراضية.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3>الصورة الافتراضية</h3></div>
+    <div class="lp-preview">
+      <div class="lp-preview-img">
+        {% if site.share_image %}<img src="{{ site.share_image.url }}" alt="">{% else %}<img src="{% static 'img/hero-dark.webp' %}" alt="">{% endif %}
+      </div>
+      <div class="lp-preview-body">
+        <b>{{ site.brand_name|default:'RGS TOWER' }}</b>
+        <span>{% if site.share_image %}الصورة الافتراضية الحالية{% else %}لسه مفيش صورة — بتظهر صورة الهيرو{% endif %}</span>
+      </div>
+    </div>
+    <form method="post" enctype="multipart/form-data" style="margin-top:14px">
+      {% csrf_token %}
+      {% with form=default_form %}{% include 'dashboard/_form_fields.html' %}{% endwith %}
+      <button class="btn btn-block" type="submit">حفظ الصورة الافتراضية</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

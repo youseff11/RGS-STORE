@@ -10,8 +10,9 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 
+from .models import normalize_site_path
 from .models import (
-    Announcement, Banner, Category, Country, Coupon, HomeSection, NavLink, Policy,
+    AboutPage, AboutStat, Announcement, Banner, Category, Country, Coupon, HomeSection, LinkPreview, NavLink, Order, Policy,
     Product, ProductColor, Promotion, Review, STAFF_PERMISSIONS, Service, SiteSettings,
     Work, WorkCategory,
 )
@@ -120,12 +121,6 @@ class ColorForm(StyledForm):
 class ServiceForm(StyledForm):
     """A service the customer picks on a design — Malak writes them himself."""
 
-    #: only used when adding: attach the new service to every existing design
-    add_to_all = forms.BooleanField(
-        required=False, initial=True, label='ضيفها لكل الديزاينات الموجودة',
-        help_text='تقدر تشيلها بعد كده من أي ديزاين من صفحة «الخدمات» بتاعته',
-    )
-
     class Meta:
         model = Service
         fields = ['name_ar', 'name_en', 'price', 'is_active', 'ordering']
@@ -140,8 +135,6 @@ class ServiceForm(StyledForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['price'].widget.attrs.update({'min': '0', 'step': '0.01'})
-        if self.instance.pk:
-            self.fields.pop('add_to_all')
 
     def clean_price(self):
         price = self.cleaned_data.get('price')
@@ -200,6 +193,49 @@ class AnnouncementForm(StyledForm):
             'text_ar': 'نص الإعلان', 'text_en': 'نص الإعلان', 'link': 'رابط (اختياري)',
             'is_active': 'ظاهر في الشريط', 'ordering': 'الترتيب',
         }
+
+
+class LinkPreviewForm(StyledForm):
+    class Meta:
+        model = LinkPreview
+        fields = [
+            'path', 'match_children', 'image', 'title_ar', 'title_en',
+            'description_ar', 'description_en', 'is_active',
+        ]
+        widgets = {
+            'path': forms.TextInput(attrs={'dir': 'ltr', 'list': 'site-pages',
+                                           'placeholder': '/policies/privacy/  أو الرابط كامل'}),
+        }
+        labels = {
+            'path': 'الرابط', 'match_children': 'ينطبق كمان على كل الصفحات اللي جوه الرابط ده',
+            'image': 'الصورة اللي تظهر مع الرابط', 'title_ar': 'العنوان (اختياري)',
+            'title_en': 'العنوان (اختياري)', 'description_ar': 'الوصف (اختياري)',
+            'description_en': 'الوصف (اختياري)', 'is_active': 'مفعّل',
+        }
+        help_texts = {
+            'path': 'الصق رابط الصفحة من الموقع أو اكتب آخره بس — مثلاً / للصفحة الرئيسية',
+            'image': 'المقاس المثالي 1200×630',
+            'title_ar': 'لو فاضي هيظهر عنوان الصفحة العادي',
+        }
+
+    def clean_path(self):
+        path = normalize_site_path(self.cleaned_data.get('path'))
+        if path.startswith('/dashboard'):
+            raise forms.ValidationError('ده رابط لوحة التحكم — اختار رابط من الموقع')
+        qs = LinkPreview.objects.filter(path=path)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError('الرابط ده عليه صورة قبل كده — عدّلها من القائمة')
+        return path
+
+
+class DefaultShareImageForm(StyledForm):
+    class Meta:
+        model = SiteSettings
+        fields = ['share_image']
+        labels = {'share_image': 'الصورة الافتراضية'}
+        help_texts = {'share_image': 'بتظهر مع أي رابط من الموقع ملوش صورة خاصة (1200×630 مثالي)'}
 
 
 class BannerForm(StyledForm):
@@ -413,7 +449,7 @@ class SiteSettingsForm(StyledForm):
         model = SiteSettings
         fields = [
             'brand_name_ar', 'brand_name_en', 'tagline_ar', 'tagline_en',
-            'logo', 'favicon', 'share_image', 'about_ar', 'about_en',
+            'logo', 'favicon', 'share_image',
             'phone', 'whatsapp', 'email', 'address_ar', 'address_en',
             'facebook_url', 'instagram_url', 'tiktok_url', 'youtube_url',
             'currency_ar', 'currency_en', 'shipping_fee', 'free_shipping_threshold',
@@ -572,6 +608,230 @@ class ReviewForm(StyledForm):
         }
 
 
+class ReviewCreateForm(ReviewForm):
+    """Adding a review by hand from the dashboard — it has to belong to a customer."""
+
+    user = forms.ModelChoiceField(label='العميل', queryset=get_user_model().objects.none())
+    order = forms.ModelChoiceField(
+        label='الطلب (اختياري)', queryset=Order.objects.none(), required=False,
+        help_text='لازم يكون من طلبات نفس العميل ومفيش عليه تقييم',
+    )
+
+    class Meta(ReviewForm.Meta):
+        fields = ['user', 'order'] + ReviewForm.Meta.fields
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        users = get_user_model().objects.filter(is_staff=False).order_by('first_name', 'username')
+        self.fields['user'].queryset = users
+        self.fields['user'].label_from_instance = (
+            lambda u: f'{u.get_full_name() or u.username} — {u.email}' if u.email else (u.get_full_name() or u.username)
+        )
+        self.fields['order'].queryset = Order.objects.filter(review__isnull=True, user__isnull=False)
+        self.fields['order'].label_from_instance = lambda o: f'{o.order_number} — {o.full_name}'
+        self.fields['name'].required = False
+        self.fields['name'].help_text = 'لو فاضي هيتكتب اسم العميل'
+        for name in ('user', 'order'):
+            self.fields[name].widget.attrs.setdefault('class', 'inp select')
+
+    def clean(self):
+        data = super().clean()
+        user, order = data.get('user'), data.get('order')
+        if user and order and order.user_id != user.pk:
+            self.add_error('order', 'الطلب ده مش بتاع العميل اللي اخترته')
+        if user and not data.get('name'):
+            data['name'] = user.get_full_name() or user.username
+        return data
+
+
+class CustomerForm(forms.Form):
+    """Add / edit a customer account (auth.User + CustomerProfile) from the dashboard."""
+
+    full_name = forms.CharField(label='الاسم', max_length=150)
+    email = forms.EmailField(label='البريد الإلكتروني', widget=forms.EmailInput(attrs={'dir': 'ltr'}))
+    phone = forms.CharField(label='الموبايل', max_length=30, required=False,
+                            widget=forms.TextInput(attrs={'dir': 'ltr'}))
+    phone_alt = forms.CharField(label='موبايل آخر', max_length=30, required=False,
+                                widget=forms.TextInput(attrs={'dir': 'ltr'}))
+    country = forms.ModelChoiceField(label='الدولة', queryset=Country.objects.none(), required=False)
+    city = forms.CharField(label='المدينة', max_length=120, required=False)
+    address = forms.CharField(label='العنوان', required=False, widget=forms.Textarea(attrs={'rows': 3}))
+    password = forms.CharField(
+        label='كلمة المرور', required=False,
+        widget=forms.PasswordInput(attrs={'autocomplete': 'new-password', 'dir': 'ltr'}),
+    )
+    admin_note = forms.CharField(label='ملاحظة داخلية (مش بتظهر للعميل)', required=False,
+                                 widget=forms.Textarea(attrs={'rows': 2}))
+    is_active = forms.BooleanField(label='الحساب مفعّل', required=False, initial=True)
+
+    def __init__(self, *args, instance=None, **kwargs):
+        self.instance = instance
+        super().__init__(*args, **kwargs)
+        self.fields['country'].queryset = Country.objects.order_by('ordering', 'name_ar')
+        self.fields['country'].label_from_instance = lambda c: c.name_ar
+        for field in self.fields.values():
+            widget = field.widget
+            if isinstance(widget, forms.CheckboxInput):
+                widget.attrs.setdefault('class', 'switch-input')
+            elif isinstance(widget, forms.Select):
+                widget.attrs.setdefault('class', 'inp select')
+            elif isinstance(widget, forms.Textarea):
+                widget.attrs.setdefault('class', 'inp area')
+            else:
+                widget.attrs.setdefault('class', 'inp')
+        if instance is None:
+            self.fields['password'].help_text = (
+                '8 حروف على الأقل — لو سبتها فاضية العميل يقدر يدخل بجوجل أو ديسكورد بنفس الإيميل'
+            )
+        else:
+            self.fields['password'].help_text = 'اتركها فاضية علشان تفضل زي ما هي'
+
+    def clean_email(self):
+        email = self.cleaned_data['email'].strip().lower()
+        qs = get_user_model().objects.filter(email__iexact=email)
+        if self.instance is not None:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError('الإيميل ده عليه حساب تاني')
+        return email
+
+    def clean_password(self):
+        password = self.cleaned_data.get('password') or ''
+        if password:
+            if len(password) < 8:
+                raise forms.ValidationError('كلمة المرور لازم تكون 8 حروف على الأقل')
+            validate_password(password, self.instance)
+        return password
+
+
+class OrderEditForm(StyledForm):
+    """Customer / delivery details of an order (items and payment stay as they are)."""
+
+    class Meta:
+        model = Order
+        fields = [
+            'full_name', 'phone', 'phone_alt', 'email', 'country', 'city', 'address',
+            'notes', 'shipping_fee', 'admin_note',
+        ]
+        widgets = {
+            'phone': forms.TextInput(attrs={'dir': 'ltr'}),
+            'phone_alt': forms.TextInput(attrs={'dir': 'ltr'}),
+            'email': forms.EmailInput(attrs={'dir': 'ltr'}),
+            'address': forms.Textarea(attrs={'rows': 3}),
+            'notes': forms.Textarea(attrs={'rows': 3}),
+            'admin_note': forms.Textarea(attrs={'rows': 3}),
+        }
+        labels = {
+            'full_name': 'اسم العميل', 'phone': 'الموبايل', 'phone_alt': 'موبايل آخر',
+            'email': 'البريد الإلكتروني', 'country': 'الدولة', 'city': 'المدينة',
+            'address': 'العنوان', 'notes': 'ملاحظات العميل', 'shipping_fee': 'سعر الشحن',
+            'admin_note': 'ملاحظة داخلية',
+        }
+        help_texts = {
+            'shipping_fee': 'الإجمالي بيتحسب تاني أوتوماتيك لو غيّرت سعر الشحن',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['country'].queryset = Country.objects.order_by('ordering', 'name_ar')
+        self.fields['country'].label_from_instance = lambda c: c.name_ar
+
+
+# ============================================================= about / story
+class AboutBlockForm(StyledForm):
+    """The «حكايتنا» block on the homepage (its HomeSection row)."""
+
+    class Meta:
+        model = HomeSection
+        fields = [
+            'is_active', 'eyebrow_ar', 'eyebrow_en', 'title_ar', 'title_en',
+            'subtitle_ar', 'subtitle_en', 'button_text_ar', 'button_text_en', 'button_link', 'image',
+        ]
+        widgets = {
+            'title_ar': forms.Textarea(attrs={'rows': 2}),
+            'title_en': forms.Textarea(attrs={'rows': 2}),
+            'subtitle_ar': forms.Textarea(attrs={'rows': 4}),
+            'subtitle_en': forms.Textarea(attrs={'rows': 4}),
+            'button_link': forms.TextInput(attrs={'dir': 'ltr'}),
+            'image': forms.FileInput(attrs={'class': 'inp file', 'accept': 'image/*'}),
+        }
+        labels = {
+            'is_active': 'القسم ظاهر في الصفحة الرئيسية',
+            'eyebrow_ar': 'الكلمة الصغيرة فوق العنوان', 'eyebrow_en': 'الكلمة الصغيرة فوق العنوان',
+            'title_ar': 'العنوان', 'title_en': 'العنوان',
+            'subtitle_ar': 'النص المختصر', 'subtitle_en': 'النص المختصر',
+            'button_text_ar': 'نص الزرار', 'button_text_en': 'نص الزرار',
+            'button_link': 'رابط الزرار', 'image': 'الصورة',
+        }
+        help_texts = {
+            'subtitle_ar': 'لو فاضي هيظهر أول الحكاية الكاملة',
+            'button_text_ar': 'سيبه فاضي لو مش عايز زرار',
+            'image': 'لو مفيش صورة هيظهر اللوجو',
+        }
+
+
+class AboutStoryForm(StyledForm):
+    class Meta:
+        model = SiteSettings
+        fields = ['about_ar', 'about_en']
+        widgets = {
+            'about_ar': forms.Textarea(attrs={'rows': 8}),
+            'about_en': forms.Textarea(attrs={'rows': 8}),
+        }
+        labels = {'about_ar': 'الحكاية الكاملة', 'about_en': 'الحكاية الكاملة'}
+        help_texts = {'about_ar': 'بتظهر في صفحة «من نحن» — كل سطر جديد بيبقى فقرة'}
+
+
+class AboutPageForm(StyledForm):
+    class Meta:
+        model = AboutPage
+        fields = [
+            'tag_ar', 'tag_en', 'show_tag', 'stats_mode', 'stats_on_home', 'stats_on_page',
+            'page_title_ar', 'page_title_en', 'page_subtitle_ar', 'page_subtitle_en', 'page_image',
+            'button1_text_ar', 'button1_text_en', 'button1_link',
+            'button2_text_ar', 'button2_text_en', 'button2_link',
+        ]
+        widgets = {
+            'stats_mode': forms.RadioSelect(attrs={'class': 'radio-input'}),
+            'page_image': forms.FileInput(attrs={'class': 'inp file', 'accept': 'image/*'}),
+            'button1_link': forms.TextInput(attrs={'dir': 'ltr'}),
+            'button2_link': forms.TextInput(attrs={'dir': 'ltr'}),
+        }
+        labels = {
+            'tag_ar': 'الكلمة اللي على الصورة', 'tag_en': 'الكلمة اللي على الصورة',
+            'show_tag': 'إظهار الكلمة اللي على الصورة',
+            'stats_mode': 'الأرقام', 'stats_on_home': 'الأرقام تظهر في الصفحة الرئيسية',
+            'stats_on_page': 'الأرقام تظهر في صفحة «من نحن»',
+            'page_title_ar': 'عنوان الصفحة', 'page_title_en': 'عنوان الصفحة',
+            'page_subtitle_ar': 'السطر تحت العنوان', 'page_subtitle_en': 'السطر تحت العنوان',
+            'page_image': 'صورة الصفحة',
+            'button1_text_ar': 'الزرار الأول', 'button1_text_en': 'الزرار الأول', 'button1_link': 'رابط الزرار الأول',
+            'button2_text_ar': 'الزرار التاني', 'button2_text_en': 'الزرار التاني', 'button2_link': 'رابط الزرار التاني',
+        }
+        help_texts = {
+            'tag_ar': 'لو فاضية هيظهر اسم المتجر',
+            'page_title_ar': 'لو فاضي: «من نحن»',
+            'page_subtitle_ar': 'لو فاضي هيظهر شعار المتجر',
+            'page_image': 'لو فاضية هتظهر نفس صورة قسم الصفحة الرئيسية',
+            'button1_text_ar': 'سيب النص فاضي علشان الزرار يختفي',
+        }
+
+
+class AboutStatForm(StyledForm):
+    class Meta:
+        model = AboutStat
+        fields = ['value', 'suffix', 'show_star', 'label_ar', 'label_en', 'is_active', 'ordering']
+        widgets = {
+            'value': forms.TextInput(attrs={'dir': 'ltr', 'placeholder': '500'}),
+            'suffix': forms.TextInput(attrs={'dir': 'ltr', 'placeholder': '+'}),
+        }
+        labels = {
+            'value': 'الرقم', 'suffix': 'علامة بعد الرقم', 'show_star': 'نجمة جنب الرقم',
+            'label_ar': 'الوصف', 'label_en': 'الوصف', 'is_active': 'ظاهر', 'ordering': 'الترتيب',
+        }
+        help_texts = {'label_ar': 'مثلاً: عميل سعيد'}
+
+
 # ============================================================= homepage / nav
 class HomeSectionForm(StyledForm):
     class Meta:
@@ -579,9 +839,13 @@ class HomeSectionForm(StyledForm):
         fields = [
             'is_active', 'eyebrow_ar', 'eyebrow_en', 'title_ar', 'title_en',
             'subtitle_ar', 'subtitle_en', 'button_text_ar', 'button_text_en',
-            'button_link', 'image', 'items_limit',
+            'button_link', 'image', 'image_mobile', 'image_focus', 'image_focus_mobile',
+            'script_text', 'items_limit',
         ]
         widgets = {
+            'image_focus': forms.NumberInput(attrs={'type': 'range', 'min': 0, 'max': 100, 'step': 1, 'class': 'inp range'}),
+            'image_focus_mobile': forms.NumberInput(attrs={'type': 'range', 'min': 0, 'max': 100, 'step': 1, 'class': 'inp range'}),
+            'script_text': forms.Textarea(attrs={'rows': 4, 'dir': 'ltr'}),
             'title_ar': forms.Textarea(attrs={'rows': 2}),
             'title_en': forms.Textarea(attrs={'rows': 2}),
             'subtitle_ar': forms.Textarea(attrs={'rows': 3}),
@@ -595,6 +859,10 @@ class HomeSectionForm(StyledForm):
             'subtitle_ar': 'النص', 'subtitle_en': 'النص',
             'button_text_ar': 'نص الزرار', 'button_text_en': 'نص الزرار',
             'button_link': 'رابط الزرار', 'image': 'صورة', 'items_limit': 'عدد العناصر المعروضة',
+            'image_mobile': 'صورة للموبايل (اختياري)',
+            'image_focus': 'مكان الصورة على الكمبيوتر (شمال ← يمين)',
+            'image_focus_mobile': 'مكان الصورة على الموبايل (شمال ← يمين)',
+            'script_text': 'الكلام المكتوب بخط اليد (على الشاشات الكبيرة)',
         }
 
     def __init__(self, *args, **kwargs):
@@ -609,6 +877,18 @@ class HomeSectionForm(StyledForm):
             )
         if not section.uses_limit:
             self.fields.pop('items_limit', None)
+        if section.key == 'hero':
+            self.fields['image_mobile'].help_text = 'لو فاضية الموبايل هيعرض نفس الصورة — الأفضل صورة طولية أو مربعة'
+            self.fields['image_focus'].help_text = 'حرّك علشان تختار أنهي جزء من الصورة يبان'
+            self.fields['script_text'].help_text = 'كل كلمة في سطر — سيبه فاضي للكلام الافتراضي'
+            self.fields['title_en'].help_text = 'اكتب السطر الأول، Enter، وبعدين السطر التاني (بيتلوّن)'
+            for name, default in (('image_focus', 58), ('image_focus_mobile', 40)):
+                self.fields[name].required = False
+                if getattr(section, name) is None:
+                    self.initial[name] = default
+        else:
+            for name in ('image_mobile', 'image_focus', 'image_focus_mobile', 'script_text'):
+                self.fields.pop(name, None)
         if section.key in ('banners', 'features'):
             for name in list(self.fields):
                 if name != 'is_active':

@@ -30,14 +30,14 @@
   </div>
   <div class="stat warn">
     <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
-    <div><div class="v">{{ stats.pending }}</div><div class="l">طلبات قيد المراجعة</div></div>
+    <div><div class="v">{{ stats.pending }}</div><div class="l">طلبات جديدة (تم الاستلام)</div></div>
   </div>
   <div class="stat ok">
     <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg></span>
     <div><div class="v">{% price stats.revenue %}</div><div class="l">إجمالي المبيعات المؤكدة</div></div>
   </div>
   <div class="stat info">
-    <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 4l-4 3v13h16V7l-4-3"/><path d="M8 4a4 4 0 008 0"/></svg></span>
+    <span class="ico">{% include 'partials/icon.html' with name='pen-tool' %}</span>
     <div><div class="v">{{ stats.active_products }}<span style="font-size:14px;color:var(--muted)">/{{ stats.products }}</span></div><div class="l">منتجات معروضة</div></div>
   </div>
 </div>

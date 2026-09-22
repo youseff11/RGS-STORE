@@ -4,40 +4,45 @@
 {% block content %}
 <section class="page-hero">
   <div class="wrap">
-    <div class="crumbs"><a href="{% url 'home' %}">{% t 'home' %}</a> <span>/</span> <span>{% t 'about' %}</span></div>
-    <h1>{% t 'about' %}</h1>
-    <p>{{ SITE.tagline }}</p>
+    <div class="crumbs"><a href="{% url 'home' %}">{% t 'home' %}</a> <span>/</span> <span>{% if story.page_title %}{{ story.page_title }}{% else %}{% t 'about' %}{% endif %}</span></div>
+    <h1>{% if story.page_title %}{{ story.page_title }}{% else %}{% t 'about' %}{% endif %}</h1>
+    <p>{{ story.page_subtitle|default:SITE.tagline }}</p>
   </div>
 </section>
 
 <section class="section about-block">
   <div class="wrap about-grid">
     <div class="about-media">
-      {% if sec.image %}
+      {% if story.page_image %}
+        <img src="{{ story.page_image.url }}" alt="{{ SITE.brand_name }}">
+      {% elif sec.image %}
         <img src="{{ sec.image.url }}" alt="{{ SITE.brand_name }}">
       {% else %}
         <div class="about-mark" aria-hidden="true">{% include 'partials/logo.html' %}</div>
       {% endif %}
-      <span class="about-tag">{{ SITE.brand_name|default:'RGS TOWER' }}</span>
+      {% if story.show_tag %}<span class="about-tag">{{ story.tag|default:SITE.brand_name|default:'RGS TOWER' }}</span>{% endif %}
     </div>
     <div class="about-copy">
-      <span class="eyebrow">{{ sec.eyebrow|default:SITE.brand_name }}</span>
+      {% if sec.eyebrow %}<span class="eyebrow">{{ sec.eyebrow }}</span>{% endif %}
       <h2>{{ sec.title|default:SITE.brand_name }}</h2>
       <div class="about-text">{{ SITE.about|default:sec.subtitle|default:SITE.tagline|linebreaks }}</div>
       {% if stats %}
       <div class="about-stats">
         {% for stat in stats %}
           <div class="about-stat">
-            <b>{{ stat.value }}{% if stat.plus %}<i>+</i>{% endif %}{% if stat.star %} {% include 'partials/icon.html' with name='star-fill' %}{% endif %}</b>
+            <b dir="ltr">{{ stat.value }}{% if stat.suffix %}<i>{{ stat.suffix }}</i>{% endif %}{% if stat.star %} {% include 'partials/icon.html' with name='star-fill' %}{% endif %}</b>
             <span>{{ stat.label }}</span>
           </div>
         {% endfor %}
       </div>
       {% endif %}
+      {% if story.buttons %}
       <div class="flex" style="flex-wrap:wrap">
-        <a class="btn" href="{% url 'shop' %}">{% t 'shop_now' %} {% include 'partials/icon.html' with name='arrow' %}</a>
-        <a class="btn btn-ghost" href="{% url 'works' %}">{% t 'portfolio' %}</a>
+        {% for btn in story.buttons %}
+          <a class="btn{% if btn.ghost %} btn-ghost{% endif %}" href="{{ btn.link }}">{{ btn.text }}{% if not btn.ghost %} {% include 'partials/icon.html' with name='arrow' %}{% endif %}</a>
+        {% endfor %}
       </div>
+      {% endif %}
     </div>
   </div>
 </section>

@@ -31,12 +31,12 @@
       <div class="gallery" data-gallery>
         {% for item in media %}
           <button type="button" class="gal-item{% if item.is_video %} is-video{% endif %}"
-                  data-index="{{ forloop.counter0 }}" data-kind="{{ item.kind }}" data-src="{{ item.full_url }}"
+                  data-index="{{ forloop.counter0 }}" data-kind="{{ item.play_kind }}" data-src="{{ item.full_url }}"
                   data-caption="{{ item.caption }}" aria-label="{{ item.caption|default:work.title }}">
             {% if item.thumb_url %}
               <img src="{{ item.thumb_url }}" alt="{{ item.caption|default:work.title }}" loading="lazy">
-            {% elif item.kind == 'video' %}
-              <video src="{{ item.video.url }}#t=0.5" preload="metadata" muted playsinline></video>
+            {% elif item.play_kind == 'video' %}
+              <video src="{{ item.full_url }}#t=0.5" preload="metadata" muted playsinline></video>
             {% else %}
               <span class="gal-ph">{% include 'partials/icon.html' with name='film' %}</span>
             {% endif %}

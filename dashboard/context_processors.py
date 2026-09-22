@@ -2,7 +2,7 @@
 
 from .i18n import current_lang
 from .models import (
-    Announcement, Category, NavLink, Policy, SiteSettings, Ticket, staff_permissions,
+    Announcement, Category, LinkPreview, NavLink, Order, Policy, SiteSettings, Ticket, staff_permissions,
 )
 from .utils import Cart
 
@@ -62,4 +62,17 @@ def store(request):
             unread = 0
         data['SUPPORT_STAFF'] = support_staff
         data['TICKETS_UNREAD'] = unread
+        # orders badge for the store's staff: new orders nobody started on yet
+        orders_staff = bool(
+            user is not None and user.is_authenticated and user.is_staff
+            and 'orders' in staff_permissions(user)
+        )
+        new_orders = Order.objects.filter(status='pending').count() if orders_staff else 0
+        data['ORDERS_STAFF'] = orders_staff
+        data['NEW_ORDERS'] = new_orders
+        data['ACCT_BADGE'] = unread + new_orders
+        profile = getattr(user, 'customer', None) if user is not None and user.is_authenticated else None
+        data['USER_PHOTO'] = profile.photo_url if profile else ''
+        # picture / title shown under this page's link when it's shared
+        data['LINK_PREVIEW'] = LinkPreview.for_path(path)
     return data

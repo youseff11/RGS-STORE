@@ -66,11 +66,10 @@
         <div class="footer-links">
           <a href="{% url 'works' %}">{% t 'portfolio' %}</a>
           <a href="{% url 'reviews' %}">{% t 'reviews' %}</a>
-          <a href="{% url 'track_order' %}">{% t 'track_order' %}</a>
-          <a href="{% url 'account' %}">{% t 'account' %}</a>
           <a href="{% url 'support' %}">{% t 'support' %}</a>
           <a href="{% url 'about' %}">{% t 'about' %}</a>
           <a href="{% url 'contact' %}">{% t 'contact' %}</a>
+          {% for policy in FOOTER_POLICIES %}<a href="{{ policy.get_absolute_url }}">{{ policy.title }}</a>{% endfor %}
         </div>
       </div>
 
@@ -109,11 +108,6 @@
 
     <div class="footer-bottom">
       <span>© {% now "Y" %} {{ SITE.brand_name|default:"RGS TOWER" }} — {% t 'rights' %}</span>
-      {% if FOOTER_POLICIES %}
-      <nav class="footer-policies" aria-label="{% t 'policies' %}">
-        {% for policy in FOOTER_POLICIES %}<a href="{{ policy.get_absolute_url }}">{{ policy.title }}</a>{% endfor %}
-      </nav>
-      {% endif %}
       <a class="to-top" href="#top">
         {% t 'back_to_top' %}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>

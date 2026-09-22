@@ -1,5 +1,6 @@
 {% extends 'base/dashboard_base.html' %}
-{% block page_name %}قسم الصفحة الرئيسية{% endblock %}
+{% load static %}
+{% block page_name %}{% if section.key == 'hero' %}الواجهة (Hero){% else %}قسم الصفحة الرئيسية{% endif %}{% endblock %}
 
 {% block content %}
 <div class="page-head">
@@ -7,7 +8,7 @@
   <a class="btn btn-ghost" href="{% url 'dash_home' %}">رجوع</a>
 </div>
 
-<form method="post" enctype="multipart/form-data" style="max-width:860px">
+<form method="post" enctype="multipart/form-data" {% if section.key == 'hero' %}class="split hero-edit"{% else %}style="max-width:860px"{% endif %}>
   {% csrf_token %}
   <div class="card">
     {% include 'dashboard/_form_fields.html' %}
@@ -17,8 +18,77 @@
         <button class="btn btn-sm btn-danger" type="submit" name="clear_image" value="1">حذف الصورة</button>
       </div>
     {% endif %}
+    {% if section.key == 'hero' and section.image_mobile %}
+      <div class="flex" style="margin-bottom:14px;align-items:flex-end">
+        <img src="{{ section.image_mobile.url }}" alt="" style="max-height:130px;border-radius:10px">
+        <button class="btn btn-sm btn-danger" type="submit" name="clear_image_mobile" value="1">حذف صورة الموبايل</button>
+      </div>
+    {% endif %}
     <button class="btn" type="submit">حفظ</button>
     {% if section.key == 'banners' %}<a class="btn btn-soft" href="{% url 'dash_banners' %}">إدارة البانرات</a>{% endif %}
   </div>
+  {% if section.key == 'hero' %}
+  <div class="card hero-prev-card">
+    <div class="card-head"><h3>معاينة</h3>
+      <div class="seg-mini"><button type="button" class="is-on" data-hp-mode="desk">كمبيوتر</button><button type="button" data-hp-mode="phone">موبايل</button></div>
+    </div>
+    <div class="hero-prev" data-hero-prev>
+      <img data-hp-img alt=""
+           data-desk="{% if section.image %}{{ section.image.url }}{% else %}{% static 'img/hero-dark.webp' %}{% endif %}"
+           data-phone="{% if section.image_mobile %}{{ section.image_mobile.url }}{% elif section.image %}{{ section.image.url }}{% else %}{% static 'img/hero-dark.webp' %}{% endif %}">
+      <div class="hero-prev-copy" dir="ltr">
+        <small data-hp="eyebrow_en"></small>
+        <b data-hp="title1"></b><b class="l2" data-hp="title2"></b>
+        <p data-hp="subtitle_en"></p>
+        <span class="hero-prev-btn" data-hp="button_text_en"></span>
+      </div>
+    </div>
+    <div class="help" style="margin-top:8px">المعاينة تقريبية — افتح الرئيسية بعد الحفظ علشان تشوف الشكل النهائي.</div>
+  </div>
+  {% endif %}
 </form>
+{% if section.key == 'hero' %}
+<script>
+(function () {
+  var box = document.querySelector('[data-hero-prev]');
+  if (!box) return;
+  var img = box.querySelector('[data-hp-img]');
+  var mode = 'desk';
+  var q = function (n) { return document.querySelector('[name="' + n + '"]'); };
+  var fileDesk = q('image'), filePhone = q('image_mobile');
+  var urls = { desk: img.dataset.desk, phone: img.dataset.phone };
+  var draw = function () {
+    var title = (q('title_en') || {}).value || '';
+    var lines = title.split(/\r?\n/).filter(function (l) { return l.trim(); });
+    box.querySelector('[data-hp="title1"]').textContent = lines[0] || '';
+    box.querySelector('[data-hp="title2"]').textContent = lines.slice(1).join(' ');
+    ['eyebrow_en', 'subtitle_en', 'button_text_en'].forEach(function (n) {
+      var el = box.querySelector('[data-hp="' + n + '"]');
+      el.textContent = (q(n) || {}).value || '';
+      el.hidden = !el.textContent;
+    });
+    var focus = q(mode === 'desk' ? 'image_focus' : 'image_focus_mobile');
+    img.src = urls[mode];
+    img.style.objectPosition = (focus ? focus.value : 50) + '% center';
+    box.classList.toggle('is-phone', mode === 'phone');
+  };
+  var pick = function (input, key) {
+    if (!input) return;
+    input.addEventListener('change', function () {
+      if (input.files && input.files[0]) { urls[key] = URL.createObjectURL(input.files[0]); if (key === 'desk' && !filePhone.files.length && img.dataset.phone === img.dataset.desk) urls.phone = urls.desk; draw(); }
+    });
+  };
+  pick(fileDesk, 'desk'); pick(filePhone, 'phone');
+  document.querySelectorAll('[data-hp-mode]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      mode = btn.dataset.hpMode;
+      document.querySelectorAll('[data-hp-mode]').forEach(function (b) { b.classList.toggle('is-on', b === btn); });
+      draw();
+    });
+  });
+  document.querySelector('.hero-edit').addEventListener('input', draw);
+  draw();
+})();
+</script>
+{% endif %}
 {% endblock %}
