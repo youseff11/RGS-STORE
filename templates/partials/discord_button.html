@@ -10,7 +10,10 @@
     {% if SITE.discord_button_icon %}
       <img src="{{ SITE.discord_button_icon.url }}" alt="" width="20" height="20">
     {% else %}
-      {% include 'partials/icon.html' with name='chat' %}
+      {# أيقونة ديسكورد من خدمة الفافيكون بتاعة جوجل — ولو ما اتحمّلتش بتظهر أيقونة الشات #}
+      <img src="https://www.google.com/s2/favicons?domain=discord.com&sz=64" alt="" width="20" height="20"
+           referrerpolicy="no-referrer" onerror="this.closest('.soc-logo').classList.add('is-fallback');this.remove()">
+      <span class="soc-fallback">{% include 'partials/icon.html' with name='chat' %}</span>
     {% endif %}
   </span>
   <span>{% t 'continue_with_discord' %}</span>

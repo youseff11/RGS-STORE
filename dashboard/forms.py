@@ -357,7 +357,7 @@ class GoogleLoginForm(StyledForm):
         }
         help_texts = {
             'google_client_id': 'بينتهي بـ .apps.googleusercontent.com',
-            'google_button_icon': 'صورة مربعة صغيرة (PNG أو SVG بخلفية شفافة) — نزّل شعار جوجل الرسمي من صفحة Google Branding Guidelines وارفعه هنا',
+            'google_button_icon': 'صورة مربعة صغيرة بخلفية شفافة (PNG أو SVG) — نزّل شعار جوجل الرسمي من google.com/permissions وارفعه هنا',
         }
         widgets = {
             'google_client_id': forms.TextInput(attrs={
@@ -409,7 +409,7 @@ class DiscordLoginForm(StyledForm):
         }
         help_texts = {
             'discord_client_id': 'رقم طويل من OAuth2 ← Client information (هو نفسه الـ Application ID)',
-            'discord_button_icon': 'صورة مربعة صغيرة (PNG أو SVG بخلفية شفافة) — نزّل شعار ديسكورد الرسمي من صفحة Discord Branding وارفعه هنا',
+            'discord_button_icon': 'صورة مربعة صغيرة بخلفية شفافة (PNG أو SVG) — نزّل شعار ديسكورد الرسمي من discord.com/branding وارفعه هنا',
         }
         widgets = {
             'discord_client_id': forms.TextInput(attrs={

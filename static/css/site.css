@@ -1501,6 +1501,8 @@ html[dir="rtl"] .gal-item .work-play { transform: translate(50%, -50%); }
 .soc-logo svg { width: 20px; height: 20px; }
 .soc-logo b { display: none; font-family: 'Jost', sans-serif; font-size: 15px; font-weight: 800; }
 .soc-logo.is-fallback b { display: block; }
+.soc-logo .soc-fallback { display: none; }
+.soc-logo.is-fallback .soc-fallback { display: grid; place-items: center; }
 /* «الدخول بحساب ديسكورد» — لون ديسكورد (blurple) */
 .btn-discord { --btn-bg: #5865F2; --btn-fg: #FFFFFF; --btn-bd: #5865F2; gap: 10px; }
 .btn-discord:hover { --btn-bg: #4752C4; --btn-bd: #4752C4; }
