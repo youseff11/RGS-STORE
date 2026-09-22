@@ -12,10 +12,16 @@ SECRET_KEY = 'django-insecure-dtciu*^dj#cdh=t5t!sv__3rs#@0jfnchv$t2%h^2htm-n=3k#
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    '*',  # تسمح بجميع الهوستس بما فيها اللوكال والدومين الجديد
+]
 
-CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000']
-
+CSRF_TRUSTED_ORIGINS = [
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+    'https://www.zhmkart.com',
+    'https://zhmkart.com',
+]
 
 # ---------------------------------------------------------------- applications
 INSTALLED_APPS = [
