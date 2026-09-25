@@ -1740,7 +1740,7 @@ HOME_SECTION_DEFAULTS = {
     'banners': ('', '', '', '', '', '', '', '', '', 0),
     'features': ('', '', '', '', '', '', '', '', '', 4),
     'categories': ('الأقسام', 'Categories', 'تصفح الأقسام', 'Browse categories',
-                   'اختار القسم اللي يناسب تصميمك', 'Pick the section that fits your style',
+                   'اختار القسم اللي يناسب تصميمك', 'Pick the section that fits your design',
                    '', '', '', 6),
     'featured': ('مختارات', 'Featured', 'منتجات مختارة', 'Featured pieces',
                  'قطع اخترناها لك من أحدث المجموعات', 'Hand-picked pieces from our latest drops',

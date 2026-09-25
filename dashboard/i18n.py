@@ -83,7 +83,7 @@ STRINGS = {
     'featured': ('منتجات مختارة', 'Featured'),
     'featured_sub': ('قطع اخترناها لك من أحدث المجموعات', 'Hand-picked pieces from our latest drops'),
     'browse_categories': ('تصفح الأقسام', 'Browse categories'),
-    'categories_sub': ('اختار القسم اللي يناسب ستايلك', 'Pick the section that fits your style'),
+    'categories_sub': ('اختار القسم اللي يناسب تصميمك', 'Pick the section that fits your design'),
     'new_sub': ('آخر ما وصل إلى المتجر', 'The latest to land in store'),
     'feature_delivery': ('شحن دولي', 'Worldwide shipping'),
     'feature_delivery_sub': ('بنشحن لدول كتير — سريع وآمن لباب البيت',
