@@ -828,6 +828,8 @@ a.stat { color: inherit; }
 .hero-prev-copy b { font-size: clamp(12px, 2.4vw, 20px); line-height: 1; font-weight: 900; }
 .hero-prev-copy b.l2 { color: var(--accent); font-style: italic; }
 .hero-prev-copy p { margin: 4px 0; font-size: 9px; opacity: .8; }
+.hero-prev-script { position: absolute; z-index: 1; right: 5%; top: 50%; transform: translateY(-50%) rotate(-4deg); white-space: pre-line; text-align: center; font-family: 'Caveat', cursive; font-weight: 700; font-size: clamp(10px, 1.6vw, 15px); line-height: 1.1; color: var(--accent-2, #d8cbc1); }
+.hero-prev-script[hidden] { display: none; }
 .hero-prev-btn { align-self: flex-start; margin-top: 4px; padding: 4px 8px; border-radius: 4px; background: var(--accent); font-size: 8px; letter-spacing: .08em; white-space: nowrap; text-transform: uppercase; }
 
 .soc-icon-prev { display: grid; place-items: center; width: 60px; height: 60px; flex: none; border-radius: 12px; background: var(--bg-2); border: 1px solid var(--line); overflow: hidden; }

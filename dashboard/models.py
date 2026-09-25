@@ -1740,7 +1740,7 @@ HOME_SECTION_DEFAULTS = {
     'banners': ('', '', '', '', '', '', '', '', '', 0),
     'features': ('', '', '', '', '', '', '', '', '', 4),
     'categories': ('الأقسام', 'Categories', 'تصفح الأقسام', 'Browse categories',
-                   'اختار القسم اللي يناسب ستايلك', 'Pick the section that fits your style',
+                   'اختار القسم اللي يناسب تصميمك', 'Pick the section that fits your style',
                    '', '', '', 6),
     'featured': ('مختارات', 'Featured', 'منتجات مختارة', 'Featured pieces',
                  'قطع اخترناها لك من أحدث المجموعات', 'Hand-picked pieces from our latest drops',
@@ -1789,6 +1789,7 @@ class HomeSection(models.Model):
         null=True, blank=True, validators=[MaxValueValidator(100)],
     )
     script_text = models.CharField(max_length=160, blank=True, default='')
+    show_script = models.BooleanField(default=True)  # hero only: the handwritten words
     items_limit = models.PositiveSmallIntegerField(default=8)
 
     class Meta:

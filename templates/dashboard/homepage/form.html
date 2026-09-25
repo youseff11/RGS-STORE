@@ -42,6 +42,7 @@
         <p data-hp="subtitle_en"></p>
         <span class="hero-prev-btn" data-hp="button_text_en"></span>
       </div>
+      <span class="hero-prev-script" data-hp-script></span>
     </div>
     <div class="help" style="margin-top:8px">المعاينة تقريبية — افتح الرئيسية بعد الحفظ علشان تشوف الشكل النهائي.</div>
   </div>
@@ -67,6 +68,10 @@
       el.textContent = (q(n) || {}).value || '';
       el.hidden = !el.textContent;
     });
+    var script = box.querySelector('[data-hp-script]');
+    var showScript = q('show_script');
+    script.textContent = ((q('script_text') || {}).value || '').replace(/\\n/g, '\n').trim() || 'Bold\nIdeas\nBetter\nDesigns';
+    script.hidden = mode === 'phone' || (showScript && !showScript.checked);
     var focus = q(mode === 'desk' ? 'image_focus' : 'image_focus_mobile');
     img.src = urls[mode];
     img.style.objectPosition = (focus ? focus.value : 50) + '% center';
@@ -87,6 +92,7 @@
     });
   });
   document.querySelector('.hero-edit').addEventListener('input', draw);
+  document.querySelector('.hero-edit').addEventListener('change', draw);
   draw();
 })();
 </script>

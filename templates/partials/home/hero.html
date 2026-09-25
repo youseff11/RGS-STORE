@@ -28,6 +28,8 @@
     </div>
   </div>
 
+  {% if sec.show_script %}
   {% t 'hero_script' as default_script %}
   <span class="hero-script" aria-hidden="true">{{ sec.hero_script|default:default_script|linebreaksbr }}</span>
+  {% endif %}
 </section>
