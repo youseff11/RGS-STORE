@@ -68,6 +68,8 @@ h1,h2,h3,h4 { margin: 0 0 .4em; line-height: 1.3; font-weight: 700; }
 }
 .mr-logo .mr-ink { fill: var(--logo-ink); transition: fill .3s var(--ease); }
 .mr-logo .mr-dot { fill: var(--logo-dot); transition: fill .3s var(--ease); }
+/* uploaded logo picture (SITE.logo) — keeps its own proportions */
+.mr-logo-img { object-fit: contain; max-width: 100%; }
 
 /* the sidebar is dark in both themes, so the logo is always light there */
 .sidebar .mr-logo { --logo-ink: #fff; --logo-dot: var(--accent); height: 27px; }
