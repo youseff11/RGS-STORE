@@ -23,7 +23,7 @@
     <button class="btn btn-block" type="submit">رفع الصور</button>
   </form>
 
-  <form class="card" method="post" enctype="multipart/form-data">
+  <form class="card" method="post" enctype="multipart/form-data" data-chunk-upload="{% url 'dash_work_upload_chunk' work.pk %}">
     {% csrf_token %}<input type="hidden" name="action" value="upload_video">
     <div class="card-head"><h3>{% include 'partials/icon.html' with name='film' %} فيديو من جهازك</h3></div>
     <div class="field"><label>الفيديو (MP4 / WEBM / MOV)</label><input class="inp file" type="file" name="video" accept="video/mp4,video/webm,video/quicktime,.mov,.m4v" required></div>
@@ -32,6 +32,11 @@
       <div class="field"><label>تعليق <span class="lang-tag ar">عربي</span></label><input class="inp" name="caption_ar" dir="rtl"></div>
       <div class="field"><label>تعليق <span class="lang-tag en">English</span></label><input class="inp" name="caption_en" dir="ltr"></div>
     </div>
+    <div class="upload-progress" data-up-box hidden>
+      <div class="upload-progress-track"><span data-up-bar></span></div>
+      <div class="small muted" data-up-text></div>
+    </div>
+    <div class="help">أي حجم لحد 500 ميجا — بيترفع على أجزاء صغيرة، فسيب الصفحة مفتوحة لحد ما يخلص</div>
     <button class="btn btn-block" type="submit">رفع الفيديو</button>
   </form>
 
@@ -91,4 +96,110 @@
     <div class="empty"><div class="ico ico-badge">{% include 'partials/icon.html' with name='image' %}</div>لسه مفيش صور أو فيديوهات</div>
   {% endif %}
 </div>
+<style>
+.upload-progress { margin: 4px 0 12px; }
+.upload-progress-track { height: 8px; border-radius: 8px; background: var(--line, rgba(255,255,255,.1)); overflow: hidden; }
+.upload-progress-track span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+.upload-progress [data-up-text] { margin-top: 6px; }
+.upload-progress.is-error [data-up-text] { color: #e5484d; }
+</style>
+<script>
+/* Big videos go up in small pieces — the server in front of the site refuses one big request (413). */
+(function () {
+  var form = document.querySelector('[data-chunk-upload]');
+  if (!form || !window.fetch || !window.FormData || !Blob.prototype.slice) return;
+  var CHUNK = 768 * 1024;          // under the usual 1 MB server limit
+  var MAX_MB = 500;
+  var url = form.dataset.chunkUpload;
+  var csrf = form.querySelector('[name="csrfmiddlewaretoken"]').value;
+  var box = form.querySelector('[data-up-box]'), bar = form.querySelector('[data-up-bar]'), text = form.querySelector('[data-up-text]');
+  var btn = form.querySelector('button[type="submit"]');
+  var busy = false;
+
+  var token = function () {
+    var a = new Uint8Array(16); window.crypto.getRandomValues(a);
+    return Array.prototype.map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+  };
+  var mb = function (n) { return (n / 1048576).toFixed(1); };
+  var show = function (pct, msg, error) {
+    box.hidden = false; box.classList.toggle('is-error', !!error);
+    bar.style.width = pct + '%'; text.textContent = msg;
+  };
+  var post = function (data, target) {
+    data.append('csrfmiddlewaretoken', csrf);
+    return fetch(target || url, { method: 'POST', body: data, credentials: 'same-origin' })
+      .then(function (res) {
+        if (res.status === 413) throw new Error('السيرفر رفض الجزء ده لأنه كبير (413) — كلّم الاستضافة يزوّدوا حد الرفع');
+        return res.json().catch(function () { throw new Error('حصل خطأ في السيرفر (' + res.status + ')'); })
+          .then(function (json) { json._status = res.status; return json; });
+      });
+  };
+
+  // send one file piece by piece → resolves with its token
+  var sendFile = function (file, onPiece) {
+    var id = token(), offset = 0, tries = 0;
+    var next = function () {
+      if (offset >= file.size) return Promise.resolve(id);
+      var data = new FormData();
+      data.append('token', id); data.append('offset', offset);
+      data.append('chunk', file.slice(offset, offset + CHUNK), 'chunk');
+      return post(data).then(function (json) {
+        if (json.ok) { offset = json.size; tries = 0; onPiece(offset); return next(); }
+        if (json._status === 409 && typeof json.size === 'number' && tries < 5) { offset = json.size; tries++; return next(); }
+        throw new Error(json.error || 'الرفع وقف — جرّب تاني');
+      }, function (err) {
+        if (tries < 5 && !/413/.test(err.message)) {  // network hiccup → wait and resend the same piece
+          tries++; return new Promise(function (r) { setTimeout(r, 1500 * tries); }).then(next);
+        }
+        throw err;
+      });
+    };
+    return next();
+  };
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    if (busy) return;
+    var video = form.querySelector('[name="video"]').files[0];
+    var poster = (form.querySelector('[name="poster"]').files || [])[0];
+    if (!video) return;
+    if (!/\.(mp4|webm|mov|m4v)$/i.test(video.name)) { show(0, 'ارفع فيديو بصيغة MP4 أو WEBM أو MOV', true); return; }
+    if (video.size > MAX_MB * 1048576) { show(0, 'الفيديو ' + mb(video.size) + ' ميجا — الحد ' + MAX_MB + ' ميجا. ارفعه على يوتيوب وحط اللينك', true); return; }
+
+    busy = true; btn.disabled = true;
+    var total = video.size + (poster ? poster.size : 0);
+    var posterDone = 0;
+    var tick = function (sent) {
+      var pct = Math.min(99, Math.round((sent + posterDone) * 100 / total));
+      show(pct, 'بيترفع… ' + pct + '% (' + mb(sent + posterDone) + ' من ' + mb(total) + ' ميجا)');
+    };
+    show(0, 'بيبدأ الرفع…');
+    window.onbeforeunload = function () { return 'الفيديو لسه بيترفع'; };
+
+    var posterToken = null;
+    (poster ? sendFile(poster, function () {}).then(function (t) { posterToken = t; posterDone = poster.size; }) : Promise.resolve())
+      .then(function () { return sendFile(video, tick); })
+      .then(function (videoToken) {
+        show(100, 'بيتحفظ…');
+        var data = new FormData();
+        data.append('action', 'finish_video');
+        data.append('video_token', videoToken); data.append('video_name', video.name);
+        if (posterToken) { data.append('poster_token', posterToken); data.append('poster_name', poster.name); }
+        data.append('caption_ar', form.querySelector('[name="caption_ar"]').value);
+        data.append('caption_en', form.querySelector('[name="caption_en"]').value);
+        return post(data, window.location.pathname);
+      })
+      .then(function (json) {
+        if (!json.ok) throw new Error(json.error || 'ما اتحفظش — جرّب تاني');
+        window.onbeforeunload = null;
+        window.location.href = json.redirect;
+      })
+      .catch(function (err) {
+        window.onbeforeunload = null;
+        busy = false; btn.disabled = false;
+        show(0, err.message || 'حصل خطأ — جرّب تاني', true);
+      });
+  });
+})();
+</script>
 {% endblock %}

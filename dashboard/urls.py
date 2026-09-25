@@ -167,6 +167,7 @@ urlpatterns = [
     path('dashboard/works/new/', dv.work_form, name='dash_work_new'),
     path('dashboard/works/<int:pk>/edit/', dv.work_form, name='dash_work_edit'),
     path('dashboard/works/<int:pk>/media/', dv.work_media, name='dash_work_media'),
+    path('dashboard/works/<int:pk>/upload-chunk/', dv.work_upload_chunk, name='dash_work_upload_chunk'),
     path('dashboard/works/<int:pk>/toggle/<str:field>/', dv.work_toggle, name='dash_work_toggle'),
     path('dashboard/works/<int:pk>/delete/', dv.work_delete, name='dash_work_delete'),
     path('dashboard/works/media/<int:pk>/delete/', dv.work_media_delete, name='dash_work_media_delete'),

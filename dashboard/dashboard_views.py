@@ -1,6 +1,9 @@
 """Admin dashboard views — RGS TOWER."""
 
 import csv
+import os
+import re
+import time
 from datetime import timedelta
 from decimal import Decimal
 from functools import wraps
@@ -11,7 +14,10 @@ from django.contrib.auth.decorators import user_passes_test
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Avg, Count, F, Max, Q, Sum
-from django.http import HttpResponse
+from django.conf import settings as dj_settings
+from django.core.files import File
+from django.core.files.base import ContentFile
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -1347,7 +1353,9 @@ def work_media(request, pk):
                 WorkMedia.objects.create(work=work, kind='image', image=image, ordering=start + index)
                 ok += 1
             messages.success(request, f'تم رفع {ok} صورة') if ok else messages.error(request, 'اختار صور بس')
-        elif action == 'upload_video':
+        elif action == 'finish_video':
+            return _finish_video_upload(request, work, start)
+        elif action == 'upload_video':  # fallback when JavaScript is off
             video = request.FILES.get('video')
             ext = (video.name.rsplit('.', 1)[-1].lower() if video else '')
             if not video or ext not in ('mp4', 'webm', 'mov', 'm4v'):
@@ -1412,6 +1420,97 @@ def work_delete(request, pk):
     get_object_or_404(Work, pk=pk).delete()
     messages.info(request, 'تم حذف العمل')
     return redirect('dash_works')
+
+
+# ------------------------------------------------ big videos, piece by piece
+# The web server in front of Django refuses big requests («413 Request Entity Too Large»),
+# so the browser sends the video in small pieces and we glue them back together here.
+CHUNK_DIR = 'tmp_uploads'
+MAX_UPLOAD_MB = 500
+_TOKEN_RE = re.compile(r'^[0-9a-f]{32}$')
+
+
+def _chunk_path(token):
+    return os.path.join(dj_settings.MEDIA_ROOT, CHUNK_DIR, f'{token}.part')
+
+
+def _clean_old_chunks(max_age=24 * 3600):
+    folder = os.path.join(dj_settings.MEDIA_ROOT, CHUNK_DIR)
+    if not os.path.isdir(folder):
+        return
+    now = time.time()
+    for name in os.listdir(folder):
+        path = os.path.join(folder, name)
+        try:
+            if now - os.path.getmtime(path) > max_age:
+                os.remove(path)
+        except OSError:
+            pass
+
+
+@perm_required('portfolio')
+@require_POST
+def work_upload_chunk(request, pk):
+    """One piece of a file: appended to media/tmp_uploads/<token>.part."""
+    get_object_or_404(Work, pk=pk)
+    token = request.POST.get('token') or ''
+    chunk = request.FILES.get('chunk')
+    try:
+        offset = int(request.POST.get('offset') or 0)
+    except ValueError:
+        offset = -1
+    if not _TOKEN_RE.match(token) or chunk is None or offset < 0:
+        return JsonResponse({'ok': False, 'error': 'طلب غلط'}, status=400)
+
+    path = _chunk_path(token)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    if offset == 0:
+        _clean_old_chunks()
+    size = os.path.getsize(path) if os.path.exists(path) else 0
+    if size != offset:  # a piece got lost or sent twice → tell the browser where to continue
+        return JsonResponse({'ok': False, 'size': size}, status=409)
+    if size + chunk.size > MAX_UPLOAD_MB * 1024 * 1024:
+        os.remove(path) if os.path.exists(path) else None
+        return JsonResponse({'ok': False, 'error': f'الملف أكبر من {MAX_UPLOAD_MB} ميجا'}, status=400)
+    with open(path, 'wb' if offset == 0 else 'ab') as fh:
+        for part in chunk.chunks():
+            fh.write(part)
+    return JsonResponse({'ok': True, 'size': os.path.getsize(path)})
+
+
+def _finish_video_upload(request, work, start):
+    """All pieces arrived → build the WorkMedia (video + optional poster)."""
+    token = request.POST.get('video_token') or ''
+    name = os.path.basename(request.POST.get('video_name') or 'video.mp4')[:120]
+    ext = name.rsplit('.', 1)[-1].lower() if '.' in name else ''
+    path = _chunk_path(token) if _TOKEN_RE.match(token) else ''
+    if not path or not os.path.exists(path):
+        return JsonResponse({'ok': False, 'error': 'الفيديو ما وصلش كامل — جرّب تاني'}, status=400)
+    if ext not in ('mp4', 'webm', 'mov', 'm4v'):
+        os.remove(path)
+        return JsonResponse({'ok': False, 'error': 'ارفع فيديو بصيغة MP4 أو WEBM أو MOV'}, status=400)
+
+    media = WorkMedia(
+        work=work, kind='video', ordering=start,
+        caption_ar=(request.POST.get('caption_ar') or '')[:200],
+        caption_en=(request.POST.get('caption_en') or '')[:200],
+    )
+    poster_token = request.POST.get('poster_token') or ''
+    poster_path = _chunk_path(poster_token) if _TOKEN_RE.match(poster_token) else ''
+    if poster_path and os.path.exists(poster_path):
+        poster_name = os.path.basename(request.POST.get('poster_name') or 'poster.jpg')[:120]
+        with open(poster_path, 'rb') as fh:
+            media.poster = ContentFile(fh.read(), name=poster_name)  # gets compressed on save
+    try:
+        with open(path, 'rb') as fh:
+            media.video = File(fh, name=name)
+            media.save()
+    finally:
+        for p in (path, poster_path):
+            if p and os.path.exists(p):
+                os.remove(p)
+    messages.success(request, 'تم رفع الفيديو')
+    return JsonResponse({'ok': True, 'redirect': reverse('dash_work_media', args=[work.pk])})
 
 
 @perm_required('portfolio')
