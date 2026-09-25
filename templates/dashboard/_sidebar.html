@@ -65,6 +65,9 @@
   <a class="sb-link {% if active_page == 'navbar' %}is-active{% endif %}" href="{% url 'dash_nav' %}">
     {% include 'partials/icon.html' with name='menu' %} القائمة (الناف بار)
   </a>
+  <a class="sb-link {% if active_page == 'footer' %}is-active{% endif %}" href="{% url 'dash_footer' %}">
+    {% include 'partials/icon.html' with name='grid' %} الفوتر
+  </a>
   <a class="sb-link {% if active_page == 'about' %}is-active{% endif %}" href="{% url 'dash_about' %}">
     {% include 'partials/icon.html' with name='quote' %} حكايتنا (من نحن)
   </a>

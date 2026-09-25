@@ -1,0 +1,65 @@
+{% extends 'base/dashboard_base.html' %}
+{% block page_name %}الفوتر{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h2>الفوتر</h2><p>النصوص اللي في أسفل الموقع، وإظهار أو إخفاء أي جزء فيه · سيب أي نص فاضي علشان يرجع للنص الافتراضي</p></div>
+  <a class="btn btn-soft" href="{% url 'home' %}#top" target="_blank" rel="noopener">{% include 'partials/icon.html' with name='globe' %} شوف الموقع</a>
+</div>
+
+<form method="post">
+  {% csrf_token %}
+  <div class="split">
+    <div>
+      <div class="card">
+        <div class="card-head"><h3>اللوجو والنص</h3></div>
+        <div class="switch">{{ form.footer_show_logo }}<label for="{{ form.footer_show_logo.id_for_label }}">{{ form.footer_show_logo.label }}</label></div>
+        <div class="help" style="margin-top:-6px;margin-bottom:10px">اللوجو نفسه بيتغيّر من <a href="{% url 'dash_settings' %}" style="color:var(--accent-text)">«إعدادات المتجر»</a>.</div>
+        <div class="switch">{{ form.footer_show_text }}<label for="{{ form.footer_show_text.id_for_label }}">{{ form.footer_show_text.label }}</label></div>
+        {% include 'dashboard/_pair.html' with ar=form.footer_text_ar en=form.footer_text_en label='النص تحت اللوجو' help='لو فاضي بيظهر الشعار النصي (tagline) من إعدادات المتجر' %}
+        <div class="switch">{{ form.footer_show_socials }}<label for="{{ form.footer_show_socials.id_for_label }}">{{ form.footer_show_socials.label }}</label></div>
+        <div class="help" style="margin-top:-6px">الروابط نفسها من «إعدادات المتجر» ← السوشيال ميديا.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>عمود «المتجر»</h3></div>
+        <div class="switch">{{ form.footer_show_shop }}<label for="{{ form.footer_show_shop.id_for_label }}">{{ form.footer_show_shop.label }}</label></div>
+        {% include 'dashboard/_pair.html' with ar=form.footer_shop_title_ar en=form.footer_shop_title_en label='عنوان العمود' help='فاضي = «المتجر»' %}
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>عمود «المساعدة»</h3></div>
+        <div class="switch">{{ form.footer_show_help }}<label for="{{ form.footer_show_help.id_for_label }}">{{ form.footer_show_help.label }}</label></div>
+        {% include 'dashboard/_pair.html' with ar=form.footer_help_title_ar en=form.footer_help_title_en label='عنوان العمود' help='فاضي = «المساعدة»' %}
+        <div class="switch">{{ form.footer_show_policies }}<label for="{{ form.footer_show_policies.id_for_label }}">{{ form.footer_show_policies.label }}</label></div>
+        <div class="help" style="margin-top:-6px">وكل سياسة لوحدها بتختار تظهر في الفوتر ولا لأ من <a href="{% url 'dash_policies' %}" style="color:var(--accent-text)">«السياسات»</a>.</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-head"><h3>عمود «اتصل بنا»</h3></div>
+        <div class="switch">{{ form.footer_show_contact }}<label for="{{ form.footer_show_contact.id_for_label }}">{{ form.footer_show_contact.label }}</label></div>
+        {% include 'dashboard/_pair.html' with ar=form.footer_contact_title_ar en=form.footer_contact_title_en label='عنوان العمود' help='فاضي = «اتصل بنا»' %}
+        <div class="switch">{{ form.footer_show_phone }}<label for="{{ form.footer_show_phone.id_for_label }}">{{ form.footer_show_phone.label }}</label></div>
+        <div class="switch">{{ form.footer_show_email }}<label for="{{ form.footer_show_email.id_for_label }}">{{ form.footer_show_email.label }}</label></div>
+        <div class="switch">{{ form.footer_show_address }}<label for="{{ form.footer_show_address.id_for_label }}">{{ form.footer_show_address.label }}</label></div>
+        <div class="help" style="margin-top:-6px;margin-bottom:10px">البيانات نفسها من «إعدادات المتجر» ← بيانات التواصل.</div>
+        <div class="switch">{{ form.footer_show_payment }}<label for="{{ form.footer_show_payment.id_for_label }}">{{ form.footer_show_payment.label }}</label></div>
+        {% include 'dashboard/_pair.html' with ar=form.footer_payment_text_ar en=form.footer_payment_text_en label='نص شارة الدفع' help='فاضي = بيتكتب لوحده حسب طرق الدفع المفعّلة' %}
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>السطر الأخير</h3></div>
+        {% include 'dashboard/_pair.html' with ar=form.footer_copyright_ar en=form.footer_copyright_en label='سطر حقوق النشر' help='اكتب {year} علشان السنة تتحدّث لوحدها · فاضي = «© السنة اسم المتجر — كل الحقوق محفوظة»' %}
+        <div class="switch">{{ form.footer_show_back_to_top }}<label for="{{ form.footer_show_back_to_top.id_for_label }}">{{ form.footer_show_back_to_top.label }}</label></div>
+      </div>
+
+      <div class="card">
+        <button class="btn btn-block" type="submit">حفظ الفوتر</button>
+      </div>
+      {% if form.non_field_errors %}<div class="alert">{{ form.non_field_errors }}</div>{% endif %}
+    </div>
+  </div>
+</form>
+{% endblock %}

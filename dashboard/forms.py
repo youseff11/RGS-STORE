@@ -482,6 +482,47 @@ class SiteSettingsForm(StyledForm):
         }
 
 
+class FooterSettingsForm(StyledForm):
+    """«الفوتر» — نصوص الفوتر وإظهار/إخفاء أجزاءه."""
+
+    class Meta:
+        model = SiteSettings
+        fields = [
+            'footer_show_logo', 'footer_show_text', 'footer_text_ar', 'footer_text_en', 'footer_show_socials',
+            'footer_show_shop', 'footer_shop_title_ar', 'footer_shop_title_en',
+            'footer_show_help', 'footer_help_title_ar', 'footer_help_title_en', 'footer_show_policies',
+            'footer_show_contact', 'footer_contact_title_ar', 'footer_contact_title_en',
+            'footer_show_phone', 'footer_show_email', 'footer_show_address',
+            'footer_show_payment', 'footer_payment_text_ar', 'footer_payment_text_en',
+            'footer_copyright_ar', 'footer_copyright_en', 'footer_show_back_to_top',
+        ]
+        widgets = {
+            'footer_text_ar': forms.Textarea(attrs={'rows': 3}),
+            'footer_text_en': forms.Textarea(attrs={'rows': 3}),
+            'footer_copyright_en': forms.TextInput(attrs={'placeholder': '© {year} RGS TOWER — All rights reserved'}),
+            'footer_copyright_ar': forms.TextInput(attrs={'placeholder': '© {year} RGS TOWER — كل الحقوق محفوظة'}),
+        }
+        labels = {
+            'footer_show_logo': 'إظهار اللوجو',
+            'footer_show_text': 'إظهار النص تحت اللوجو',
+            'footer_text_ar': 'النص تحت اللوجو', 'footer_text_en': 'النص تحت اللوجو',
+            'footer_show_socials': 'إظهار أيقونات السوشيال ميديا',
+            'footer_show_shop': 'إظهار عمود «المتجر»',
+            'footer_shop_title_ar': 'عنوان العمود', 'footer_shop_title_en': 'عنوان العمود',
+            'footer_show_help': 'إظهار عمود «المساعدة»',
+            'footer_help_title_ar': 'عنوان العمود', 'footer_help_title_en': 'عنوان العمود',
+            'footer_show_policies': 'إظهار روابط السياسات في العمود ده',
+            'footer_show_contact': 'إظهار عمود «اتصل بنا»',
+            'footer_contact_title_ar': 'عنوان العمود', 'footer_contact_title_en': 'عنوان العمود',
+            'footer_show_phone': 'رقم التليفون', 'footer_show_email': 'البريد الإلكتروني',
+            'footer_show_address': 'العنوان',
+            'footer_show_payment': 'إظهار شارة طرق الدفع',
+            'footer_payment_text_ar': 'نص شارة الدفع', 'footer_payment_text_en': 'نص شارة الدفع',
+            'footer_copyright_ar': 'سطر حقوق النشر', 'footer_copyright_en': 'سطر حقوق النشر',
+            'footer_show_back_to_top': 'إظهار زرار «لأعلى»',
+        }
+
+
 class PaymentSettingsForm(StyledForm):
     paypal_secret = forms.CharField(
         label='PayPal Secret', required=False,

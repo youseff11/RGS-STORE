@@ -187,6 +187,7 @@ urlpatterns = [
     path('dashboard/homepage/<int:pk>/', dv.home_section_edit, name='dash_home_edit'),
     path('dashboard/homepage/<int:pk>/move/<str:direction>/', dv.home_section_move, name='dash_home_move'),
     path('dashboard/homepage/<int:pk>/toggle/', dv.home_section_toggle, name='dash_home_toggle'),
+    path('dashboard/footer/', dv.footer_settings, name='dash_footer'),
     path('dashboard/navbar/', dv.nav_list, name='dash_nav'),
     path('dashboard/navbar/new/', dv.nav_form, name='dash_nav_new'),
     path('dashboard/navbar/<int:pk>/edit/', dv.nav_form, name='dash_nav_edit'),

@@ -115,6 +115,32 @@ class SiteSettings(models.Model):
     reviews_auto_publish = models.BooleanField(default=True)
     share_image = models.ImageField(upload_to='site/', blank=True, null=True)
 
+    # ---- footer (texts + what shows) — «الفوتر» in the dashboard ----
+    footer_text_ar = models.TextField(blank=True, default='')
+    footer_text_en = models.TextField(blank=True, default='')
+    footer_show_logo = models.BooleanField(default=True)
+    footer_show_text = models.BooleanField(default=True)
+    footer_show_socials = models.BooleanField(default=True)
+    footer_show_shop = models.BooleanField(default=True)
+    footer_shop_title_ar = models.CharField(max_length=60, blank=True, default='')
+    footer_shop_title_en = models.CharField(max_length=60, blank=True, default='')
+    footer_show_help = models.BooleanField(default=True)
+    footer_help_title_ar = models.CharField(max_length=60, blank=True, default='')
+    footer_help_title_en = models.CharField(max_length=60, blank=True, default='')
+    footer_show_policies = models.BooleanField(default=True)
+    footer_show_contact = models.BooleanField(default=True)
+    footer_contact_title_ar = models.CharField(max_length=60, blank=True, default='')
+    footer_contact_title_en = models.CharField(max_length=60, blank=True, default='')
+    footer_show_phone = models.BooleanField(default=True)
+    footer_show_email = models.BooleanField(default=True)
+    footer_show_address = models.BooleanField(default=True)
+    footer_show_payment = models.BooleanField(default=True)
+    footer_payment_text_ar = models.CharField(max_length=120, blank=True, default='')
+    footer_payment_text_en = models.CharField(max_length=120, blank=True, default='')
+    footer_copyright_ar = models.CharField(max_length=200, blank=True, default='')
+    footer_copyright_en = models.CharField(max_length=200, blank=True, default='')
+    footer_show_back_to_top = models.BooleanField(default=True)
+
     # ---- email notifications (Gmail or any SMTP) ----
     emails_enabled = models.BooleanField(default=False)
     notify_email = models.EmailField(
@@ -197,6 +223,38 @@ class SiteSettings(models.Model):
     @property
     def currency(self):
         return pick(self.currency_ar, self.currency_en)
+
+    # ---- footer ----
+    @property
+    def footer_text(self):
+        return pick(self.footer_text_ar, self.footer_text_en) or self.about or self.tagline
+
+    @property
+    def footer_shop_title(self):
+        return pick(self.footer_shop_title_ar, self.footer_shop_title_en)
+
+    @property
+    def footer_help_title(self):
+        return pick(self.footer_help_title_ar, self.footer_help_title_en)
+
+    @property
+    def footer_contact_title(self):
+        return pick(self.footer_contact_title_ar, self.footer_contact_title_en)
+
+    @property
+    def footer_payment_text(self):
+        return pick(self.footer_payment_text_ar, self.footer_payment_text_en)
+
+    @property
+    def footer_copyright(self):
+        """Custom copyright line — {year} becomes the current year."""
+        text = pick(self.footer_copyright_ar, self.footer_copyright_en)
+        return text.replace('{year}', str(timezone.localdate().year)) if text else ''
+
+    @property
+    def footer_columns(self):
+        """How many footer columns are showing — the grid sizes itself to fit."""
+        return 1 + sum([self.footer_show_shop, self.footer_show_help, self.footer_show_contact])
 
     # -- sign in with Google
     @property

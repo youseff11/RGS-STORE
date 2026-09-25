@@ -917,6 +917,12 @@ svg.i { width: 1.15em; height: 1.15em; vertical-align: -.2em; flex: none; }
   gap: 44px 32px;
   padding-block: 64px 44px;
 }
+/* columns hidden from «الفوتر» in the dashboard → the rest share the width */
+@media (min-width: 1081px) {
+  .footer-grid.cols-3 { grid-template-columns: 1.7fr 1fr 1.4fr; }
+  .footer-grid.cols-2 { grid-template-columns: 1.7fr 1.4fr; }
+  .footer-grid.cols-1 { grid-template-columns: 1fr; }
+}
 
 /* --- brand column --- */
 .footer-brand .logo { margin-bottom: 16px; }

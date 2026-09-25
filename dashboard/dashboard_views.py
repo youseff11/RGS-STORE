@@ -21,7 +21,7 @@ from .forms import (
     AboutBlockForm, AboutPageForm, AboutStatForm, AboutStoryForm, AnnouncementForm, BannerForm, DefaultShareImageForm, LinkPreviewForm, CategoryForm, ColorForm, CouponForm,
     CountryForm, CustomerForm, DiscordLoginForm, GoogleLoginForm, HomeSectionForm, NavLinkForm, NotificationSettingsForm,
     OrderEditForm, PaymentSettingsForm, PolicyForm, ProductForm, PromotionForm, ReviewCreateForm,
-    ReviewForm, SiteSettingsForm,
+    ReviewForm, SiteSettingsForm, FooterSettingsForm,
     ServiceForm, StaffForm, WorkCategoryForm, WorkForm,
 )
 from . import discord_oauth, google_oauth, mailer
@@ -1081,6 +1081,20 @@ def settings_view(request):
         return redirect('dash_settings')
     return render(request, 'dashboard/settings.html', {
         'form': form, 'site': site, 'active_page': 'settings', **_pending_counts(),
+    })
+
+
+@perm_required('content')
+def footer_settings(request):
+    """«الفوتر» — نصوص الفوتر وإظهار/إخفاء أجزاءه."""
+    site = SiteSettings.load()
+    form = FooterSettingsForm(request.POST or None, instance=site)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'تم حفظ إعدادات الفوتر')
+        return redirect('dash_footer')
+    return render(request, 'dashboard/footer.html', {
+        'form': form, 'site': site, 'active_page': 'footer', **_pending_counts(),
     })
 
 
