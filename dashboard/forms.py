@@ -67,7 +67,7 @@ class ProductForm(StyledForm):
     class Meta:
         model = Product
         fields = [
-            'name_ar', 'name_en', 'category', 'sku', 'price', 'compare_price',
+            'name_ar', 'name_en', 'category', 'sku', 'price', 'compare_price', 'fees_type', 'fees_value',
             'short_ar', 'short_en', 'description_ar', 'description_en',
             'is_active', 'is_featured', 'is_new', 'ordering', 'slug',
         ]
@@ -79,6 +79,7 @@ class ProductForm(StyledForm):
             'name_ar': 'اسم المنتج', 'name_en': 'اسم المنتج',
             'category': 'القسم', 'sku': 'كود المنتج (SKU)',
             'price': 'السعر', 'compare_price': 'السعر قبل الخصم (اختياري)',
+            'fees_type': 'نوع الرسوم', 'fees_value': 'الضرائب والرسوم التحويلي والبنكي',
             'short_ar': 'وصف مختصر', 'short_en': 'وصف مختصر',
             'description_ar': 'الوصف الكامل', 'description_en': 'الوصف الكامل',
             'is_active': 'معروض في المتجر', 'is_featured': 'منتج مميز',

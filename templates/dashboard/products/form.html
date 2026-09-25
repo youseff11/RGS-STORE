@@ -35,6 +35,10 @@
           <div class="field"><label>السعر</label>{{ form.price }}{% for e in form.price.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
           <div class="field"><label>السعر قبل الخصم (اختياري)</label>{{ form.compare_price }}</div>
         </div>
+        <div class="grid g2">
+          <div class="field"><label>الضرائب والرسوم التحويلي والبنكي</label>{{ form.fees_value }}{% for e in form.fees_value.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}<div class="help">بتتضاف على السعر لو العميل دفع بـ PayPal بس، وبتظهرله في سطر لوحدها · 0 = من غير رسوم</div></div>
+          <div class="field"><label>نوع الرسوم</label>{{ form.fees_type }}<div class="help" data-fees-preview></div></div>
+        </div>
         {% include 'dashboard/_pair.html' with ar=form.short_ar en=form.short_en label='وصف مختصر' %}
         {% include 'dashboard/_pair.html' with ar=form.description_ar en=form.description_en label='الوصف الكامل' %}
       </div>
@@ -59,4 +63,19 @@
     </div>
   </div>
 </form>
+<script>
+(function () {
+  var q = function (n) { return document.querySelector('[name="' + n + '"]'); };
+  var price = q('price'), value = q('fees_value'), type = q('fees_type'), out = document.querySelector('[data-fees-preview]');
+  if (!price || !value || !type || !out) return;
+  var draw = function () {
+    var p = parseFloat(price.value) || 0, v = parseFloat(value.value) || 0;
+    if (v <= 0) { out.textContent = ''; return; }
+    var fee = type.value === 'fixed' ? v : p * v / 100;
+    out.textContent = 'مثال: منتج بـ ' + p + ' ← رسوم ' + fee.toFixed(2) + ' ← العميل يدفع بـ PayPal ' + (p + fee).toFixed(2);
+  };
+  [price, value, type].forEach(function (el) { el.addEventListener('input', draw); el.addEventListener('change', draw); });
+  draw();
+})();
+</script>
 {% endblock %}

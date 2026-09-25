@@ -34,6 +34,13 @@
     <b data-sum-shipping data-currency="{{ CURRENCY }}" data-free-label="{% t 'free' %}">{% if totals.shipping %}{% price totals.shipping %}{% else %}{% t 'free' %}{% endif %}</b>
   </div>
 
+  {% if totals.paypal_fees %}
+  <div class="sum-row muted" data-sum-fees-row {% if not totals.fees and hide_checkout %}hidden{% endif %}>
+    <span>{% t 'fees_label' %}{% if not hide_checkout %} <small>({% t 'fees_paypal_note' %})</small>{% endif %}</span>
+    <b>{% price totals.paypal_fees %}</b>
+  </div>
+  {% endif %}
+
   <div class="sum-total"><span>{% t 'total' %}</span><span data-sum-total>{% price totals.total %}</span></div>
 
   {% if totals.coupon %}

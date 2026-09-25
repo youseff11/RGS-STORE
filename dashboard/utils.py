@@ -94,6 +94,7 @@ class Cart:
                 stale = True
                 self.cart[str(variant.id)] = qty
             unit = money(variant.unit_price)
+            unit_fees = money(variant.unit_fees)
             rows.append({
                 'variant': variant,
                 'product': variant.product,
@@ -103,6 +104,8 @@ class Cart:
                 'unit_price': unit,
                 'quantity': qty,
                 'line_total': money(unit * qty),
+                'unit_fees': unit_fees,
+                'fees_total': money(unit_fees * qty),
                 'max_quantity': MAX_QTY,
             })
         found_ids = {v.id for v in variants}
@@ -133,6 +136,11 @@ class Cart:
     @property
     def subtotal(self):
         return money(sum((row['line_total'] for row in self.rows), ZERO))
+
+    @property
+    def fees_total(self):
+        """«الضرائب والرسوم التحويلي والبنكي» of the whole cart — charged with PayPal only."""
+        return money(sum((row['fees_total'] for row in self.rows), ZERO))
 
     # ------------------------------------------------------------- coupons
     @property
@@ -165,7 +173,7 @@ class Cart:
             return ZERO
         return money(coupon.amount_for(self.subtotal))
 
-    def totals(self, country=None):
+    def totals(self, country=None, method=None):
         settings_obj = SiteSettings.load()
         subtotal = self.subtotal
         discount = self.coupon_discount
@@ -177,11 +185,17 @@ class Cart:
         else:
             shipping = money(settings_obj.shipping_for(after_discount, country))
         threshold = ZERO if free_coupon else settings_obj.free_threshold_for(country)
+        paypal_fees = self.fees_total if 'paypal' in settings_obj.payment_methods else ZERO
+        fees = paypal_fees if method == 'paypal' else ZERO
         return {
             'subtotal': subtotal,
             'discount': discount,
             'shipping': shipping,
-            'total': money(after_discount + shipping),
+            'fees': fees,                      # charged on this order
+            'paypal_fees': paypal_fees,        # what PayPal would add (for the note / the switch)
+            'total': money(after_discount + shipping + fees),
+            'total_cod': money(after_discount + shipping),
+            'total_paypal': money(after_discount + shipping + paypal_fees),
             'coupon': coupon,
             'country': country,
             'settings': settings_obj,
@@ -193,6 +207,7 @@ class Cart:
         """Shipping + total for each country — lets checkout update the summary live."""
         base = self.totals()
         after_discount = max(ZERO, base['subtotal'] - base['discount'])
+        paypal_fees = base['paypal_fees']
         free_coupon = bool(base['coupon'] and base['coupon'].free_shipping)
         site = base['settings']
         options = []
@@ -203,6 +218,7 @@ class Cart:
                 'country': country,
                 'shipping': shipping,
                 'total': money(after_discount + shipping),
+                'total_paypal': money(after_discount + shipping + paypal_fees),
                 'remaining_for_free': max(ZERO, threshold - after_discount) if threshold > ZERO else None,
             })
         return options

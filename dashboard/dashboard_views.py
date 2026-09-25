@@ -552,7 +552,7 @@ def order_edit(request, pk):
     if request.method == 'POST' and form.is_valid():
         order = form.save(commit=False)
         order.shipping_fee = order.shipping_fee or Decimal('0')
-        order.total = max(Decimal('0'), order.subtotal - order.discount_total) + order.shipping_fee
+        order.total = max(Decimal('0'), order.subtotal - order.discount_total) + order.shipping_fee + order.fees_total
         order.save()
         messages.success(request, 'تم حفظ بيانات الطلب')
         return redirect('dash_order_detail', pk=order.pk)

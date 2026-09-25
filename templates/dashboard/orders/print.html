@@ -81,6 +81,7 @@
     <div><span>الإجمالي الفرعي</span><b>{{ order.subtotal|money }}</b></div>
     {% if order.discount_total %}<div><span>الخصم {{ order.coupon_code }}</span><b>− {{ order.discount_total|money }}</b></div>{% endif %}
     <div><span>الشحن</span><b>{% if order.shipping_fee %}{{ order.shipping_fee|money }}{% else %}مجاني{% endif %}</b></div>
+    {% if order.fees_total %}<div><span>الضرائب والرسوم التحويلي والبنكي</span><b>{{ order.fees_total|money }}</b></div>{% endif %}
     <div class="grand"><span>الإجمالي</span><span>{% price order.total %}</span></div>
   </div>
 

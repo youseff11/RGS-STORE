@@ -74,6 +74,7 @@
       <div class="sum-row"><span>{% t 'subtotal' %}</span><b>{% price order.subtotal %}</b></div>
       {% if order.discount_total %}<div class="sum-row discount"><span>{% t 'discount' %}</span><b>− {% price order.discount_total %}</b></div>{% endif %}
       <div class="sum-row muted"><span>{% t 'shipping' %}</span><b>{% if order.shipping_fee %}{% price order.shipping_fee %}{% else %}{% t 'free' %}{% endif %}</b></div>
+      {% if order.fees_total %}<div class="sum-row muted"><span>{% t 'fees_label' %}</span><b>{% price order.fees_total %}</b></div>{% endif %}
       <div class="sum-total"><span>{% t 'total' %}</span><span>{% price order.total %}</span></div>
     </aside>
   </div>

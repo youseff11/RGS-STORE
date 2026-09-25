@@ -984,8 +984,8 @@ def checkout(request):
             errors['country'] = t('choose_country')
 
         if not errors:
-            totals = cart.totals(country)
             method = data['payment_method']
+            totals = cart.totals(country, method)
             with transaction.atomic():
                 order = Order.objects.create(
                     user=user,
@@ -1002,6 +1002,7 @@ def checkout(request):
                     coupon=totals['coupon'],
                     coupon_code=totals['coupon'].code if totals['coupon'] else '',
                     shipping_fee=totals['shipping'],
+                    fees_total=totals['fees'],
                     total=totals['total'],
                     payment_method=method,
                     payment_status='unpaid',
@@ -1051,7 +1052,7 @@ def checkout(request):
     selected = next((c for c in countries if str(c.pk) == data['country']), None)
     context = {
         'cart': cart,
-        'totals': cart.totals(selected),
+        'totals': cart.totals(selected, data['payment_method']),
         'countries': countries,
         'ship_options': cart.shipping_options(countries),
         'data': data,

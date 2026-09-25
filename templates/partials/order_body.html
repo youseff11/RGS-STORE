@@ -58,6 +58,7 @@
     <tr><th>{% t 'subtotal' %}</th><td>{% price order.subtotal %}</td></tr>
     {% if order.discount_total %}<tr><th>{% t 'discount' %} {{ order.coupon_code }}</th><td style="color:var(--ok)">− {% price order.discount_total %}</td></tr>{% endif %}
     <tr><th>{% t 'shipping' %}</th><td>{% if order.shipping_fee %}{% price order.shipping_fee %}{% else %}{% t 'free' %}{% endif %}</td></tr>
+    {% if order.fees_total %}<tr><th>{% t 'fees_label' %}</th><td>{% price order.fees_total %}</td></tr>{% endif %}
     <tr><th style="color:var(--text);font-weight:800">{% t 'total' %}</th><td style="font-weight:800">{% price order.total %}</td></tr>
   </table>
 

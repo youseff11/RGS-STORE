@@ -19,6 +19,18 @@
     <td style="padding:8px 0;border-bottom:1px solid #F0E9E3;font-size:13px;color:#14110F;font-weight:700;white-space:nowrap;" align="left" dir="ltr">{{ item.line_total|money }} {{ site.currency_ar }}</td>
   </tr>
   {% endfor %}
+  {% if order.shipping_fee %}
+  <tr>
+    <td style="padding:8px 0;font-size:13px;color:#8A7D74;">الشحن</td>
+    <td style="padding:8px 0;font-size:13px;color:#14110F;" align="left" dir="ltr">{{ order.shipping_fee|money }} {{ site.currency_ar }}</td>
+  </tr>
+  {% endif %}
+  {% if order.fees_total %}
+  <tr>
+    <td style="padding:8px 0;font-size:13px;color:#8A7D74;">الضرائب والرسوم التحويلي والبنكي</td>
+    <td style="padding:8px 0;font-size:13px;color:#14110F;" align="left" dir="ltr">{{ order.fees_total|money }} {{ site.currency_ar }}</td>
+  </tr>
+  {% endif %}
   <tr>
     <td style="padding:10px 0 0;font-size:15px;font-weight:800;color:#14110F;">الإجمالي</td>
     <td style="padding:10px 0 0;font-size:15px;font-weight:800;color:#B04B00;" align="left" dir="ltr">{{ order.total|money }} {{ site.currency_ar }}</td>

@@ -51,6 +51,7 @@
           <div class="between" style="padding:6px 0;color:var(--ok)"><span>الخصم {% if order.coupon_code %}({{ order.coupon_code }}){% endif %}</span><b>− {% price order.discount_total %}</b></div>
         {% endif %}
         <div class="between" style="padding:6px 0"><span class="muted">الشحن</span><b>{% if order.shipping_fee %}{% price order.shipping_fee %}{% else %}مجاني{% endif %}</b></div>
+        {% if order.fees_total %}<div class="between" style="padding:6px 0"><span class="muted">الضرائب والرسوم التحويلي والبنكي</span><b>{% price order.fees_total %}</b></div>{% endif %}
         <div class="between" style="padding:12px 0 0;border-top:1px solid var(--line);font-size:18px"><b>الإجمالي</b><b>{% price order.total %}</b></div>
       </div>
     </div>

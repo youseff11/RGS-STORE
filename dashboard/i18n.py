@@ -458,6 +458,8 @@ STRINGS = {
     'stat_works': ('عمل', 'projects'),
     'stat_rating': ('متوسط التقييم', 'average rating'),
     'stat_reviews': ('تقييم', 'reviews'),
+    'fees_label': ('الضرائب والرسوم التحويلي والبنكي', 'Taxes, transfer & bank fees'),
+    'fees_paypal_note': ('بتتضاف لو الدفع بـ PayPal', 'added when paying with PayPal'),
     'stat_products': ('منتج', 'products'),
     'policies': ('السياسات', 'Policies'),
     'last_updated': ('آخر تحديث', 'Last updated'),

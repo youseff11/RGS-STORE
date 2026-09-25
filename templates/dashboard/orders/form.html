@@ -16,7 +16,7 @@
   {% csrf_token %}
   <div class="card">
     {% include 'dashboard/_form_fields.html' %}
-    <div class="help" style="margin-bottom:12px">المنتجات: {% price order.subtotal %}{% if order.discount_total %} · الخصم: {% price order.discount_total %}{% endif %} · الإجمالي الحالي: <b>{% price order.total %}</b></div>
+    <div class="help" style="margin-bottom:12px">المنتجات: {% price order.subtotal %}{% if order.discount_total %} · الخصم: {% price order.discount_total %}{% endif %}{% if order.fees_total %} · الضرائب والرسوم: {% price order.fees_total %}{% endif %} · الإجمالي الحالي: <b>{% price order.total %}</b></div>
     <button class="btn" type="submit">حفظ</button>
   </div>
 </form>

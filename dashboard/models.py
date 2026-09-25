@@ -451,6 +451,12 @@ class Service(models.Model):
 
 
 # =================================================================== products
+FEES_TYPES = [
+    ('percent', 'نسبة % من سعر المنتج'),
+    ('fixed', 'مبلغ ثابت على كل قطعة'),
+]
+
+
 class Product(models.Model):
     category = models.ForeignKey(
         Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='products'
@@ -468,6 +474,11 @@ class Product(models.Model):
     compare_price = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True,
         help_text='السعر قبل الخصم (اختياري) / original price, optional',
+    )
+    # «الضرائب والرسوم التحويلي والبنكي» — added on top of the price, only when paying with PayPal
+    fees_type = models.CharField(max_length=8, choices=FEES_TYPES, default='percent')
+    fees_value = models.DecimalField(
+        max_digits=10, decimal_places=2, default=ZERO, validators=[MinValueValidator(ZERO)],
     )
 
     is_active = models.BooleanField(default=True)
@@ -546,6 +557,19 @@ class Product(models.Model):
         if promo:
             return max(ZERO, (self.price - promo.amount_for(self.price)).quantize(Decimal('0.01')))
         return self.price
+
+    def fees_for(self, unit_price):
+        """Taxes & transfer/bank fees for one piece that costs `unit_price`."""
+        value = self.fees_value or ZERO
+        if value <= ZERO:
+            return ZERO
+        if self.fees_type == 'fixed':
+            return value.quantize(Decimal('0.01'))
+        return (Decimal(unit_price) * value / Decimal('100')).quantize(Decimal('0.01'))
+
+    @property
+    def has_fees(self):
+        return (self.fees_value or ZERO) > ZERO
 
     @property
     def has_discount(self):
@@ -700,6 +724,11 @@ class ProductVariant(models.Model):
         """Design price (after any running offer) + the service's extra price."""
         extra = self.service.price if self.service else ZERO
         return self.product.final_price + extra
+
+    @property
+    def unit_fees(self):
+        """«الضرائب والرسوم التحويلي والبنكي» for one piece (PayPal only)."""
+        return self.product.fees_for(self.unit_price)
 
     @property
     def image(self):
@@ -946,6 +975,8 @@ class Order(models.Model):
     )
     coupon_code = models.CharField(max_length=40, blank=True, default='')
     shipping_fee = models.DecimalField(max_digits=10, decimal_places=2, default=ZERO)
+    # «الضرائب والرسوم التحويلي والبنكي» — only on PayPal orders
+    fees_total = models.DecimalField(max_digits=10, decimal_places=2, default=ZERO)
     total = models.DecimalField(max_digits=10, decimal_places=2, default=ZERO)
 
     status = models.CharField(max_length=12, choices=STATUSES, default='pending')
