@@ -14,9 +14,9 @@
   <div class="wrap about-grid">
     <div class="about-media">
       {% if story.page_image %}
-        <img src="{{ story.page_image.url }}" alt="{{ SITE.brand_name }}">
+        <img src="{{ story.page_image.url }}" alt="{{ SITE.brand_name }}" loading="lazy" decoding="async">
       {% elif sec.image %}
-        <img src="{{ sec.image.url }}" alt="{{ SITE.brand_name }}">
+        <img src="{{ sec.image.url }}" alt="{{ SITE.brand_name }}" loading="lazy" decoding="async">
       {% else %}
         <div class="about-mark" aria-hidden="true">{% include 'partials/logo.html' %}</div>
       {% endif %}
