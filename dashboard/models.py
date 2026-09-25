@@ -1946,13 +1946,30 @@ class AboutPage(models.Model):
         return out
 
 
-class AboutStat(models.Model):
-    """A number the owner writes himself in «حكايتنا» (e.g. 500+ عميل)."""
+ABOUT_STAT_SOURCES = [
+    ('custom', 'رقم أنا بكتبه'),
+    ('customers', 'تلقائي — عدد العملاء المسجلين'),
+    ('products', 'تلقائي — عدد الديزاينات'),
+    ('works', 'تلقائي — عدد الأعمال'),
+    ('reviews', 'تلقائي — عدد التقييمات'),
+    ('rating', 'تلقائي — متوسط التقييم'),
+]
 
-    value = models.CharField(max_length=20)
+# default label (i18n key) for each automatic number
+ABOUT_STAT_LABELS = {
+    'customers': 'stat_customers', 'products': 'stat_products', 'works': 'stat_works',
+    'reviews': 'stat_reviews', 'rating': 'stat_rating',
+}
+
+
+class AboutStat(models.Model):
+    """One number in «حكايتنا» — written by the owner, or counted by the site itself."""
+
+    source = models.CharField(max_length=12, choices=ABOUT_STAT_SOURCES, default='custom')
+    value = models.CharField(max_length=20, blank=True, default='')
     suffix = models.CharField(max_length=6, blank=True, default='+', help_text='مثلاً + أو % أو K')
     show_star = models.BooleanField(default=False)
-    label_ar = models.CharField(max_length=60)
+    label_ar = models.CharField(max_length=60, blank=True, default='')
     label_en = models.CharField(max_length=60, blank=True, default='')
     is_active = models.BooleanField(default=True)
     ordering = models.PositiveIntegerField(default=0)
@@ -1961,11 +1978,50 @@ class AboutStat(models.Model):
         ordering = ['ordering', 'id']
 
     def __str__(self):
-        return f'{self.value}{self.suffix} {self.label_ar}'
+        return f'{self.value or self.get_source_display()}{self.suffix} {self.label_ar}'
+
+    @property
+    def is_auto(self):
+        return self.source != 'custom'
 
     @property
     def label(self):
-        return pick(self.label_ar, self.label_en)
+        text = pick(self.label_ar, self.label_en)
+        if not text and self.is_auto:
+            from .i18n import t
+            text = t(ABOUT_STAT_LABELS[self.source])
+        return text
+
+    def real_value(self):
+        """The number the site counts by itself (automatic sources only)."""
+        from django.contrib.auth import get_user_model
+        if self.source == 'customers':
+            return get_user_model().objects.filter(is_staff=False, is_active=True).count()
+        if self.source == 'products':
+            return Product.objects.filter(is_active=True).count()
+        if self.source == 'works':
+            return Work.objects.filter(is_active=True).count()
+        if self.source in ('reviews', 'rating'):
+            summary = Review.summary()
+            if not summary['count']:
+                return 0
+            return summary['count'] if self.source == 'reviews' else summary['avg']
+        return None
+
+    @property
+    def shown_value(self):
+        """What the site shows: a number written in the dashboard always wins."""
+        value = (self.value or '').strip()
+        if value or not self.is_auto:
+            return value
+        return self.real_value()
+
+    def as_display(self):
+        """{'value', 'suffix', 'star', 'label'} for the templates, or None when there's nothing to show."""
+        value = self.shown_value
+        if value in (None, '', 0, '0', 0.0):
+            return None
+        return {'value': value, 'suffix': self.suffix, 'star': self.show_star, 'label': self.label}
 
 
 # ==================================================================== navbar

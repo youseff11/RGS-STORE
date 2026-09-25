@@ -78,22 +78,10 @@
       {# ----------------------------------------------------- numbers #}
       <div class="card">
         <div class="card-head"><h3>{% include 'partials/icon.html' with name='trend' %} الأرقام</h3></div>
-        <div class="radio-list">
-          {% for choice in p.stats_mode %}
-            <label class="perm-item">{{ choice.tag }}<span>{{ choice.choice_label }}</span></label>
-          {% endfor %}
-        </div>
-        <div class="auto-counts" data-auto-counts>
-          <div class="help" style="margin-bottom:6px">مع «أرقام تلقائية»: سيب الخانة فاضية علشان يظهر الرقم الحقيقي، أو اكتب الرقم اللي عايزه.</div>
-          <div class="grid g3">
-            <div class="field"><label>{{ p.customers_override.label }}</label>{{ p.customers_override }}<div class="help">الحقيقي: {{ real_counts.customers }}</div>{% for e in p.customers_override.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
-            <div class="field"><label>{{ p.products_override.label }}</label>{{ p.products_override }}<div class="help">الحقيقي: {{ real_counts.products }}</div>{% for e in p.products_override.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
-            <div class="field"><label>{{ p.works_override.label }}</label>{{ p.works_override }}<div class="help">الحقيقي: {{ real_counts.works }}</div>{% for e in p.works_override.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
-          </div>
-        </div>
+        <div class="help" style="margin-bottom:10px">الأرقام نفسها بتضيفها وتعدّلها من «أرقامك» تحت — كل رقم يا بتكتبه بنفسك يا بيتحسب تلقائي. اقفل الزرارين علشان الأرقام تختفي خالص.</div>
         <div class="switch">{{ p.stats_on_home }}<label for="{{ p.stats_on_home.id_for_label }}">{{ p.stats_on_home.label }}</label></div>
         <div class="switch">{{ p.stats_on_page }}<label for="{{ p.stats_on_page.id_for_label }}">{{ p.stats_on_page.label }}</label></div>
-        {% if page.stats_mode == 'custom' %}<a class="small" href="#stats" style="color:var(--accent-text)">اكتب أرقامك من تحت ↓</a>{% endif %}
+        <a class="small" href="#stats" style="color:var(--accent-text)">أرقامك من تحت ↓</a>
       </div>
 
       <button class="btn btn-block about-save" type="submit">حفظ كل التعديلات</button>
@@ -105,7 +93,7 @@
 <div class="card" id="stats">
   <div class="card-head">
     <h3>أرقامك ({{ stats|length }})</h3>
-    <span class="small muted">بتظهر لما تختار «أرقام أنا اللي بكتبها»</span>
+    <span class="small muted">بتظهر بالترتيب ده في الرئيسية وفي «من نحن» · المخفي مش بيظهر</span>
   </div>
   <div class="split">
     <div>
@@ -113,8 +101,9 @@
       <div class="about-stat-list">
         {% for st in stats %}
         <div class="about-stat-row{% if not st.is_active %} is-off{% endif %}{% if edit_stat and edit_stat.pk == st.pk %} is-editing{% endif %}">
-          <b dir="ltr">{{ st.value }}{{ st.suffix }}{% if st.show_star %} ★{% endif %}</b>
-          <span>{{ st.label_ar }}{% if st.label_en %} <small class="muted" dir="ltr">· {{ st.label_en }}</small>{% endif %}</span>
+          <b dir="ltr">{{ st.shown_value|default:'0' }}{{ st.suffix }}{% if st.show_star %} ★{% endif %}</b>
+          <span>{{ st.label_ar|default:st.label }}{% if st.label_en %} <small class="muted" dir="ltr">· {{ st.label_en }}</small>{% endif %}</span>
+          {% if st.is_auto %}<span class="chip">{% if st.value %}تلقائي · مكتوب بإيدك{% else %}تلقائي{% endif %}</span>{% endif %}
           {% if not st.is_active %}<span class="chip chip-muted">مخفي</span>{% endif %}
           <div class="row-actions">
             <a class="btn btn-sm btn-soft" href="?stat={{ st.pk }}#stats">{% include 'partials/icon.html' with name='edit' %} تعديل</a>
@@ -138,11 +127,15 @@
         {% if edit_stat %}<a class="btn btn-sm btn-ghost" href="{% url 'dash_about' %}#stats">إلغاء</a>{% endif %}
       </div>
       {% with f=stat_form %}
+      <div class="field">
+        <label>{{ f.source.label }}</label>{{ f.source }}
+        <div class="help" data-stat-real hidden>الرقم الحقيقي دلوقتي: <b dir="ltr" data-stat-real-num></b></div>
+      </div>
       <div class="grid g2">
-        <div class="field"><label>{{ f.value.label }} <span class="req">*</span></label>{{ f.value }}{% for e in f.value.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+        <div class="field"><label><span data-stat-value-label>{{ f.value.label }}</span> <span class="req" data-stat-req>*</span></label>{{ f.value }}<div class="help" data-stat-auto-help hidden>سيبه فاضي علشان يظهر الرقم الحقيقي ويتحدّث لوحده، أو اكتب الرقم اللي عايزه يظهر</div>{% for e in f.value.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
         <div class="field"><label>{{ f.suffix.label }}</label>{{ f.suffix }}</div>
       </div>
-      {% include 'dashboard/_pair.html' with ar=f.label_ar en=f.label_en help=f.label_ar.help_text %}
+      {% include 'dashboard/_pair.html' with ar=f.label_ar en=f.label_en help='مثلاً: عميل سعيد · مع الأرقام التلقائية لو فاضي بيتكتب لوحده' %}
       <div class="grid g2">
         <div class="field"><label>{{ f.ordering.label }}</label>{{ f.ordering }}</div>
         <div>
@@ -156,16 +149,29 @@
   </div>
 </div>
 {% endwith %}
+{{ real_counts|json_script:"stat-real-counts" }}
 <script>
 (function () {
-  var box = document.querySelector('[data-auto-counts]');
-  var radios = document.querySelectorAll('input[name="page-stats_mode"]');
-  if (!box || !radios.length) return;
+  var src = document.querySelector('select[name="stat-source"]');
+  if (!src) return;
+  var real = JSON.parse(document.getElementById('stat-real-counts').textContent);
+  var value = document.querySelector('input[name="stat-value"]');
+  var q = function (s) { return document.querySelector(s); };
   var sync = function () {
-    var on = document.querySelector('input[name="page-stats_mode"]:checked');
-    box.hidden = !(on && on.value === 'auto');
+    var auto = src.value !== 'custom';
+    q('[data-stat-real]').hidden = !auto;
+    q('[data-stat-auto-help]').hidden = !auto;
+    q('[data-stat-req]').hidden = auto;
+    q('[data-stat-value-label]').textContent = auto ? 'رقم بدل الحقيقي (اختياري)' : 'الرقم';
+    if (auto) {
+      var n = real[src.value];
+      q('[data-stat-real-num]').textContent = (n === null || n === undefined) ? '0' : n;
+      value.placeholder = String(n || 0);
+    } else {
+      value.placeholder = '500';
+    }
   };
-  radios.forEach(function (r) { r.addEventListener('change', sync); });
+  src.addEventListener('change', sync);
   sync();
 })();
 </script>

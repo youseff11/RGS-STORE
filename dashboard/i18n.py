@@ -457,6 +457,7 @@ STRINGS = {
     'stat_customers': ('عميل', 'customers'),
     'stat_works': ('عمل', 'projects'),
     'stat_rating': ('متوسط التقييم', 'average rating'),
+    'stat_reviews': ('تقييم', 'reviews'),
     'stat_products': ('منتج', 'products'),
     'policies': ('السياسات', 'Policies'),
     'last_updated': ('آخر تحديث', 'Last updated'),

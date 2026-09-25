@@ -175,40 +175,11 @@ def home(request):
 
 
 def _story_stats(where):
-    """Numbers of «حكايتنا» — automatic, the owner's own, or none (chosen in the dashboard)."""
+    """Numbers of «حكايتنا» — the list in the dashboard, each one written or counted automatically."""
     page = AboutPage.load()
-    if page.stats_mode == 'hidden' or not (page.stats_on_home if where == 'home' else page.stats_on_page):
+    if not (page.stats_on_home if where == 'home' else page.stats_on_page):
         return []
-    if page.stats_mode == 'custom':
-        return [
-            {'value': s.value, 'suffix': s.suffix, 'star': s.show_star, 'label': s.label}
-            for s in AboutStat.objects.filter(is_active=True)
-        ]
-    return [
-        {'value': s['value'], 'suffix': '+' if s.get('plus') else '', 'star': s.get('star'), 'label': s['label']}
-        for s in _about_stats()
-    ]
-
-
-def _about_stats():
-    summary = Review.summary()
-    page = AboutPage.load()
-
-    def pick_num(override, real):  # a number written in the dashboard wins over the real one
-        return override if override is not None else real
-
-    stats = [
-        {'value': pick_num(page.customers_override, User.objects.filter(is_staff=False).count()),
-         'label': t('stat_customers'), 'plus': True},
-        {'value': pick_num(page.products_override, Product.objects.filter(is_active=True).count()),
-         'label': t('stat_products'), 'plus': True},
-    ]
-    works = pick_num(page.works_override, Work.objects.filter(is_active=True).count())
-    if works:
-        stats.append({'value': works, 'label': t('stat_works'), 'plus': True})
-    if summary['count']:
-        stats.append({'value': summary['avg'], 'label': t('stat_rating'), 'plus': False, 'star': True})
-    return [s for s in stats if s['value']]
+    return [d for d in (s.as_display() for s in AboutStat.objects.filter(is_active=True)) if d]
 
 
 # ======================================================================= shop

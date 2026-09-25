@@ -832,8 +832,7 @@ class AboutPageForm(StyledForm):
     class Meta:
         model = AboutPage
         fields = [
-            'tag_ar', 'tag_en', 'show_tag', 'stats_mode', 'stats_on_home', 'stats_on_page',
-            'customers_override', 'products_override', 'works_override',
+            'tag_ar', 'tag_en', 'show_tag', 'stats_on_home', 'stats_on_page',
             'page_title_ar', 'page_title_en', 'page_subtitle_ar', 'page_subtitle_en', 'page_image',
             'button1_text_ar', 'button1_text_en', 'button1_link',
             'button2_text_ar', 'button2_text_en', 'button2_link',
@@ -872,16 +871,26 @@ class AboutPageForm(StyledForm):
 class AboutStatForm(StyledForm):
     class Meta:
         model = AboutStat
-        fields = ['value', 'suffix', 'show_star', 'label_ar', 'label_en', 'is_active', 'ordering']
+        fields = ['source', 'value', 'suffix', 'show_star', 'label_ar', 'label_en', 'is_active', 'ordering']
         widgets = {
             'value': forms.TextInput(attrs={'dir': 'ltr', 'placeholder': '500'}),
             'suffix': forms.TextInput(attrs={'dir': 'ltr', 'placeholder': '+'}),
         }
         labels = {
+            'source': 'نوع الرقم',
             'value': 'الرقم', 'suffix': 'علامة بعد الرقم', 'show_star': 'نجمة جنب الرقم',
             'label_ar': 'الوصف', 'label_en': 'الوصف', 'is_active': 'ظاهر', 'ordering': 'الترتيب',
         }
         help_texts = {'label_ar': 'مثلاً: عميل سعيد'}
+
+    def clean(self):
+        data = super().clean()
+        if data.get('source', 'custom') == 'custom':
+            if not (data.get('value') or '').strip():
+                self.add_error('value', 'اكتب الرقم')
+            if not (data.get('label_ar') or '').strip():
+                self.add_error('label_ar', 'اكتب الوصف')
+        return data
 
 
 # ============================================================= homepage / nav
