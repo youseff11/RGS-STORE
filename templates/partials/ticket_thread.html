@@ -6,6 +6,8 @@ Needs: ticket, ticket_messages. Pass `staff_view=True` from the store side.
 A message sits on the «mine» side when its author is the person reading it,
 exactly like a messaging app: the customer sees their own on the end side,
 and the store sees the store's replies there instead.
+Store replies carry the name of the admin account that sent them; on the store side
+a colleague's reply shows that name too (`show-who`), your own replies don't.
 {% endcomment %}
 <div class="chat-thread">
   {% for message in ticket_messages %}
@@ -13,12 +15,13 @@ and the store sees the store's replies there instead.
       <div class="chat-day"><span>{{ message.created_at|date:"Y/m/d" }}</span></div>
     {% endifchanged %}
 
-    <article class="msg {% if message.is_staff == staff_view %}is-mine{% else %}is-them{% endif %}{% ifchanged message.is_staff %} starts-group{% endifchanged %}">
+    <article class="msg {% if message.is_staff == staff_view %}is-mine{% else %}is-them{% endif %}{% ifchanged message.is_staff message.author_id %} starts-group{% endifchanged %}{% if staff_view and message.is_staff and message.author_id != request.user.id %} show-who{% endif %}">
       <div class="msg-bubble">
-        {% ifchanged message.is_staff %}
-          <span class="msg-who">
+        {% ifchanged message.is_staff message.author_id %}
+          <span class="msg-who" dir="auto">
             {% if message.is_staff %}
-              {% if staff_view %}{{ message.author_name|default:'المتجر' }}{% else %}{% t 'ticket_from_store' %}{% endif %}
+              {# the admin who replied, by their own account name — on both sides #}
+              {{ message.author_name|default:_('المتجر') }}
             {% else %}
               {% if staff_view %}{{ ticket.customer_name }}{% else %}{% t 'ticket_from_you' %}{% endif %}
             {% endif %}

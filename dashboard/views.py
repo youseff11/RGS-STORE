@@ -4,9 +4,11 @@ import re
 from decimal import Decimal, InvalidOperation
 from urllib.parse import quote, urlparse
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import redirect_to_login
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
@@ -1324,10 +1326,11 @@ def is_support_staff(user):
     return bool(user and user.is_authenticated and 'messages' in staff_permissions(user))
 
 
-@login_required
 def support_list(request):
-    """«الدعم» — the customer sees their own tickets, the store sees every ticket."""
-    staff = is_support_staff(request.user)
+    """«الدعم» — the customer sees their own tickets, the store sees every ticket.
+    Open to visitors too: they see the page (no tickets yet) and only get sent to
+    log in when they press «تذكرة جديدة»."""
+    staff = request.user.is_authenticated and is_support_staff(request.user)
     tickets = Ticket.objects.select_related('order', 'user').annotate(replies=Count('messages'))
     status = request.GET.get('status') or ''
     if staff:
@@ -1340,8 +1343,11 @@ def support_list(request):
             'answered': Ticket.objects.filter(status='answered').count(),
             'closed': Ticket.objects.filter(status='closed').count(),
         }
-    else:
+    elif request.user.is_authenticated:
         tickets = tickets.filter(user=request.user)
+        counts = {}
+    else:
+        tickets = tickets.none()
         counts = {}
     return render(request, 'pages/account/tickets.html', {
         'tickets': tickets[:100] if staff else tickets,
@@ -1350,8 +1356,11 @@ def support_list(request):
     })
 
 
-@login_required
 def support_new(request):
+    if not request.user.is_authenticated:
+        # visitors can browse «الدعم», but opening a ticket needs an account
+        messages.info(request, t('ticket_login_required'))
+        return redirect_to_login(request.get_full_path(), settings.LOGIN_URL)
     if is_support_staff(request.user):
         messages.info(request, t('staff_no_new_ticket'))
         return redirect('support')

@@ -224,6 +224,7 @@ STRINGS = {
     'reply_sent': ('تم إرسال ردك', 'Your reply was sent'),
     'no_tickets': ('مفيش تذاكر لسه', 'No tickets yet'),
     'ticket_from_store': ('المتجر', 'Store'),
+    'ticket_login_required': ('لانشاء تذكره يجب تسجيل الدخول او انشاء حساب', 'To open a ticket, please log in or create an account'),
     'ticket_from_you': ('أنت', 'You'),
     'attachments': ('المرفقات', 'Attachments'),
     'add_files': ('صور أو ملفات', 'Photos or files'),

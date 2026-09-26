@@ -151,6 +151,7 @@ html[dir="rtl"] .msg.is-them { justify-content: flex-end; }
 
 .msg-who { font-size: 12px; font-weight: 800; color: var(--accent-text); line-height: 1.4; }
 .msg.is-mine .msg-who { display: none; }   /* no need to tell you who you are */
+.msg.is-mine.show-who .msg-who { display: block; }   /* …but a colleague's reply keeps their name */
 .msg-text {
   margin: 0; font-size: 14px; line-height: 1.75; color: var(--text);
   overflow-wrap: anywhere; white-space: normal; text-align: start;

@@ -1313,10 +1313,10 @@ class TicketMessage(models.Model):
 
     @property
     def author_name(self):
-        if self.is_staff:
-            return SiteSettings.load().brand_name
+        """Who wrote it — for the store's replies that's the admin's own account name
+        (the store name only if that account was deleted)."""
         if self.author is None:
-            return ''
+            return SiteSettings.load().brand_name if self.is_staff else ''
         return self.author.get_full_name() or self.author.first_name or self.author.get_username()
 
 
