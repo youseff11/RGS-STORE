@@ -114,6 +114,11 @@ class SiteSettings(models.Model):
     # reviews + sharing
     reviews_auto_publish = models.BooleanField(default=True)
     share_image = models.ImageField(upload_to='site/', blank=True, null=True)
+    share_card = models.CharField(
+        max_length=10, choices=[('small', 'أيقونة صغيرة جنب الكلام'), ('large', 'صورة كبيرة تحت الكلام'), ('none', 'من غير صورة — كلام بس')],
+        default='small',
+    )
+    share_color = models.CharField(max_length=7, default='#B04B00')  # side stripe (Discord) + theme-color
 
     # ---- footer (texts + what shows) — «الفوتر» in the dashboard ----
     footer_text_ar = models.TextField(blank=True, default='')
@@ -2151,11 +2156,21 @@ class LinkPreview(models.Model):
     match_children = models.BooleanField(
         default=False, help_text='مثلاً /policies/ → كل صفحات السياسات تاخد نفس الصورة'
     )
-    image = models.ImageField(upload_to='share/')
+    image = models.ImageField(
+        upload_to='share/', blank=True,
+        help_text='اختياري — لو فاضية الرابط بياخد صورة الصفحة نفسها أو الصورة الافتراضية',
+    )
     title_ar = models.CharField(max_length=160, blank=True, default='')
     title_en = models.CharField(max_length=160, blank=True, default='')
     description_ar = models.CharField(max_length=300, blank=True, default='')
     description_en = models.CharField(max_length=300, blank=True, default='')
+    card = models.CharField(
+        max_length=10, blank=True, default='',
+        choices=[
+            ('', 'زي الإعداد الافتراضي'), ('small', 'أيقونة صغيرة جنب الكلام'),
+            ('large', 'صورة كبيرة تحت الكلام'), ('none', 'من غير صورة — كلام بس'),
+        ],
+    )
     is_active = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -2182,7 +2197,7 @@ class LinkPreview(models.Model):
         """Exact link first, then the longest parent marked «ينطبق على الصفحات اللي جواه»."""
         path = normalize_site_path(path)
         items = list(cls.objects.filter(is_active=True).only(
-            'path', 'match_children', 'image', 'title_ar', 'title_en', 'description_ar', 'description_en',
+            'path', 'match_children', 'image', 'card', 'title_ar', 'title_en', 'description_ar', 'description_en',
         ))
         exact = next((i for i in items if i.path == path), None)
         if exact:

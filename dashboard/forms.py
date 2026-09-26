@@ -6,6 +6,8 @@ requires it) and `<name>_en` (optional — the site falls back to Arabic).
 `dashboard/_form_fields.html` renders each pair side by side.
 """
 
+import re
+
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
@@ -201,7 +203,7 @@ class LinkPreviewForm(StyledForm):
     class Meta:
         model = LinkPreview
         fields = [
-            'path', 'match_children', 'image', 'title_ar', 'title_en',
+            'path', 'match_children', 'image', 'card', 'title_ar', 'title_en',
             'description_ar', 'description_en', 'is_active',
         ]
         widgets = {
@@ -210,13 +212,13 @@ class LinkPreviewForm(StyledForm):
         }
         labels = {
             'path': 'الرابط', 'match_children': 'ينطبق كمان على كل الصفحات اللي جوه الرابط ده',
-            'image': 'الصورة اللي تظهر مع الرابط', 'title_ar': 'العنوان (اختياري)',
+            'image': 'الصورة اللي تظهر مع الرابط (اختياري)', 'title_ar': 'العنوان (اختياري)',
             'title_en': 'العنوان (اختياري)', 'description_ar': 'الوصف (اختياري)',
-            'description_en': 'الوصف (اختياري)', 'is_active': 'مفعّل',
+            'description_en': 'الوصف (اختياري)', 'is_active': 'مفعّل', 'card': 'شكل الرابط',
         }
         help_texts = {
             'path': 'الصق رابط الصفحة من الموقع أو اكتب آخره بس — مثلاً / للصفحة الرئيسية',
-            'image': 'المقاس المثالي 1200×630',
+            'image': 'اختياري — لو سبتها فاضية هتظهر صورة الصفحة نفسها أو الصورة الافتراضية. المقاس المثالي 1200×630',
             'title_ar': 'لو فاضي هيظهر عنوان الصفحة العادي',
         }
 
@@ -228,16 +230,40 @@ class LinkPreviewForm(StyledForm):
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
-            raise forms.ValidationError('الرابط ده عليه صورة قبل كده — عدّلها من القائمة')
+            raise forms.ValidationError('الرابط ده متضاف قبل كده — عدّله من القائمة')
         return path
+
+    def clean(self):
+        data = super().clean()
+        # the picture is optional, but a link with nothing at all changes nothing
+        has_image = bool(data.get('image'))  # False when empty or «مسح» is ticked
+        has_text = any((data.get(k) or '').strip() for k in
+                       ('title_ar', 'title_en', 'description_ar', 'description_en'))
+        if not has_image and not has_text:
+            raise forms.ValidationError('ارفع صورة أو اكتب عنوان أو وصف — لازم حاجة واحدة على الأقل')
+        return data
 
 
 class DefaultShareImageForm(StyledForm):
     class Meta:
         model = SiteSettings
-        fields = ['share_image']
-        labels = {'share_image': 'الصورة الافتراضية'}
-        help_texts = {'share_image': 'بتظهر مع أي رابط من الموقع ملوش صورة خاصة (1200×630 مثالي)'}
+        fields = ['share_card', 'share_image', 'share_color']
+        labels = {
+            'share_card': 'شكل الرابط لما يتبعت', 'share_image': 'الصورة / الأيقونة الافتراضية',
+            'share_color': 'لون الخط الجانبي',
+        }
+        help_texts = {
+            'share_card': 'الأيقونة الصغيرة: اسم الموقع فوق، تحته العنوان، تحته الوصف، والأيقونة على الجنب · «من غير صورة»: الكلام بس',
+            'share_image': 'للأيقونة الصغيرة استخدم صورة مربعة (512×512 مثلًا) · للصورة الكبيرة 1200×630',
+            'share_color': 'الخط الملوّن جنب الرابط في ديسكورد — وبيلوّن كمان شريط المتصفح على موبايلات أندرويد',
+        }
+        widgets = {'share_color': forms.TextInput(attrs={'type': 'color'})}
+
+    def clean_share_color(self):
+        color = (self.cleaned_data.get('share_color') or '').strip()
+        if not re.fullmatch(r'#[0-9A-Fa-f]{6}', color):
+            raise forms.ValidationError('اختار لون صحيح')
+        return color.upper()
 
 
 class BannerForm(StyledForm):

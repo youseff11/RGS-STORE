@@ -18,8 +18,10 @@
   <meta property="og:description" content="{% if LINK_PREVIEW.description %}{{ LINK_PREVIEW.description|truncatechars:200 }}{% else %}{{ desc|truncatechars:200 }}{% endif %}">
   <meta property="og:url" content="{% absolute request.get_full_path %}">
   <meta property="og:locale" content="{% if LANG == 'ar' %}ar_EG{% else %}en_US{% endif %}">
+  {% with card=LINK_PREVIEW.card|default:SITE.share_card|default:'small' %}
+  {% if card != 'none' %}
   {# order: picture chosen for this link in «صور الروابط» → the page's own picture → the default one #}
-  {% if LINK_PREVIEW %}
+  {% if LINK_PREVIEW.image %}
     <meta property="og:image" content="{% absolute LINK_PREVIEW.image.url %}">
   {% elif og_image %}
     <meta property="og:image" content="{% absolute og_image %}">
@@ -29,12 +31,15 @@
     {% static 'img/hero-dark.webp' as default_share %}<meta property="og:image" content="{% absolute default_share %}">
   {% endif %}
   <meta property="og:image:alt" content="{{ page_title|default:SITE.brand_name }}">
-  <meta name="twitter:card" content="summary_large_image">
+  {% endif %}
+  {# «أيقونة صغيرة» / «من غير صورة» = summary · «صورة كبيرة» = summary_large_image #}
+  <meta name="twitter:card" content="{% if card == 'large' %}summary_large_image{% else %}summary{% endif %}">
+  {% endwith %}
   {% endwith %}
   <link rel="alternate" hreflang="ar" href="{% absolute request.path %}?lang=ar">
   <link rel="alternate" hreflang="en" href="{% absolute request.path %}?lang=en">
 
-  <meta name="theme-color" content="#000000">
+  <meta name="theme-color" content="{{ SITE.share_color|default:'#B04B00' }}">
   <meta name="color-scheme" content="dark">
 
   {% if SITE.favicon %}<link rel="icon" href="{{ SITE.favicon.url }}">{% else %}<link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">{% endif %}

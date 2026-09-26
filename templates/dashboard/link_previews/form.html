@@ -1,17 +1,17 @@
 {% extends 'base/dashboard_base.html' %}
 {% load static %}
-{% block page_name %}صورة رابط{% endblock %}
+{% block page_name %}شكل رابط{% endblock %}
 
 {% block content %}
 <div class="page-head">
   <div>
-    <h2>{% if object %}تعديل صورة {{ object.path }}{% else %}صورة لرابط معيّن{% endif %}</h2>
-    <p>اختار الرابط، وارفع الصورة اللي عايزها تظهر لما حد يبعته</p>
+    <h2>{% if object %}تعديل {{ object.path }}{% else %}إضافة رابط{% endif %}</h2>
+    <p>اختار الرابط، وارفع صورة أو اكتب عنوان ووصف (أو الاتنين) — الصورة اختياري</p>
   </div>
   <div class="flex">
     <a class="btn btn-ghost" href="{% url 'dash_link_previews' %}">رجوع</a>
     {% if object %}
-    <form method="post" action="{% url 'dash_link_preview_delete' object.pk %}" data-confirm="حذف صورة الرابط؟">{% csrf_token %}
+    <form method="post" action="{% url 'dash_link_preview_delete' object.pk %}" data-confirm="حذف إعدادات الرابط؟">{% csrf_token %}
       <button class="btn btn-danger" type="submit">{% include 'partials/icon.html' with name='trash' %} حذف</button>
     </form>
     {% endif %}
@@ -31,16 +31,16 @@
 
     <div class="card">
       <div class="card-head"><h3>شكل الرابط لما يتبعت</h3></div>
-      <div class="lp-preview" data-lp-preview>
-        <div class="lp-preview-img">
-          <img data-lp-img src="{% if object %}{{ object.image.url }}{% elif site.share_image %}{{ site.share_image.url }}{% else %}{% static 'img/hero-dark.webp' %}{% endif %}" alt="">
-        </div>
-        <div class="lp-preview-body">
-          <b data-lp-title>{{ object.title_ar|default:site.brand_name|default:'RGS TOWER' }}</b>
-          <span data-lp-desc>{{ object.description_ar|default:site.tagline|default:'' }}</span>
-          <small dir="ltr">{{ request.get_host }}</small>
-        </div>
-      </div>
+      {% static 'img/hero-dark.webp' as hero_img %}
+      {% with brand=site.brand_name|default:'RGS TOWER' %}
+      {% if object.image %}
+        {% include 'dashboard/link_previews/_card.html' with card=object.card|default:site.share_card color=site.share_color site_name=brand title=object.title_ar|default:brand desc=object.description_ar|default:site.tagline img=object.image.url %}
+      {% elif site.share_image %}
+        {% include 'dashboard/link_previews/_card.html' with card=object.card|default:site.share_card color=site.share_color site_name=brand title=object.title_ar|default:brand desc=object.description_ar|default:site.tagline img=site.share_image.url %}
+      {% else %}
+        {% include 'dashboard/link_previews/_card.html' with card=object.card|default:site.share_card color=site.share_color site_name=brand title=object.title_ar|default:brand desc=object.description_ar|default:site.tagline img=hero_img %}
+      {% endif %}
+      {% endwith %}
       <div class="help" style="margin-top:10px">واتساب وفيسبوك بيحفظوا الصورة القديمة لفترة — لو الرابط اتبعت قبل كده، الصورة الجديدة ممكن تاخد شوية وقت لحد ما تظهر.</div>
     </div>
   </div>
@@ -56,9 +56,26 @@
   var dOut = document.querySelector('[data-lp-desc]');
   var tDefault = tOut ? tOut.textContent : '';
   var dDefault = dOut ? dOut.textContent : '';
-  if (file && img) file.addEventListener('change', function () {
-    if (file.files && file.files[0]) img.src = URL.createObjectURL(file.files[0]);
+  var fallback = {% if site.share_image %}'{{ site.share_image.url|escapejs }}'{% else %}'{% static 'img/hero-dark.webp' %}'{% endif %};
+  var original = img ? img.src : '';
+  var clear = document.querySelector('input[name="image-clear"]');
+  function showImage() {
+    if (!img) return;
+    if (file && file.files && file.files[0]) img.src = URL.createObjectURL(file.files[0]);
+    else if (clear && clear.checked) img.src = fallback;
+    else img.src = original;
+  }
+  if (file) file.addEventListener('change', showImage);
+  // «شكل الرابط»: فاضي = زي الإعداد الافتراضي
+  var card = document.querySelector('[data-lp-card]');
+  var cardSel = document.querySelector('select[name="card"]');
+  var siteCard = '{{ site.share_card|default:"small"|escapejs }}';
+  if (card && cardSel) cardSel.addEventListener('change', function () {
+    var v = cardSel.value || siteCard;
+    card.classList.toggle('is-large', v === 'large');
+    card.classList.toggle('is-noimg', v === 'none');
   });
+  if (clear) clear.addEventListener('change', showImage);
   if (title && tOut) title.addEventListener('input', function () { tOut.textContent = title.value || tDefault; });
   if (desc && dOut) desc.addEventListener('input', function () { dOut.textContent = desc.value || dDefault; });
 })();

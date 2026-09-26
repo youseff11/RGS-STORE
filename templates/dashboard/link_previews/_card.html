@@ -1,0 +1,10 @@
+{% comment %}How the link looks when it's sent — Discord-style card.
+small: site name / title / description with the icon on the side · large: the picture under the text.{% endcomment %}
+<div class="lp-card{% if card == 'large' %} is-large{% elif card == 'none' %} is-noimg{% endif %}" data-lp-card style="--lp-color: {{ color|default:'#B04B00' }}">
+  <div class="lp-card-body">
+    <small class="lp-card-site" dir="auto">{{ site_name }}</small>
+    <b class="lp-card-title" dir="auto" data-lp-title>{{ title }}</b>
+    <span class="lp-card-desc" dir="auto" data-lp-desc>{{ desc }}</span>
+  </div>
+  <img class="lp-card-img" data-lp-img src="{{ img }}" alt="">
+</div>

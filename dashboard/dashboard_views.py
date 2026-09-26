@@ -750,7 +750,7 @@ def link_preview_list(request):
     default_form = DefaultShareImageForm(request.POST or None, request.FILES or None, instance=site)
     if request.method == 'POST' and default_form.is_valid():
         default_form.save()
-        messages.success(request, 'تم حفظ الصورة الافتراضية')
+        messages.success(request, 'تم حفظ الشكل الافتراضي')
         return redirect('dash_link_previews')
     return render(request, 'dashboard/link_previews/list.html', {
         'items': LinkPreview.objects.all(), 'site': site, 'default_form': default_form,
@@ -765,7 +765,7 @@ def link_preview_form(request, pk=None):
     form = LinkPreviewForm(request.POST or None, request.FILES or None, instance=obj, initial=initial)
     if request.method == 'POST' and form.is_valid():
         form.save()
-        messages.success(request, 'تم حفظ صورة الرابط')
+        messages.success(request, 'تم حفظ إعدادات الرابط')
         return redirect('dash_link_previews')
     return render(request, 'dashboard/link_previews/form.html', {
         'form': form, 'object': obj, 'pages': _site_pages(), 'site': SiteSettings.load(),
@@ -777,7 +777,7 @@ def link_preview_form(request, pk=None):
 @require_POST
 def link_preview_delete(request, pk):
     get_object_or_404(LinkPreview, pk=pk).delete()
-    messages.info(request, 'تم حذف صورة الرابط — هيرجع للصورة الافتراضية')
+    messages.info(request, 'تم حذف إعدادات الرابط — هيرجع للشكل الافتراضي')
     return redirect('dash_link_previews')
 
 

@@ -8,12 +8,12 @@
     <h2>صور الروابط</h2>
     <p>الصورة اللي بتظهر تحت الرابط لما تبعته على واتساب أو فيسبوك أو تليجرام</p>
   </div>
-  <a class="btn" href="{% url 'dash_link_preview_new' %}">{% include 'partials/icon.html' with name='plus' %} صورة لرابط معيّن</a>
+  <a class="btn" href="{% url 'dash_link_preview_new' %}">{% include 'partials/icon.html' with name='plus' %} إضافة رابط</a>
 </div>
 
 <div class="split">
   <div class="card">
-    <div class="card-head"><h3>روابط ليها صورة خاصة ({{ items|length }})</h3></div>
+    <div class="card-head"><h3>روابط ليها شكل خاص ({{ items|length }})</h3></div>
     {% if items %}
     <div class="table-wrap" style="border:0">
       <table class="t">
@@ -21,10 +21,11 @@
         <tbody>
           {% for item in items %}
           <tr>
-            <td><img class="lp-thumb" src="{{ item.image.url }}" alt=""></td>
+            <td>{% if item.image %}<img class="lp-thumb" src="{{ item.image.url }}" alt="">{% else %}<span class="lp-thumb lp-thumb-empty" title="من غير صورة — بياخد صورة الصفحة أو الافتراضية">{% include 'partials/icon.html' with name='link' %}</span>{% endif %}</td>
             <td>
               <b dir="ltr" style="display:inline-block">{{ item.path }}</b>
               {% if item.match_children %}<div class="small muted">+ كل الصفحات اللي جواه</div>{% endif %}
+              {% if not item.image %}<div class="small muted">من غير صورة — عنوان/وصف بس</div>{% endif %}
             </td>
             <td class="small">{{ item.title_ar|default:'—' }}</td>
             <td><span class="chip {% if item.is_active %}chip-ok{% else %}chip-muted{% endif %}">{% if item.is_active %}مفعّل{% else %}موقوف{% endif %}</span></td>
@@ -32,7 +33,7 @@
               <div class="row-actions">
                 <a class="btn btn-sm btn-ghost" href="{{ item.path }}" target="_blank" title="فتح الصفحة" aria-label="فتح الصفحة">{% include 'partials/icon.html' with name='external' %}</a>
                 <a class="btn btn-sm btn-soft" href="{% url 'dash_link_preview_edit' item.pk %}">{% include 'partials/icon.html' with name='edit' %} تعديل</a>
-                <form method="post" action="{% url 'dash_link_preview_delete' item.pk %}" data-confirm="حذف صورة الرابط {{ item.path }}؟ هيرجع للصورة الافتراضية.">{% csrf_token %}
+                <form method="post" action="{% url 'dash_link_preview_delete' item.pk %}" data-confirm="حذف إعدادات الرابط {{ item.path }}؟ هيرجع للشكل الافتراضي.">{% csrf_token %}
                   <button class="btn btn-sm btn-danger" type="submit" title="حذف" aria-label="حذف">{% include 'partials/icon.html' with name='trash' %}</button>
                 </form>
               </div>
@@ -45,28 +46,46 @@
     {% else %}
       <div class="empty">
         <div class="ico ico-badge">{% include 'partials/icon.html' with name='share' %}</div>
-        مفيش روابط ليها صورة خاصة — كلها بتاخد الصورة الافتراضية
+        مفيش روابط ليها شكل خاص — كلها بتاخد الصورة والعنوان الافتراضيين
       </div>
     {% endif %}
     <div class="help" style="margin-top:12px">الترتيب: صورة الرابط الخاصة ← صورة الديزاين أو العمل نفسه (في صفحاتهم) ← الصورة الافتراضية.</div>
   </div>
 
   <div class="card">
-    <div class="card-head"><h3>الصورة الافتراضية</h3></div>
-    <div class="lp-preview">
-      <div class="lp-preview-img">
-        {% if site.share_image %}<img src="{{ site.share_image.url }}" alt="">{% else %}<img src="{% static 'img/hero-dark.webp' %}" alt="">{% endif %}
-      </div>
-      <div class="lp-preview-body">
-        <b>{{ site.brand_name|default:'RGS TOWER' }}</b>
-        <span>{% if site.share_image %}الصورة الافتراضية الحالية{% else %}لسه مفيش صورة — بتظهر صورة الهيرو{% endif %}</span>
-      </div>
-    </div>
+    <div class="card-head"><h3>الشكل الافتراضي</h3></div>
+    {% static 'img/hero-dark.webp' as hero_img %}
+    {% with brand=site.brand_name|default:'RGS TOWER' %}
+    {% if site.share_image %}
+      {% include 'dashboard/link_previews/_card.html' with card=site.share_card color=site.share_color site_name=brand title=brand desc=site.tagline|default:'وصف الصفحة بيظهر هنا' img=site.share_image.url %}
+    {% else %}
+      {% include 'dashboard/link_previews/_card.html' with card=site.share_card color=site.share_color site_name=brand title=brand desc=site.tagline|default:'وصف الصفحة بيظهر هنا' img=hero_img %}
+    {% endif %}
+    {% endwith %}
+    {% if not site.share_image %}<div class="help" style="margin-top:8px">لسه مفيش صورة افتراضية — بتظهر صورة الهيرو. للأيقونة الصغيرة ارفع لوجو مربع.</div>{% endif %}
     <form method="post" enctype="multipart/form-data" style="margin-top:14px">
       {% csrf_token %}
       {% with form=default_form %}{% include 'dashboard/_form_fields.html' %}{% endwith %}
-      <button class="btn btn-block" type="submit">حفظ الصورة الافتراضية</button>
+      <button class="btn btn-block" type="submit">حفظ الشكل الافتراضي</button>
     </form>
+    <script>
+    (function () {
+      var card = document.querySelector('[data-lp-card]');
+      var sel = document.querySelector('select[name="share_card"]');
+      var color = document.querySelector('input[name="share_color"]');
+      var file = document.querySelector('input[name="share_image"]');
+      var img = document.querySelector('[data-lp-img]');
+      if (!card) return;
+      if (sel) sel.addEventListener('change', function () {
+        card.classList.toggle('is-large', sel.value === 'large');
+        card.classList.toggle('is-noimg', sel.value === 'none');
+      });
+      if (color) color.addEventListener('input', function () { card.style.setProperty('--lp-color', color.value); });
+      if (file && img) file.addEventListener('change', function () {
+        if (file.files && file.files[0]) img.src = URL.createObjectURL(file.files[0]);
+      });
+    })();
+    </script>
   </div>
 </div>
 {% endblock %}
