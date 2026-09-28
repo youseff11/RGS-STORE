@@ -483,7 +483,7 @@ class SiteSettingsForm(StyledForm):
             'brand_name_ar', 'brand_name_en', 'tagline_ar', 'tagline_en',
             'logo', 'favicon', 'share_image',
             'phone', 'whatsapp', 'email', 'address_ar', 'address_en',
-            'facebook_url', 'instagram_url', 'tiktok_url', 'youtube_url',
+            'facebook_url', 'instagram_url', 'tiktok_url', 'youtube_url', 'discord_url',
             'currency_ar', 'currency_en', 'shipping_fee', 'free_shipping_threshold',
             'orders_enabled', 'reviews_auto_publish',
         ]
@@ -500,12 +500,13 @@ class SiteSettingsForm(StyledForm):
             'phone': 'رقم التليفون', 'whatsapp': 'واتساب', 'email': 'البريد الإلكتروني',
             'address_ar': 'العنوان', 'address_en': 'العنوان',
             'facebook_url': 'فيسبوك', 'instagram_url': 'إنستجرام', 'tiktok_url': 'تيك توك',
-            'youtube_url': 'يوتيوب', 'currency_ar': 'العملة', 'currency_en': 'العملة',
+            'youtube_url': 'يوتيوب', 'discord_url': 'ديسكورد', 'currency_ar': 'العملة', 'currency_en': 'العملة',
             'shipping_fee': 'سعر الشحن العام', 'free_shipping_threshold': 'شحن مجاني فوق مبلغ (عام)',
             'orders_enabled': 'استقبال الطلبات',
             'reviews_auto_publish': 'نشر تقييمات العملاء تلقائيًا من غير مراجعة',
         }
         help_texts = {
+            'discord_url': 'لينك دعوة السيرفر، مثال: https://discord.gg/xxxx',
             'share_image': 'بتظهر تحت أي رابط من الموقع لما يتبعت على واتساب/فيسبوك (1200×630 مثالي)',
         }
 
@@ -626,7 +627,7 @@ class WorkForm(StyledForm):
     class Meta:
         model = Work
         fields = [
-            'title_ar', 'title_en', 'category', 'cover', 'summary_ar', 'summary_en',
+            'title_ar', 'title_en', 'category', 'cover', 'thumbnail', 'summary_ar', 'summary_en',
             'description_ar', 'description_en', 'client', 'work_date',
             'is_active', 'is_featured', 'ordering', 'slug',
         ]
@@ -640,6 +641,7 @@ class WorkForm(StyledForm):
         labels = {
             'title_ar': 'اسم العمل', 'title_en': 'اسم العمل', 'category': 'التصنيف',
             'cover': 'البانر / صورة الغلاف',
+            'thumbnail': 'الصورة المصغرة (تقبل GIF)',
             'summary_ar': 'نبذة قصيرة', 'summary_en': 'نبذة قصيرة',
             'description_ar': 'التفاصيل', 'description_en': 'التفاصيل',
             'client': 'العميل (اختياري)', 'work_date': 'التاريخ (اختياري)',
@@ -650,11 +652,20 @@ class WorkForm(StyledForm):
             'summary_ar': 'بتظهر في الكارت وتحت الرابط لما تشاركه',
         }
 
+    remove_thumbnail = forms.BooleanField(required=False, label='شيل الصورة المصغرة (يرجع يظهر البانر)')
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['thumbnail'].widget = forms.FileInput(attrs={'class': 'inp file', 'accept': 'image/*,.gif'})
         self.fields['slug'].required = False
         self.fields['category'].empty_label = '— بدون تصنيف —'
         self.fields['work_date'].input_formats = ['%Y-%m-%d']
+
+    def clean(self):
+        data = super().clean()
+        if data.get('remove_thumbnail') and not self.files.get(self.add_prefix('thumbnail')):
+            data['thumbnail'] = False  # False = clear the field on save
+        return data
 
 
 class WorkCategoryForm(StyledForm):

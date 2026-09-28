@@ -54,6 +54,7 @@ class SiteSettings(models.Model):
     instagram_url = models.URLField(blank=True, default='')
     tiktok_url = models.URLField(blank=True, default='')
     youtube_url = models.URLField(blank=True, default='')
+    discord_url = models.URLField(blank=True, default='')
 
     # commerce
     currency_ar = models.CharField(max_length=20, default='ج.م')
@@ -1532,6 +1533,10 @@ class Work(models.Model):
         upload_to='works/covers/',
         help_text='البانر — بيظهر فوق صفحة العمل وتحت الرابط لما تبعته لحد',
     )
+    thumbnail = models.ImageField(
+        upload_to='works/thumbs/', blank=True, null=True,
+        help_text='الصورة اللي بتظهر في كارت العمل — تقدر ترفع GIF متحرك. لو فاضية بيظهر البانر',
+    )
     client = models.CharField(max_length=120, blank=True, default='')
     work_date = models.DateField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
@@ -1572,6 +1577,11 @@ class Work(models.Model):
         text = self.summary or self.description or ''
         text = ' '.join(text.split())
         return text[:200]
+
+    @property
+    def card_image(self):
+        """What the work's card shows: the thumbnail (may be an animated GIF), else the banner."""
+        return self.thumbnail or self.cover
 
     @property
     def media_count(self):
@@ -1699,6 +1709,10 @@ class WorkMedia(models.Model):
     @property
     def is_video(self):
         return self.kind in ('video', 'embed')
+
+    @property
+    def is_gif(self):
+        return self.kind == 'image' and bool(self.image) and self.image.name.lower().endswith('.gif')
 
     @property
     def embed_info(self):

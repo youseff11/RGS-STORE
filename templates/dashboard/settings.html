@@ -43,6 +43,9 @@
           <div class="field"><label>رابط تيك توك</label>{{ form.tiktok_url }}</div>
           <div class="field"><label>رابط يوتيوب</label>{{ form.youtube_url }}</div>
         </div>
+        <div class="grid g2">
+          <div class="field"><label>رابط ديسكورد</label>{{ form.discord_url }}<div class="help">{{ form.discord_url.help_text }}</div>{% for e in form.discord_url.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+        </div>
       </div>
 
       <div class="card">

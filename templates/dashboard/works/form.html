@@ -37,6 +37,14 @@
         </div>
         <div class="field">{{ form.cover }}{% for e in form.cover.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}
           <div class="help">{{ form.cover.help_text }}</div></div>
+        <div class="field"><label>{{ form.thumbnail.label }}</label>
+          <div class="thumb-drop">
+            {% if object.thumbnail %}<img src="{{ object.thumbnail.url }}" alt="" data-thumb-preview>{% else %}<div class="cover-empty" data-thumb-preview>{% include 'partials/icon.html' with name='image' %}<span>GIF أو صورة · اختياري</span></div>{% endif %}
+          </div>
+          {{ form.thumbnail }}{% for e in form.thumbnail.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}
+          <div class="help">{{ form.thumbnail.help_text }}</div>
+          {% if object.thumbnail %}<div class="switch" style="margin-top:8px">{{ form.remove_thumbnail }}<label for="{{ form.remove_thumbnail.id_for_label }}">{{ form.remove_thumbnail.label }}</label></div>{% endif %}
+        </div>
         <div class="field"><label>{{ form.category.label }}</label>{{ form.category }}
           <div class="help"><a href="{% url 'dash_work_categories' %}" style="color:var(--accent-text)">إدارة التصنيفات</a></div></div>
         <div class="switch">{{ form.is_active }}<label for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label></div>

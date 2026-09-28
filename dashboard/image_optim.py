@@ -37,6 +37,7 @@ MAX_BY_FOLDER = {
     'works/covers/': 2000,
     'works/media/': 2000,
     'works/posters/': 1600,
+    'works/thumbs/': 1200,
     'avatars/': 400,
     'share/': 1200,
     'tickets/': 1600,

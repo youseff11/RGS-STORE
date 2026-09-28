@@ -22,7 +22,7 @@
   {% for work in works %}
   <article class="work-admin{% if not work.is_active %} is-off{% endif %}">
     <a class="work-admin-media" href="{% url 'dash_work_edit' work.pk %}">
-      <img src="{{ work.cover.url }}" alt="">
+      <img src="{{ work.card_image.url }}" alt="">
       <span class="work-admin-flags">
         {% if work.is_featured %}<span class="chip chip-accent">{% include 'partials/icon.html' with name='star-fill' %} في الرئيسية</span>{% endif %}
         {% if not work.is_active %}<span class="chip chip-muted">مخفي</span>{% endif %}

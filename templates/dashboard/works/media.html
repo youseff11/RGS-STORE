@@ -18,8 +18,8 @@
   <form class="card" method="post" enctype="multipart/form-data">
     {% csrf_token %}<input type="hidden" name="action" value="upload_images">
     <div class="card-head"><h3>{% include 'partials/icon.html' with name='image' %} صور</h3></div>
-    <div class="field"><input class="inp file" type="file" name="images" accept="image/*" multiple required data-multi-preview>
-      <div class="help">تقدر تختار كذا صورة مرة واحدة</div><div class="multi-preview"></div></div>
+    <div class="field"><input class="inp file" type="file" name="images" accept="image/*,.gif" multiple required data-multi-preview>
+      <div class="help">تقدر تختار كذا صورة مرة واحدة · GIF المتحرك بيترفع زي ما هو ويفضل متحرك</div><div class="multi-preview"></div></div>
     <button class="btn btn-block" type="submit">رفع الصور</button>
   </form>
 
@@ -65,7 +65,7 @@
           {% if item.thumb_url %}<img src="{{ item.thumb_url }}" alt="">
           {% elif item.kind == 'video' %}<video src="{{ item.video.url }}#t=0.5" preload="metadata" muted></video>
           {% else %}<span class="media-ph">{% include 'partials/icon.html' with name='film' %}</span>{% endif %}
-          <span class="chip {% if item.is_video %}chip-accent{% else %}chip-muted{% endif %} media-kind">{{ item.get_kind_display }}</span>
+          <span class="chip {% if item.is_video %}chip-accent{% else %}chip-muted{% endif %} media-kind">{% if item.is_gif %}GIF{% else %}{{ item.get_kind_display }}{% endif %}</span>
           {% if item.kind == 'image' and work.cover.name == item.image.name %}<span class="chip chip-ok media-cover-tag">البانر</span>{% endif %}
         </div>
         <div class="media-fields">

@@ -110,19 +110,20 @@
     });
   });
 
-  /* work cover preview */
-  const coverInput = $('#id_cover');
-  if (coverInput) {
-    coverInput.addEventListener('change', () => {
-      const file = coverInput.files && coverInput.files[0];
-      const target = $('[data-cover-preview]');
+  /* work cover + thumbnail (GIF) previews */
+  [['#id_cover', 'data-cover-preview'], ['#id_thumbnail', 'data-thumb-preview']].forEach(([sel, attr]) => {
+    const input = $(sel);
+    if (!input) return;
+    input.addEventListener('change', () => {
+      const file = input.files && input.files[0];
+      const target = $('[' + attr + ']');
       if (!file || !target) return;
       const img = document.createElement('img');
       img.src = URL.createObjectURL(file);
-      img.setAttribute('data-cover-preview', '');
+      img.setAttribute(attr, '');
       target.replaceWith(img);
     });
-  }
+  });
 
   /* navbar link form: only show the field that matches the link type */
   const navForm = $('[data-nav-form]');

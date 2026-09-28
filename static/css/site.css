@@ -949,6 +949,7 @@ svg.i { width: 1.15em; height: 1.15em; vertical-align: -.2em; flex: none; }
 .social-btn.tt:hover { background: #111; }
 .social-btn.yt:hover { background: #FF0000; }
 .social-btn.wa:hover { background: #25D366; }
+.social-btn.dc:hover { background: #5865F2; }
 
 /* --- link columns --- */
 .footer h4 {
