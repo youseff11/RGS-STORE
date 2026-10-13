@@ -111,7 +111,7 @@
         {% if SITE.footer_show_payment %}
         <div class="footer-badge">
           {% include 'partials/icon.html' with name='lock' %}
-          {% if SITE.footer_payment_text %}{{ SITE.footer_payment_text }}{% elif 'paypal' in SITE.payment_methods and 'cod' in SITE.payment_methods %}{% t 'cod_or_paypal' %}{% elif 'paypal' in SITE.payment_methods %}{% t 'pay_paypal' %}{% else %}{% t 'cod_only' %}{% endif %}
+          {% if SITE.footer_payment_text %}{{ SITE.footer_payment_text }}{% else %}{% t 'pay_paypal' %}{% endif %}
         </div>
         {% endif %}
       </div>

@@ -125,7 +125,7 @@ def set_language(request, code):
 # =================================================================== homepage
 FEATURES = [
     ('truck', 'feature_delivery', 'feature_delivery_sub'),
-    ('lock', 'payments_secure', 'cod_or_paypal'),
+    ('lock', 'payments_secure', 'pay_paypal'),
     ('pen-tool', 'feature_quality', 'feature_quality_sub'),
     ('chat', 'feature_support', 'feature_support_sub'),
 ]
