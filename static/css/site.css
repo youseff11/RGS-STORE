@@ -3,39 +3,43 @@
    ========================================================================== */
 
 /* ------------------------------------------------------------- 1. tokens  */
-/* Dark only — monochrome: a black page, grey surfaces, white type.
-   --accent is the fill for primary actions (buttons, badges, bars) — near-white
-   with black text on top (--on-accent); --accent-text is the light grey used for
-   small highlighted text; --accent-2 is a softer mid grey. */
+/* Dark only — "neon aurora": an ink-black page with the hero photo's light running
+   through it. --accent is the violet used for fills (with white text on top);
+   --accent-text a lighter violet for small text on the dark; --accent-2 the pink,
+   --accent-3 the blue. --grad is the full orange → pink → violet → blue sweep,
+   --grad-btn the calmer violet → blue used for buttons. */
 :root {
-  --bg:        #000000;
-  --bg-2:      #070707;
-  --surface:   #0F0F10;
-  --surface-2: #18181A;
-  --line:      #262628;
-  --line-soft: #1A1A1C;
-  --text:      #F5F5F5;
-  --text-2:    #C9C9CC;
-  --muted:     #8A8A90;
-  --accent:    #EDEDED;
-  --accent-hover: #FFFFFF;
-  --accent-text: #E4E4E7;
-  --accent-2:  #A1A1AA;
-  --accent-soft:rgba(255,255,255,.06);
-  --on-accent: #0A0A0A;
-  --ink:       #FAFAFA;
-  --glass:     rgba(24,24,27,.55);
-  --glass-line:rgba(255,255,255,.09);
-  --ok:        #5CC08E;
-  --warn:      #E3B55B;
-  --bad:       #EF6E63;
-  --info:      #8FB4E6;
+  --bg:        #05050A;
+  --bg-2:      #08080F;
+  --surface:   #0E0E17;
+  --surface-2: #151520;
+  --line:      #23233A;
+  --line-soft: #181826;
+  --text:      #F5F5FB;
+  --text-2:    #C9C9DB;
+  --muted:     #8C8CA6;
+  --accent:    #7C5CFF;
+  --accent-hover: #8E72FF;
+  --accent-text: #B3A3FF;
+  --accent-2:  #FF4FA3;
+  --accent-3:  #3D8BFF;
+  --accent-soft:rgba(124,92,255,.12);
+  --on-accent: #FFFFFF;
+  --ink:       #FFFFFF;
+  --grad:      linear-gradient(110deg, #FF9548 0%, #FF4FA3 32%, #8B5CFF 66%, #3D8BFF 100%);
+  --grad-btn:  linear-gradient(115deg, #8B5CFF 0%, #5B6CFF 55%, #3D8BFF 100%);
+  --glass:     rgba(20,20,32,.55);
+  --glass-line:rgba(255,255,255,.08);
+  --ok:        #4ADE9B;
+  --warn:      #FBBF4D;
+  --bad:       #FF5C7A;
+  --info:      #6CB2FF;
   --shadow-sm: 0 1px 2px rgba(0,0,0,.5);
-  --shadow-md: 0 10px 30px rgba(0,0,0,.6);
+  --shadow-md: 0 12px 34px rgba(0,0,0,.55);
   --shadow-lg: 0 30px 80px rgba(0,0,0,.7);
   --radius:    18px;
   --radius-sm: 12px;
-  --radius-lg: 26px;
+  --radius-lg: 24px;
   --maxw:      1280px;
   --header-h:  76px;
   --ease:      cubic-bezier(.22,.61,.36,1);
@@ -302,8 +306,11 @@ html[dir="rtl"] .drawer-panel { transform: translateX(102%); }
 .hero-media img {
   position: absolute; inset-block: 0; left: auto; right: 0;
   width: auto; max-width: 100%; height: 100%;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 22%);
-          mask-image: linear-gradient(90deg, transparent 0%, #000 22%);
+  /* fade the left edge into the copy side and the bottom edge into the page */
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 22%), linear-gradient(0deg, transparent 0%, #000 16%);
+  -webkit-mask-composite: source-in;
+          mask-image: linear-gradient(90deg, transparent 0%, #000 22%), linear-gradient(0deg, transparent 0%, #000 16%);
+          mask-composite: intersect;
 }
 .hero-media .for-dark { display: none; }
 :root .hero-media .for-light { display: none; }
@@ -1675,99 +1682,243 @@ html[dir="rtl"] .pass-eye { inset-inline-end: auto; left: 8px; }
 .pay-steps li::marker { color: var(--accent-text); font-weight: 800; }
 .paid-form { padding-top: 16px; border-top: 1px dashed var(--line); }
 
-/* --------------------------------------------------- 17j. modern layer    */
-/* the monochrome refresh: soft light from above, glassy panels, pill chips */
+/* --------------------------------------------------- 17j. aurora theme    */
+/* Everything that makes the site feel like the hero: ambient light, gradient
+   type and buttons, glass cards. Kept in one place so it reads as one system. */
+
+/* ambient light: a violet wash top-left, a blue one bottom-right, fixed behind everything */
 body {
   background:
-    radial-gradient(1200px 520px at 50% -180px, rgba(255,255,255,.06), transparent 70%),
+    radial-gradient(900px 600px at 0% 0%, rgba(124,92,255,.10), transparent 60%),
+    radial-gradient(900px 700px at 100% 100%, rgba(61,139,255,.08), transparent 60%),
     var(--bg);
   background-attachment: fixed;
+}
+h1, h2, h3, .section-head h2, .card-title, .work-title, .cat-tile .meta h3 {
+  font-family: 'Readex Pro', 'Cairo', 'Jost', sans-serif;
+}
+::selection { background: var(--accent); color: #fff; }
+
+/* the hero lets the page's ambient light through instead of a flat black block */
+.hero-main { background: transparent; }
+.hero-media::after {
+  -webkit-mask-image: linear-gradient(0deg, transparent 0%, #000 22%);
+          mask-image: linear-gradient(0deg, transparent 0%, #000 22%);
 }
 
 /* the home hero slides up under the floating menu */
 main > .hero-main:first-child { margin-top: calc(-1 * var(--header-h)); }
 main > .hero-main:first-child .hero-wrap { padding-top: calc(var(--header-h) + 24px); }
 
-/* section titles: a small pill above, the heading fading white → grey */
+/* announcement: thin strip with the aurora running through it */
+:root .announce {
+  background: linear-gradient(90deg, rgba(255,149,72,.16), rgba(255,79,163,.16) 33%, rgba(139,92,255,.18) 66%, rgba(61,139,255,.16)), var(--bg);
+  color: var(--text); border-bottom: 1px solid var(--glass-line);
+}
+
+/* ---- section titles ---- */
+.section-head { margin-bottom: 40px; }
+.section-head h2 { font-size: clamp(28px, 3.8vw, 44px); font-weight: 700; letter-spacing: -.02em; }
+.section-head p { font-size: 15.5px; }
 .section-head .eyebrow, .eyebrow {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 5px 12px 5px 10px; border-radius: 100px;
-  background: rgba(255,255,255,.04); border: 1px solid var(--glass-line);
-  color: var(--text-2); font-size: 10.5px; letter-spacing: .2em;
+  padding: 6px 14px 6px 12px; border-radius: 100px;
+  background: rgba(124,92,255,.10); border: 1px solid rgba(124,92,255,.28);
+  color: var(--accent-text); font-size: 11px; letter-spacing: .18em; margin-bottom: 14px;
 }
 .section-head .eyebrow::before, .eyebrow::before {
-  content: ''; width: 6px; height: 6px; border-radius: 50%;
-  background: var(--accent); box-shadow: 0 0 10px rgba(255,255,255,.6);
+  content: ''; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--grad); box-shadow: 0 0 12px rgba(255,79,163,.7);
 }
 .section-head h2, .about-copy h2, .reviews-intro h2, .page-hero h1 {
-  letter-spacing: -.025em;
-  background: linear-gradient(180deg, #FFFFFF 30%, #A1A1AA 100%);
+  background: linear-gradient(180deg, #FFFFFF 35%, #CFC6FF 100%);
   -webkit-background-clip: text; background-clip: text;
   color: transparent; -webkit-text-fill-color: transparent;
 }
 .page-hero {
+  border-bottom: 1px solid var(--line-soft);
   background:
-    radial-gradient(900px 300px at 50% -60px, rgba(255,255,255,.07), transparent 70%),
-    var(--bg);
+    radial-gradient(700px 260px at 85% -40px, rgba(124,92,255,.22), transparent 70%),
+    radial-gradient(500px 220px at 10% 0, rgba(255,79,163,.10), transparent 70%),
+    transparent;
 }
 
-/* buttons: crisp white primary, glass secondary */
-.btn { box-shadow: inset 0 1px 0 rgba(255,255,255,.25); }
-.btn:hover { box-shadow: 0 10px 30px rgba(255,255,255,.12); }
-.btn-ghost { --btn-bg: rgba(255,255,255,.03); --btn-bd: var(--glass-line); box-shadow: none; }
-.btn-ghost:hover { --btn-bg: rgba(255,255,255,.08); --btn-bd: rgba(255,255,255,.22); --btn-fg: var(--text); }
-.btn-soft { box-shadow: none; }
-
-/* panels: hairline borders with a faint top light */
-.form-card, .summary, .filters, .cart-list, .review-card, .about-stat, .auth-card,
-.account-tabs, .order-row, .ticket-row, .policy-side a, .work-nav a {
-  background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.01)), var(--surface);
-  border-color: var(--line);
+/* ---- buttons: violet → blue primary, glass secondary ---- */
+.btn {
+  --btn-bg: var(--grad-btn); --btn-bd: transparent;
+  background: var(--btn-bg);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 8px 26px rgba(124,92,255,.28);
 }
-.review-card:hover, .order-row:hover, .ticket-row:hover { border-color: rgba(255,255,255,.22); }
+.btn:hover {
+  --btn-bg: linear-gradient(115deg, #9A70FF 0%, #6A79FF 55%, #55A0FF 100%); --btn-bd: transparent;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 12px 36px rgba(124,92,255,.45);
+}
+.btn-ghost, .btn-soft, .btn-dark, .btn-danger, .btn-google, .btn-discord { box-shadow: none; }
+.btn-ghost { --btn-bg: rgba(255,255,255,.03); --btn-bd: var(--glass-line); }
+.btn-ghost:hover { --btn-bg: rgba(124,92,255,.12); --btn-bd: rgba(124,92,255,.5); --btn-fg: var(--text); box-shadow: none; }
+.btn-soft, .btn-soft:hover { --btn-bg: var(--surface-2); --btn-bd: transparent; box-shadow: none; }
+.btn-dark, .btn-dark:hover { --btn-bg: #fff; --btn-fg: #0A0A12; --btn-bd: #fff; }
+.btn-danger { --btn-bg: transparent; --btn-bd: color-mix(in srgb, var(--bad) 40%, transparent); }
+.btn-danger:hover { --btn-bg: var(--bad); --btn-bd: var(--bad); box-shadow: none; }
+.btn-google:hover { --btn-bg: #E9E9F2; --btn-bd: #E9E9F2; box-shadow: none; }
+.btn-discord:hover { --btn-bg: #4752C4; --btn-bd: #4752C4; box-shadow: none; }
 
-/* product + category + work cards lift a little on hover */
-.card-media { border: 1px solid var(--line-soft); }
-.card { transition: transform .35s var(--ease); }
-.card:hover { transform: translateY(-4px); }
+/* ---- header ---- */
+.nav a.is-active {
+  color: #fff;
+  background: linear-gradient(115deg, rgba(139,92,255,.38), rgba(61,139,255,.26));
+  box-shadow: inset 0 0 0 1px rgba(160,140,255,.35), 0 4px 18px rgba(124,92,255,.25);
+}
+.mr-logo { --logo-dot: var(--accent-2); }
+.lang-btn {
+  border-color: var(--glass-line); background: var(--glass); min-width: 36px; justify-content: center;
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+}
+.lang-btn:hover { border-color: rgba(124,92,255,.5); background: rgba(124,92,255,.12); }
+.icon-btn:hover { background: rgba(255,255,255,.08); color: var(--text); }
+.acct-av { background: var(--grad-btn); }
+.acct-menu {
+  background: rgba(16,16,26,.94); border-color: var(--glass-line); border-radius: 18px;
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+}
+.cart-count { background: var(--accent-2); color: #fff; }
+
+/* ---- hero ---- */
+:root .hero-title .line-2 {
+  background-image:
+    repeating-linear-gradient(74deg, rgba(255,255,255,.12) 0 1px, rgba(255,255,255,0) 1px 5px),
+    var(--grad);
+  filter: drop-shadow(0 0 30px rgba(139,92,255,.35));
+}
+.hero-title .line-1 { text-shadow: 0 4px 40px rgba(0,0,0,.5); }
+.hero-eyebrow { color: var(--accent-text); }
+:root .hero-cta {
+  background: var(--grad-btn); color: #fff; border-radius: 100px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 12px 36px rgba(124,92,255,.45);
+}
+:root .hero-cta:hover {
+  background: var(--grad-btn);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 16px 48px rgba(124,92,255,.6);
+}
+:root .hero-script { color: #E9E3FF; }
+:root .hero-script::after { background: var(--grad); }
+
+/* ---- product cards: a glass card, the picture inset, price on its own line ---- */
+/* six to a row on desktop — home sections usually hold six products */
+.products-grid { grid-template-columns: repeat(auto-fill, minmax(184px, 1fr)); gap: 20px; }
+.card {
+  display: flex; flex-direction: column; padding: 10px; border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.015)), var(--surface);
+  border: 1px solid var(--line);
+  transition: transform .35s var(--ease), border-color .35s, box-shadow .35s var(--ease);
+}
+.card:hover {
+  transform: translateY(-6px); border-color: rgba(139,92,255,.55);
+  box-shadow: 0 22px 50px rgba(0,0,0,.55), 0 12px 40px rgba(124,92,255,.22);
+}
+.card-media { border-radius: 16px; aspect-ratio: 1 / 1; }
 .card-media .placeholder { background: linear-gradient(160deg, var(--surface-2), var(--surface)); }
-.cat-tile, .work-card, .work-tile-media { transition: border-color .3s, transform .35s var(--ease), box-shadow .35s var(--ease); }
-.cat-tile:hover, .work-card:hover { border-color: rgba(255,255,255,.2); box-shadow: 0 20px 50px rgba(0,0,0,.6); }
-.cat-tile .meta h3, .work-title { letter-spacing: -.01em; }
-.badge-new { background: #fff; color: #000; }
+.card-body { padding: 14px 6px 6px; display: flex; flex-direction: column; flex: 1; }
+.card-cat { color: var(--accent-text); font-size: 11px; font-weight: 700; }
+.card-title { font-size: 15px; margin: 4px 0 12px; }
+.card-price { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+.price-now { font-size: 17px; color: #fff; }
+.card .price-now .cur { color: var(--muted); }
+.card-quick .btn { box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+.badge { padding: 5px 11px; }
+.badge-new { background: var(--grad); color: #fff; box-shadow: 0 4px 14px rgba(255,79,163,.35); }
+.badge-sale { background: var(--bad); }
 
-/* the features strip becomes four glass tiles */
+/* ---- category tiles ---- */
+.cats-grid { gap: 20px; }
+.cat-tile {
+  border-radius: 24px; border: 1px solid var(--line);
+  transition: transform .4s var(--ease), border-color .3s, box-shadow .4s var(--ease);
+}
+.cat-tile::after { background: linear-gradient(to top, rgba(5,5,10,.92) 0%, rgba(5,5,10,.2) 55%, transparent 100%); }
+.cat-tile:hover {
+  transform: translateY(-6px); border-color: rgba(139,92,255,.55);
+  box-shadow: 0 24px 60px rgba(0,0,0,.6), 0 10px 40px rgba(124,92,255,.25);
+}
+.cat-tile .meta h3 { font-size: 20px; }
+.cat-tile .meta span {
+  display: inline-block; margin-top: 4px; padding: 3px 10px; border-radius: 100px;
+  background: rgba(255,255,255,.1); backdrop-filter: blur(6px); color: #fff;
+}
+.cat-tile .go { background: var(--grad-btn); }
+
+/* ---- features strip: glass tiles ---- */
 .usp { border: 0; background: transparent; }
-.usp-grid { gap: 12px; padding-block: 18px; }
+.usp-grid { gap: 14px; padding-block: 22px; }
 .usp-item {
   border-radius: var(--radius); border: 1px solid var(--line);
-  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01));
+  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)), var(--surface);
 }
 .usp-item + .usp-item { border-inline-start: 1px solid var(--line); }
-.usp-icon { background: rgba(255,255,255,.06); color: var(--text); border: 1px solid var(--glass-line); }
+.usp-icon { background: var(--grad-btn); color: #fff; box-shadow: 0 8px 22px rgba(124,92,255,.35); }
 
-/* inputs */
-.field input, .field select, .field textarea, .coupon-form input, .price-inputs input {
+/* ---- panels ---- */
+.form-card, .summary, .filters, .cart-list, .review-card, .about-stat, .auth-card,
+.account-tabs, .order-row, .ticket-row, .policy-side a, .work-nav a {
+  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.012)), var(--surface);
+  border-color: var(--line);
+}
+.review-card:hover, .order-row:hover, .ticket-row:hover, .policy-side a:hover, .work-nav a:hover { border-color: rgba(139,92,255,.5); }
+.filter-list a.is-active, .account-tabs a.is-active {
+  background: rgba(124,92,255,.16); color: #fff; box-shadow: inset 0 0 0 1px rgba(139,92,255,.35);
+}
+.service-chip.is-active, .pagination .is-current { background: var(--grad-btn); color: #fff; border-color: transparent; }
+
+/* ---- about ---- */
+.about-media { border-radius: 28px; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+.about-stat { border-radius: 18px; }
+.about-stat::before { width: auto; height: 2px; inset: 0 0 auto 0; background: var(--grad); }
+.about-stat b { font-size: 30px; }
+.about-stat b i, .about-stat b svg { color: var(--accent-2); }
+
+/* ---- portfolio ---- */
+.work-card, .work-tile-media {
+  border-radius: 24px; border: 1px solid var(--line);
+  transition: border-color .3s, box-shadow .4s var(--ease);
+}
+.work-card:hover, .work-tile:hover .work-tile-media {
+  border-color: rgba(139,92,255,.55);
+  box-shadow: 0 20px 50px rgba(0,0,0,.6), 0 10px 40px rgba(124,92,255,.22);
+}
+.work-cat { background: rgba(124,92,255,.35); border-color: rgba(180,160,255,.3); color: #fff; }
+.work-play { background: var(--grad-btn); color: #fff; box-shadow: 0 0 0 6px rgba(124,92,255,.25); }
+.work-filters a.is-active { background: var(--grad-btn); border-color: transparent; color: #fff; }
+
+/* ---- reviews ---- */
+.stars .stars-fill, .rating-bar > span:first-child svg { color: #FFC24D; }
+.star-input label:hover, .star-input label:hover ~ label, .star-input input:checked ~ label { color: #FFC24D; }
+.rating-bar .track span { background: var(--grad); }
+.review-av { background: var(--grad-btn); }
+.review-q svg { fill: rgba(139,92,255,.4); }
+.reviews-home { background: transparent; }
+
+/* ---- inputs ---- */
+.field input, .field select, .field textarea, .coupon-form input, .price-inputs input, .select-inline {
   background: rgba(255,255,255,.03); border-color: var(--line);
 }
 .field input:focus, .field select:focus, .field textarea:focus {
-  border-color: rgba(255,255,255,.4); box-shadow: 0 0 0 4px rgba(255,255,255,.06);
+  border-color: rgba(139,92,255,.7); box-shadow: 0 0 0 4px rgba(124,92,255,.15);
 }
 
-/* header extras in glass */
-.lang-btn { border-color: var(--glass-line); background: var(--glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
-.lang-btn:hover { border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.08); }
-.lang-btn { min-width: 36px; justify-content: center; }
-.icon-btn:hover { background: rgba(255,255,255,.08); color: var(--text); }
-.acct-menu { background: rgba(18,18,20,.92); border-color: var(--glass-line); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 18px; }
-.cart-count { background: #fff; color: #000; }
-
-/* footer */
-.footer { background: linear-gradient(180deg, var(--bg-2), #000); border-top-color: var(--line-soft); }
-.footer-rule { background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent); opacity: 1; }
-.footer h4::after { background: var(--accent-2); }
-.social-btn { border-radius: 100px; background: rgba(255,255,255,.03); border-color: var(--glass-line); }
-.contact-line .ico { background: rgba(255,255,255,.06); color: var(--text); }
+/* ---- footer ---- */
+.footer {
+  background:
+    radial-gradient(800px 260px at 50% 0, rgba(124,92,255,.12), transparent 70%),
+    linear-gradient(180deg, var(--bg-2), #030306);
+  border-top-color: var(--line-soft);
+}
+.footer-rule { background: var(--grad); opacity: .7; height: 1px; }
+.footer h4::after { background: var(--grad); width: 26px; }
+.footer-links a::before { background: var(--accent-2); }
+.social-btn { border-radius: 14px; background: rgba(255,255,255,.03); border-color: var(--glass-line); }
+.contact-line .ico { background: rgba(124,92,255,.14); color: var(--accent-text); }
+a.contact-line:hover .ico { background: var(--grad-btn); color: #fff; }
+.to-top:hover { border-color: rgba(139,92,255,.6); color: #fff; }
 
 /* the menu pill gets tighter before it hides behind the burger */
 @media (max-width: 1200px) {
@@ -1775,6 +1926,19 @@ main > .hero-main:first-child .hero-wrap { padding-top: calc(var(--header-h) + 2
 }
 @media (max-width: 1100px) {
   .nav a svg, .nav-more-btn svg:not(.i-down) { display: none; }
+}
+@media (max-width: 640px) {
+  .products-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .card { padding: 7px; border-radius: 18px; }
+  .card-media { border-radius: 13px; }
+  .card-body { padding: 10px 4px 4px; }
+  .card-title { font-size: 13.5px; margin-bottom: 8px; }
+  .price-now { font-size: 15px; }
+  /* categories two to a row instead of one full-screen tile each */
+  .cats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .cat-tile { border-radius: 18px; }
+  .cat-tile .meta { inset-inline: 12px; bottom: 12px; }
+  .cat-tile .meta h3 { font-size: 15px; }
 }
 
 /* -------------------------------------------------------- 18. responsive  */
