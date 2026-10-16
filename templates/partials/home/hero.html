@@ -9,8 +9,8 @@
   </div>
 
   <div class="hero-wrap">
-    {# the hero stays in English in both languages #}
-    <div class="hero-copy" lang="en" dir="ltr">
+    {# the copy is whatever the dashboard holds — Arabic or English — so it takes its direction from the text #}
+    <div class="hero-copy" dir="auto">
       {% if sec.hero_eyebrow %}<span class="hero-eyebrow">{{ sec.hero_eyebrow }}</span>{% endif %}
       {% with lines=sec.hero_lines %}
       <h1 class="hero-title">

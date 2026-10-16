@@ -342,7 +342,7 @@ html[dir="rtl"] .drawer-panel { transform: translateX(102%); }
   max-width: var(--maxw); margin-inline: auto; padding: 48px 20px;
   direction: ltr;
 }
-.hero-copy { max-width: 560px; text-align: left; }
+.hero-copy { max-width: 560px; text-align: start; }
 
 .hero-eyebrow {
   display: block;
@@ -1121,8 +1121,8 @@ html[lang="ar"] :is(.nav a, .eyebrow, .section-head .eyebrow, .footer h4, .card-
   letter-spacing: 0; text-transform: none;
 }
 html[lang="ar"] .nav a { font-family: 'Cairo', sans-serif; font-size: 14px; font-weight: 600; }
-/* the hero copy is English in both languages — it keeps the English fonts, spacing and arrow */
-.hero-copy[lang="en"] { font-family: 'Jost', 'Cairo', sans-serif; }
+/* the hero copy follows its own text direction (dir="auto") — English copy keeps the English font */
+.hero-copy:lang(en) { font-family: 'Jost', 'Cairo', sans-serif; }
 html[dir="rtl"] svg.i-arrow, html[dir="rtl"] svg.i-arrow-back { transform: scaleX(-1); }
 html[dir="rtl"] [dir="ltr"] svg.i-arrow, html[dir="rtl"] [dir="ltr"] svg.i-arrow-back { transform: none; }
 html[dir="rtl"] .hero-copy[dir="ltr"] .hero-cta:hover svg { transform: translateX(5px); }
@@ -1791,6 +1791,14 @@ main > .hero-main:first-child .hero-wrap { padding-top: calc(var(--header-h) + 2
   filter: drop-shadow(0 0 30px rgba(139,92,255,.35));
 }
 .hero-title .line-1 { text-shadow: 0 4px 40px rgba(0,0,0,.5); }
+/* right-to-left copy can't spill past its box the way "DESIGN YOUR" does — it would run
+   off the left edge of the screen — so an Arabic title wraps inside the column instead */
+.hero-copy:dir(rtl) { max-width: 660px; }
+.hero-copy:dir(rtl) .hero-title .line-1 {
+  width: auto; max-width: 100%;
+  font-family: 'Readex Pro', 'Cairo', sans-serif; font-weight: 700;
+  font-size: clamp(34px, 4.2vw, 58px); line-height: 1.3;
+}
 .hero-eyebrow { color: var(--accent-text); }
 :root .hero-cta {
   background: var(--grad-btn); color: #fff; border-radius: 100px;
@@ -1927,6 +1935,36 @@ a.contact-line:hover .ico { background: var(--grad-btn); color: #fff; }
 @media (max-width: 1100px) {
   .nav a svg, .nav-more-btn svg:not(.i-down) { display: none; }
 }
+/* Phones and portrait tablets: the photo can't share the width with the copy, so they
+   stack — the full picture on top, fading into the page, and the copy centred under it. */
+@media (max-width: 860px) {
+  .hero-main { aspect-ratio: auto; min-height: 0; display: block; padding-bottom: 36px; }
+  .hero-media { position: relative; inset: auto; z-index: 0; height: min(100vw, 460px); }
+  .hero-media img {
+    left: 0; right: 0; margin-inline: auto; max-width: 100%; object-position: var(--hero-x-m, 50%) center;
+    /* fade out at the bottom (into the copy) and softly at both sides */
+    -webkit-mask-image: linear-gradient(0deg, transparent 0%, #000 38%), linear-gradient(90deg, transparent 0%, #000 10%, #000 90%, transparent 100%);
+    -webkit-mask-composite: source-in;
+            mask-image: linear-gradient(0deg, transparent 0%, #000 38%), linear-gradient(90deg, transparent 0%, #000 10%, #000 90%, transparent 100%);
+            mask-composite: intersect;
+  }
+  :root .hero-media::after { display: none; }
+  .hero-wrap, main > .hero-main:first-child .hero-wrap { margin-top: -84px; padding: 0 20px; }
+  .hero-copy { max-width: none; text-align: center; }
+  .hero-eyebrow { font-size: 11px; letter-spacing: .2em; margin-bottom: 10px; }
+  .hero-title { margin-bottom: 14px; line-height: 1.15; }
+  .hero-title .line-1, .hero-title .line-2 { margin-inline: auto; }
+  .hero-title .line-1 { width: auto; max-width: none; font-size: clamp(28px, 8.6vw, 38px); }
+  .hero-title .line-2 { font-size: clamp(30px, 9.2vw, 42px); }
+  .hero-copy:dir(rtl) { max-width: none; }
+  .hero-copy:dir(rtl) .hero-title .line-1 { font-size: clamp(24px, 7.4vw, 40px); }
+  .hero-sub { font-size: 15px; line-height: 1.8; margin: 0 auto 22px; max-width: 34ch; }
+  .hero-cta {
+    padding: 14px 28px; font-size: 14px; letter-spacing: .04em; gap: 10px; border-radius: 100px;
+  }
+  .hero-cta svg { width: 17px; height: 17px; }
+}
+
 @media (max-width: 640px) {
   .products-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .card { padding: 7px; border-radius: 18px; }
@@ -1934,6 +1972,10 @@ a.contact-line:hover .ico { background: var(--grad-btn); color: #fff; }
   .card-body { padding: 10px 4px 4px; }
   .card-title { font-size: 13.5px; margin-bottom: 8px; }
   .price-now { font-size: 15px; }
+  /* section titles: the "view all" button drops under the heading instead of squeezing it */
+  .section-head.between { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .section-head { margin-bottom: 26px; }
+  .section-head h2 { font-size: clamp(26px, 7.4vw, 32px); }
   /* categories two to a row instead of one full-screen tile each */
   .cats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .cat-tile { border-radius: 18px; }
