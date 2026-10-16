@@ -1,6 +1,6 @@
 {% load static store_tags %}
 <section class="hero-main">
-  <div class="hero-media{% if not sec.image %} is-default{% endif %}">
+  <div class="hero-media">
     <picture>
       {% if sec.image_mobile %}<source media="(max-width: 620px)" srcset="{{ sec.image_mobile.url }}">{% endif %}
       <img src="{% if sec.image %}{{ sec.image.url }}{% else %}{% static 'img/hero-zool.webp' %}{% endif %}" alt="" fetchpriority="high"

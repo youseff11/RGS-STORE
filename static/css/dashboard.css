@@ -846,7 +846,11 @@ a.stat { color: inherit; }
 .seg-mini button.is-on { background: var(--accent); color: #fff; }
 .hero-prev { position: relative; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: #000; margin-inline: auto; transition: max-width .2s; max-width: 100%; }
 .hero-prev.is-phone { aspect-ratio: 4 / 3; max-width: 300px; }
-.hero-prev img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* same placement as the storefront hero: full height on the right, never wider than the box */
+.hero-prev img {
+  position: absolute; top: 0; right: 0; left: auto; width: auto; max-width: 100%; height: 100%; object-fit: cover;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 22%); mask-image: linear-gradient(90deg, transparent 0%, #000 22%);
+}
 .hero-prev::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, #000 0%, rgba(0,0,0,.85) 28%, rgba(0,0,0,.2) 55%, transparent 70%); }
 .hero-prev-copy { position: absolute; inset-block: 0; left: 6%; z-index: 1; width: 55%; display: flex; flex-direction: column; justify-content: center; gap: 4px; text-align: left; color: #fff; }
 .hero-prev-copy small { font-size: 8px; letter-spacing: .25em; opacity: .8; }

@@ -295,13 +295,15 @@ html[dir="rtl"] .drawer-panel { transform: translateX(102%); }
   width: 100%; height: 100%; object-fit: cover; object-position: var(--hero-x, 58%) center;
 }
 .hero-media picture { display: contents; }
-/* the bundled photo (no picture set in the dashboard) is almost square — keep all of it
-   on the right and let its left edge melt into the black instead of cropping the head */
-.hero-media.is-default img {
-  position: absolute; inset-block: 0; inset-inline-end: 0; left: auto; right: 0;
-  width: auto; max-width: 78%; height: 100%; object-fit: cover; object-position: center;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 26%, #000 92%, transparent 100%);
-          mask-image: linear-gradient(90deg, transparent 0%, #000 26%, #000 92%, transparent 100%);
+/* Every hero photo stands full-height against the right edge. A wide photo is still
+   capped at the hero's width (so it fills it, cropped by `cover` as before); a squarer
+   one — like a portrait on black — shows whole instead of being blown up to the full
+   width and losing its top and bottom. Its left edge melts into the black. */
+.hero-media img {
+  position: absolute; inset-block: 0; left: auto; right: 0;
+  width: auto; max-width: 100%; height: 100%;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 22%);
+          mask-image: linear-gradient(90deg, transparent 0%, #000 22%);
 }
 .hero-media .for-dark { display: none; }
 :root .hero-media .for-light { display: none; }
