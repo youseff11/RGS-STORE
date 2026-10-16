@@ -1,0 +1,18 @@
+{# one header menu link — icon picked from its type #}
+<a href="{{ link.href }}"{% if link.new_tab %} target="_blank" rel="noopener"{% endif %}{% if menu_item %} role="menuitem"{% endif %}
+   class="{% if link.link_type == 'category' %}nav-cat{% endif %}{% if link.link_type == 'support' %} nav-support{% endif %}{% if request.get_full_path == link.href %} is-active{% endif %}">
+  {% if link.link_type == 'home' %}{% include 'partials/icon.html' with name='home' %}
+  {% elif link.link_type == 'shop' %}{% include 'partials/icon.html' with name='bag' %}
+  {% elif link.link_type == 'new' %}{% include 'partials/icon.html' with name='sparkles' %}
+  {% elif link.link_type == 'sale' %}{% include 'partials/icon.html' with name='tag' %}
+  {% elif link.link_type == 'portfolio' %}{% include 'partials/icon.html' with name='layers' %}
+  {% elif link.link_type == 'reviews' %}{% include 'partials/icon.html' with name='star' %}
+  {% elif link.link_type == 'about' %}{% include 'partials/icon.html' with name='users' %}
+  {% elif link.link_type == 'contact' %}{% include 'partials/icon.html' with name='mail' %}
+  {% elif link.link_type == 'track' %}{% include 'partials/icon.html' with name='truck' %}
+  {% elif link.link_type == 'support' %}{% include 'partials/icon.html' with name='chat' %}
+  {% elif link.link_type == 'category' %}{% include 'partials/icon.html' with name='grid' %}
+  {% elif link.link_type == 'policy' %}{% include 'partials/icon.html' with name='file' %}
+  {% else %}{% include 'partials/icon.html' with name='link' %}{% endif %}
+  <span>{{ link.label }}</span>{% if link.link_type == 'support' and TICKETS_UNREAD %} <span class="nav-badge">{{ TICKETS_UNREAD }}</span>{% endif %}
+</a>

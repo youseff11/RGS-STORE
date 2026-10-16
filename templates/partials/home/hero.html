@@ -1,9 +1,9 @@
 {% load static store_tags %}
 <section class="hero-main">
-  <div class="hero-media">
+  <div class="hero-media{% if not sec.image %} is-default{% endif %}">
     <picture>
       {% if sec.image_mobile %}<source media="(max-width: 620px)" srcset="{{ sec.image_mobile.url }}">{% endif %}
-      <img src="{% if sec.image %}{{ sec.image.url }}{% else %}{% static 'img/hero-dark.webp' %}{% endif %}" alt="" fetchpriority="high"
+      <img src="{% if sec.image %}{{ sec.image.url }}{% else %}{% static 'img/hero-zool.webp' %}{% endif %}" alt="" fetchpriority="high"
            {% if sec.image_focus != None or sec.image_focus_mobile != None %}style="{% if sec.image_focus != None %}--hero-x:{{ sec.image_focus }}%;{% endif %}{% if sec.image_focus_mobile != None %}--hero-x-m:{{ sec.image_focus_mobile }}%;{% endif %}"{% endif %}>
     </picture>
   </div>

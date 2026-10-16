@@ -20,8 +20,8 @@
 }
 
 :root {
-  /* the two bubble colours — outgoing carries the brand, incoming stays neutral */
-  --chat-out: color-mix(in srgb, var(--accent) 46%, var(--surface));
+  /* the two bubble colours — outgoing is a lighter grey, incoming stays neutral */
+  --chat-out: color-mix(in srgb, var(--accent) 16%, var(--surface));
   --chat-in: var(--surface-2);
   --chat-radius: 16px;
 }

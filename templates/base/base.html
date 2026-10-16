@@ -28,7 +28,7 @@
   {% elif SITE.share_image %}
     <meta property="og:image" content="{% absolute SITE.share_image.url %}">
   {% else %}
-    {% static 'img/hero-dark.webp' as default_share %}<meta property="og:image" content="{% absolute default_share %}">
+    {% static 'img/hero-zool.webp' as default_share %}<meta property="og:image" content="{% absolute default_share %}">
   {% endif %}
   <meta property="og:image:alt" content="{{ page_title|default:SITE.brand_name }}">
   {% endif %}
@@ -39,7 +39,7 @@
   <link rel="alternate" hreflang="ar" href="{% absolute request.path %}?lang=ar">
   <link rel="alternate" hreflang="en" href="{% absolute request.path %}?lang=en">
 
-  <meta name="theme-color" content="{{ SITE.share_color|default:'#B04B00' }}">
+  <meta name="theme-color" content="{{ SITE.share_color|default:'#000000' }}">
   <meta name="color-scheme" content="dark">
 
   {% if SITE.favicon %}<link rel="icon" href="{{ SITE.favicon.url }}">{% else %}<link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">{% endif %}
