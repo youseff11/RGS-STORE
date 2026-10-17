@@ -270,6 +270,7 @@
   });
 
   /* ------------------------------------------------------------ reveal --- */
+  $$('.section-head').forEach((el) => el.classList.add('reveal'));
   const revealables = $$('.reveal');
   if (revealables.length && 'IntersectionObserver' in window) {
     const observer = new IntersectionObserver((entries) => {

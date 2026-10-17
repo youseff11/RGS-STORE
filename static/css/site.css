@@ -9,12 +9,12 @@
    --accent-3 the deep coffee. --grad is the full latte → cappuccino → caramel → coffee
    sweep, --grad-btn the calmer caramel → mocha used for buttons. */
 :root {
-  --bg:        #120B07;
-  --bg-2:      #170E09;
-  --surface:   #1F150F;
-  --surface-2: #2A1D15;
-  --line:      #43301F;
-  --line-soft: #2E2017;
+  --bg:        #0A0604;
+  --bg-2:      #0A0604;
+  --surface:   #17100B;
+  --surface-2: #21170F;
+  --line:      #3A2A1C;
+  --line-soft: #24190F;
   --text:      #F8EEE3;
   --text-2:    #DCC7B1;
   --muted:     #A88D76;
@@ -332,11 +332,11 @@ html[dir="rtl"] .drawer-panel { transform: translateX(102%); }
 :root .hero-media::after {
   background:
     linear-gradient(90deg,
-      #000000 0%,
-      rgba(0,0,0,.97) 30%,
-      rgba(0,0,0,.86) 42%,
-      rgba(0,0,0,.34) 56%,
-      rgba(0,0,0,0) 70%);
+      rgb(10,6,4) 0%,
+      rgba(10,6,4,.97) 30%,
+      rgba(10,6,4,.86) 42%,
+      rgba(10,6,4,.34) 56%,
+      rgba(10,6,4,0) 70%);
 }
 
 .hero-wrap {
@@ -451,11 +451,11 @@ html[dir="rtl"] .drawer-panel { transform: translateX(102%); }
   }
   :root .hero-media::after {
     background: linear-gradient(90deg,
-      #000000 0%,
-      rgba(0,0,0,.90) 20%,
-      rgba(0,0,0,.62) 34%,
-      rgba(0,0,0,.16) 46%,
-      rgba(0,0,0,0) 56%);
+      rgb(10,6,4) 0%,
+      rgba(10,6,4,.90) 20%,
+      rgba(10,6,4,.62) 34%,
+      rgba(10,6,4,.16) 46%,
+      rgba(10,6,4,0) 56%);
   }
   .hero-wrap { padding: 20px 18px; }
   .hero-copy { max-width: 46%; }
@@ -478,8 +478,8 @@ html[dir="rtl"] .drawer-panel { transform: translateX(102%); }
       rgba(255,255,255,.66) 42%, rgba(255,255,255,.16) 56%, rgba(255,255,255,0) 66%);
   }
   :root .hero-media::after {
-    background: linear-gradient(90deg, #000000 0%, rgba(0,0,0,.92) 26%,
-      rgba(0,0,0,.68) 42%, rgba(0,0,0,.20) 56%, rgba(0,0,0,0) 66%);
+    background: linear-gradient(90deg, rgb(10,6,4) 0%, rgba(10,6,4,.92) 26%,
+      rgba(10,6,4,.68) 42%, rgba(10,6,4,.20) 56%, rgba(10,6,4,0) 66%);
   }
   .hero-copy { max-width: 54%; }
   .hero-eyebrow { font-size: 9.5px; letter-spacing: .26em; }
@@ -1688,14 +1688,8 @@ html[dir="rtl"] .pass-eye { inset-inline-end: auto; left: 8px; }
 /* Everything that makes the site feel like the hero: ambient light, gradient
    type and buttons, glass cards. Kept in one place so it reads as one system. */
 
-/* ambient light: a violet wash top-left, a blue one bottom-right, fixed behind everything */
-body {
-  background:
-    radial-gradient(900px 600px at 0% 0%, rgba(160,98,45,.10), transparent 60%),
-    radial-gradient(900px 700px at 100% 100%, rgba(111,78,55,.08), transparent 60%),
-    var(--bg);
-  background-attachment: fixed;
-}
+/* one flat espresso shade everywhere — the warm light drifting over it lives in 17k */
+body { background: var(--bg); }
 h1, h2, h3, .section-head h2, .card-title, .work-title, .cat-tile .meta h3 {
   font-family: 'Readex Pro', 'Cairo', 'Jost', sans-serif;
 }
@@ -1919,7 +1913,7 @@ main > .hero-main:first-child .hero-wrap { padding-top: calc(var(--header-h) + 2
 .footer {
   background:
     radial-gradient(800px 260px at 50% 0, rgba(160,98,45,.12), transparent 70%),
-    linear-gradient(180deg, var(--bg-2), #0A0604);
+    var(--bg);
   border-top-color: var(--line-soft);
 }
 .footer-rule { background: var(--grad); opacity: .7; height: 1px; }
@@ -2135,7 +2129,114 @@ a.contact-line:hover .ico { background: var(--grad-btn); color: #fff; }
 .empty-box .empty-ico svg { width: 24px; height: 24px; }
 .empty-box p { margin: 0; color: var(--muted); }
 
+/* ------------------------------------------------ 17k. light & motion    */
+/* The page is one espresso shade; two soft caramel lights drift slowly across it,
+   fixed behind everything, so it glows like a dim coffee house instead of looking flat. */
+body::before, body::after {
+  content: ''; position: fixed; z-index: -1; pointer-events: none;
+  width: 75vmax; height: 75vmax; border-radius: 50%;
+  will-change: transform;
+}
+body::before {
+  top: -38vmax; left: -30vmax;
+  background: radial-gradient(closest-side, rgba(181,117,60,.17), rgba(160,98,45,.06) 55%, transparent);
+  animation: glow-drift-a 28s ease-in-out infinite alternate;
+}
+body::after {
+  bottom: -42vmax; right: -30vmax;
+  background: radial-gradient(closest-side, rgba(200,162,124,.11), rgba(111,78,55,.05) 55%, transparent);
+  animation: glow-drift-b 34s ease-in-out infinite alternate;
+}
+@keyframes glow-drift-a {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(38vw, 30vh) scale(1.15); }
+  100% { transform: translate(12vw, 62vh) scale(.92); }
+}
+@keyframes glow-drift-b {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(-40vw, -28vh) scale(1.12); }
+  100% { transform: translate(-14vw, -60vh) scale(.94); }
+}
+
+/* hero: a warm light breathing over the photo, and the copy rising in line by line */
+.hero-media::before {
+  content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: radial-gradient(38% 55% at 72% 46%, rgba(221,170,116,.26), transparent 70%);
+  mix-blend-mode: screen;
+  animation: hero-breathe 6s ease-in-out infinite alternate;
+}
+@keyframes hero-breathe { from { opacity: .35; } to { opacity: 1; } }
+
+.hero-media img { animation: hero-zoom 1.8s var(--ease) both; }
+@keyframes hero-zoom { from { opacity: 0; transform: scale(1.06); } to { opacity: 1; transform: none; } }
+
+.hero-eyebrow, .hero-title .line-1, .hero-title .line-2, .hero-sub, .hero-cta {
+  animation: hero-rise .9s var(--ease) both;
+}
+.hero-eyebrow          { animation-delay: .15s; }
+.hero-title .line-1    { animation-delay: .28s; }
+.hero-title .line-2    { animation-delay: .42s; }
+.hero-sub              { animation-delay: .56s; }
+.hero-cta              { animation-delay: .7s; }
+@keyframes hero-rise { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+
+/* the coloured title line: latte → coffee light sliding through the letters */
+:root .hero-title .line-2 { background-size: auto, 220% 100%; }
+.hero-title .line-2 {
+  animation: hero-rise .9s var(--ease) .42s both, text-shimmer 7s ease-in-out 1.4s infinite alternate;
+}
+@keyframes text-shimmer { from { background-position: 0 0, 0% 50%; } to { background-position: 0 0, 100% 50%; } }
+
+.hero-script { animation: script-float 5s ease-in-out infinite alternate; }
+@keyframes script-float {
+  from { transform: translateY(-50%) rotate(-4deg); }
+  to   { transform: translateY(calc(-50% - 10px)) rotate(-2deg); }
+}
+
+/* call-to-action: a soft glow that pulses, and a light streak that crosses it */
+:root .hero-cta { position: relative; overflow: hidden; isolation: isolate; }
+.hero-cta {
+  animation: hero-rise .9s var(--ease) .7s both, cta-glow 3.2s ease-in-out 1.6s infinite;
+}
+@keyframes cta-glow {
+  0%, 100% { box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 12px 36px rgba(160,98,45,.40); }
+  50%      { box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 14px 54px rgba(221,170,116,.55); }
+}
+.hero-cta::after, .btn:not(.btn-ghost):not(.btn-soft):not(.btn-dark):not(.btn-danger):not(.btn-google):not(.btn-discord)::after {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(105deg, transparent 30%, rgba(255,240,220,.38) 50%, transparent 70%);
+  transform: translateX(-120%);
+}
+.hero-cta::after { animation: shine 4.5s ease-in-out 2s infinite; }
+@keyframes shine { 0% { transform: translateX(-120%); } 35%, 100% { transform: translateX(120%); } }
+.btn:not(.btn-ghost):not(.btn-soft):not(.btn-dark):not(.btn-danger):not(.btn-google):not(.btn-discord) {
+  position: relative; overflow: hidden; isolation: isolate;
+}
+.btn:hover::after { transform: translateX(120%); transition: transform .8s var(--ease); }
+
+/* section titles: the little dot glows like an ember */
+.section-head .eyebrow::before, .eyebrow::before { animation: ember 2.4s ease-in-out infinite; }
+@keyframes ember {
+  0%, 100% { box-shadow: 0 0 6px rgba(200,162,124,.5); transform: scale(1); }
+  50%      { box-shadow: 0 0 16px rgba(221,170,116,.95); transform: scale(1.25); }
+}
+
+/* cards and tiles: a warm rim light when hovered */
+.cat-tile { transition: transform .35s var(--ease), box-shadow .35s var(--ease); }
+.cat-tile:hover { transform: translateY(-6px); box-shadow: 0 22px 50px rgba(0,0,0,.6), 0 0 0 1px rgba(181,117,60,.5), 0 14px 44px rgba(160,98,45,.28); }
+
+/* things that scroll into view rise and fade in (site.js adds .reveal to section heads) */
+.reveal { transform: translateY(26px); }
+.reveal.in { transition: opacity .8s var(--ease), transform .8s var(--ease); }
+
+@media (prefers-reduced-motion: reduce) {
+  body::before, body::after, .hero-media::before, .hero-media img, .hero-cta, .hero-cta::after,
+  .hero-eyebrow, .hero-title .line-1, .hero-title .line-2, .hero-sub, .hero-script,
+  .section-head .eyebrow::before, .eyebrow::before { animation: none !important; }
+}
+
 @media print {
   .header, .footer, .announce, .wa-float, .toasts, .no-print { display: none !important; }
   body { background: #fff; color: #000; }
+  body::before, body::after { display: none; }
 }
