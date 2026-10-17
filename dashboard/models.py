@@ -1840,6 +1840,7 @@ class HomeSection(models.Model):
     )
     script_text = models.CharField(max_length=160, blank=True, default='')
     show_script = models.BooleanField(default=True)  # hero only: the handwritten words
+    brown_tint = models.BooleanField(default=True)  # hero only: tone the photo into coffee browns
     items_limit = models.PositiveSmallIntegerField(default=8)
 
     class Meta:

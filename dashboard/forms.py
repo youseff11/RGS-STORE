@@ -939,7 +939,7 @@ class HomeSectionForm(StyledForm):
             'is_active', 'eyebrow_ar', 'eyebrow_en', 'title_ar', 'title_en',
             'subtitle_ar', 'subtitle_en', 'button_text_ar', 'button_text_en',
             'button_link', 'image', 'image_mobile', 'image_focus', 'image_focus_mobile',
-            'show_script', 'script_text', 'items_limit',
+            'brown_tint', 'show_script', 'script_text', 'items_limit',
         ]
         widgets = {
             'image_focus': forms.NumberInput(attrs={'type': 'range', 'min': 0, 'max': 100, 'step': 1, 'class': 'inp range'}),
@@ -963,6 +963,7 @@ class HomeSectionForm(StyledForm):
             'image_focus_mobile': 'مكان الصورة على الموبايل (شمال ← يمين)',
             'script_text': 'الكلام المكتوب بخط اليد (Bold Ideas Better Designs)',
             'show_script': 'إظهار الكلام المكتوب بخط اليد على يمين الواجهة',
+            'brown_tint': 'تأثير البني على صورة الواجهة',
         }
 
     def __init__(self, *args, **kwargs):
@@ -986,13 +987,14 @@ class HomeSectionForm(StyledForm):
             if not section.script_text:
                 # show the words that are on the site right now, so they can be edited directly
                 self.initial['script_text'] = STRINGS['hero_script'][1]
+            self.fields['brown_tint'].help_text = 'بيلوّن الصورة بدرجات البني (قهوة وكابتشينو) علشان تمشي مع ألوان الموقع — شيل العلامة علشان تظهر بألوانها الأصلية'
             self.fields['title_en'].help_text = 'اكتب السطر الأول، Enter، وبعدين السطر التاني (بيتلوّن)'
             for name, default in (('image_focus', 58), ('image_focus_mobile', 40)):
                 self.fields[name].required = False
                 if getattr(section, name) is None:
                     self.initial[name] = default
         else:
-            for name in ('image_mobile', 'image_focus', 'image_focus_mobile', 'script_text', 'show_script'):
+            for name in ('image_mobile', 'image_focus', 'image_focus_mobile', 'script_text', 'show_script', 'brown_tint'):
                 self.fields.pop(name, None)
         if section.key in ('banners', 'features'):
             for name in list(self.fields):

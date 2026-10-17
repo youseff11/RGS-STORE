@@ -72,6 +72,8 @@
     var showScript = q('show_script');
     script.textContent = ((q('script_text') || {}).value || '').replace(/\\n/g, '\n').trim() || 'Bold\nIdeas\nBetter\nDesigns';
     script.hidden = mode === 'phone' || (showScript && !showScript.checked);
+    var tint = q('brown_tint');
+    box.classList.toggle('is-tinted', !!(tint && tint.checked));
     var focus = q(mode === 'desk' ? 'image_focus' : 'image_focus_mobile');
     img.src = urls[mode];
     img.style.objectPosition = (focus ? focus.value : 50) + '% center';

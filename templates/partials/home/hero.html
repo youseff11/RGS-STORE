@@ -1,5 +1,5 @@
 {% load static store_tags %}
-<section class="hero-main">
+<section class="hero-main{% if sec.brown_tint %} is-tinted{% endif %}">
   <div class="hero-media">
     <picture>
       {% if sec.image_mobile %}<source media="(max-width: 620px)" srcset="{{ sec.image_mobile.url }}">{% endif %}
