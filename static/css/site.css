@@ -299,43 +299,16 @@ html[dir="rtl"] .drawer-panel { transform: translateX(102%); }
   width: 100%; height: 100%; object-fit: cover; object-position: var(--hero-x, 58%) center;
 }
 .hero-media picture { display: contents; }
-/* Every hero photo stands full-height against the right edge. A wide photo is still
-   capped at the hero's width (so it fills it, cropped by `cover` as before); a squarer
-   one — like a portrait on black — shows whole instead of being blown up to the full
-   width and losing its top and bottom. Its left edge melts into the black. */
+/* The hero photo fills the whole section — no dark scrim or fade on the copy side —
+   and only its bottom edge melts into the page. */
 .hero-media img {
-  position: absolute; inset-block: 0; left: auto; right: 0;
-  width: auto; max-width: 100%; height: 100%;
-  /* fade the left edge into the copy side and the bottom edge into the page */
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 22%), linear-gradient(0deg, transparent 0%, #000 16%);
-  -webkit-mask-composite: source-in;
-          mask-image: linear-gradient(90deg, transparent 0%, #000 22%), linear-gradient(0deg, transparent 0%, #000 16%);
-          mask-composite: intersect;
+  position: absolute; inset: 0;
+  -webkit-mask-image: linear-gradient(0deg, transparent 0%, #000 16%);
+          mask-image: linear-gradient(0deg, transparent 0%, #000 16%);
 }
 .hero-media .for-dark { display: none; }
 :root .hero-media .for-light { display: none; }
 :root .hero-media .for-dark { display: block; }
-
-/* readability scrim: strong on the copy side, clear over the model */
-.hero-media::after {
-  content: ''; position: absolute; inset: 0; z-index: 1;
-  background:
-    linear-gradient(90deg,
-      #FFFFFF 0%,
-      rgba(255,255,255,.98) 30%,
-      rgba(255,255,255,.86) 42%,
-      rgba(255,255,255,.34) 56%,
-      rgba(255,255,255,0) 70%);
-}
-:root .hero-media::after {
-  background:
-    linear-gradient(90deg,
-      rgb(10,6,4) 0%,
-      rgba(10,6,4,.97) 30%,
-      rgba(10,6,4,.86) 42%,
-      rgba(10,6,4,.34) 56%,
-      rgba(10,6,4,0) 70%);
-}
 
 .hero-wrap {
   position: relative; z-index: 2; width: 100%;
@@ -439,22 +412,6 @@ html[dir="rtl"] .drawer-panel { transform: translateX(102%); }
     aspect-ratio: 16 / 9;
   }
   .hero-media img { object-position: var(--hero-x, 50%) center; }
-  .hero-media::after {
-    background: linear-gradient(90deg,
-      #FFFFFF 0%,
-      rgba(255,255,255,.90) 20%,
-      rgba(255,255,255,.60) 34%,
-      rgba(255,255,255,.12) 46%,
-      rgba(255,255,255,0) 56%);
-  }
-  :root .hero-media::after {
-    background: linear-gradient(90deg,
-      rgb(10,6,4) 0%,
-      rgba(10,6,4,.90) 20%,
-      rgba(10,6,4,.62) 34%,
-      rgba(10,6,4,.16) 46%,
-      rgba(10,6,4,0) 56%);
-  }
   .hero-wrap { padding: 20px 18px; }
   .hero-copy { max-width: 46%; }
   .hero-eyebrow { font-size: clamp(9px, 1.5vw, 12px); letter-spacing: .3em; margin-bottom: 8px; }
@@ -471,14 +428,6 @@ html[dir="rtl"] .drawer-panel { transform: translateX(102%); }
 @media (max-width: 620px) {
   .hero-main { aspect-ratio: 4 / 3; }
   .hero-media img { object-position: var(--hero-x-m, 40%) center; }
-  .hero-media::after {
-    background: linear-gradient(90deg, #FFFFFF 0%, rgba(255,255,255,.92) 26%,
-      rgba(255,255,255,.66) 42%, rgba(255,255,255,.16) 56%, rgba(255,255,255,0) 66%);
-  }
-  :root .hero-media::after {
-    background: linear-gradient(90deg, rgb(10,6,4) 0%, rgba(10,6,4,.92) 26%,
-      rgba(10,6,4,.68) 42%, rgba(10,6,4,.20) 56%, rgba(10,6,4,0) 66%);
-  }
   .hero-copy { max-width: 54%; }
   .hero-eyebrow { font-size: 9.5px; letter-spacing: .26em; }
   .hero-title .line-1 { font-size: clamp(19px, 6.1vw, 28px); }
@@ -1695,10 +1644,6 @@ h1, h2, h3, .section-head h2, .card-title, .work-title, .cat-tile .meta h3 {
 
 /* the hero lets the page's ambient light through instead of a flat black block */
 .hero-main { background: transparent; }
-.hero-media::after {
-  -webkit-mask-image: linear-gradient(0deg, transparent 0%, #000 22%);
-          mask-image: linear-gradient(0deg, transparent 0%, #000 22%);
-}
 
 /* the home hero slides up under the floating menu */
 main > .hero-main:first-child { margin-top: calc(-1 * var(--header-h)); }
@@ -1942,7 +1887,6 @@ a.contact-line:hover .ico { background: var(--grad-btn); color: #fff; }
             mask-image: linear-gradient(0deg, transparent 0%, #000 38%), linear-gradient(90deg, transparent 0%, #000 10%, #000 90%, transparent 100%);
             mask-composite: intersect;
   }
-  :root .hero-media::after { display: none; }
   .hero-wrap, main > .hero-main:first-child .hero-wrap { margin-top: -84px; padding: 0 20px; }
   .hero-copy { max-width: none; text-align: center; }
   .hero-eyebrow { font-size: 11px; letter-spacing: .2em; margin-bottom: 10px; }
