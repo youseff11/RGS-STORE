@@ -24,8 +24,7 @@
         </div>
         <div class="pay-step">
           <span class="pay-step-n">2</span>
-          <div class="grid g2" style="flex:1">
-            <div class="field"><label>{{ form.paypal_rate.label }}</label>{{ form.paypal_rate }}<div class="help">{{ form.paypal_rate.help_text }}</div>{% for e in form.paypal_rate.errors %}<div class="err-msg">{{ e }}</div>{% endfor %}</div>
+          <div style="flex:1">
             <div class="field"><label>{{ form.paypal_currency.label }}</label>{{ form.paypal_currency }}<div class="help">{{ form.paypal_currency.help_text }}</div></div>
           </div>
         </div>

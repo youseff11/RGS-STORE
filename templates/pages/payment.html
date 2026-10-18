@@ -20,9 +20,7 @@
       <div class="pay-amount">
         <span>{% t 'amount_to_pay' %}</span>
         <b dir="ltr">{{ order.pay_amount }} <small>{{ order.pay_currency|default:'USD' }}</small></b>
-        <em>= {% price order.total %}</em>
       </div>
-      <p class="small-note">{% t 'paypal_rate_note' rate=rate %}</p>
 
       {% if smart %}
         {# official PayPal button — payment is confirmed automatically #}
@@ -42,18 +40,6 @@
         <a class="btn btn-lg btn-block pp-link-btn" href="{{ pay_link }}" target="_blank" rel="noopener" data-pay-link>
           {% include 'partials/icon.html' with name='card' %} {% t 'pay_now_link' %} {% include 'partials/icon.html' with name='external' %}
         </a>
-        <ol class="pay-steps">
-          <li>{% t 'pay_now_link' %} — <b dir="ltr">{{ order.pay_amount }} {{ order.pay_currency|default:'USD' }}</b></li>
-          <li>{% t 'pay_link_steps' %}</li>
-        </ol>
-        <form method="post" action="{% url 'order_paid_manual' order.order_number %}" class="paid-form">
-          {% csrf_token %}
-          <div class="field">
-            <label for="pay-ref">{% t 'payment_reference' %}</label>
-            <input id="pay-ref" type="text" name="reference" maxlength="120" dir="ltr" autocomplete="off">
-          </div>
-          <button class="btn btn-ghost btn-block" type="submit">{% include 'partials/icon.html' with name='check' %} {% t 'i_paid' %}</button>
-        </form>
       {% endif %}
     </div>
 

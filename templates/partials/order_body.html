@@ -10,7 +10,7 @@
     <span class="ico">{% include 'partials/icon.html' with name='wallet' %}</span>
     <div>
       <b>{% t 'order_pending_payment_sub' %}</b>
-      <span>{% t 'amount_to_pay' %}: {% price order.total %}{% if order.pay_amount %} ≈ <span dir="ltr">{{ order.pay_amount }} {{ order.pay_currency }}</span>{% endif %}</span>
+      <span>{% t 'amount_to_pay' %}: {% price order.total %}</span>
     </div>
     <a class="btn" href="{% url 'order_pay' order.order_number %}">{% t 'pay_order' %} {% include 'partials/icon.html' with name='arrow' %}</a>
   </div>

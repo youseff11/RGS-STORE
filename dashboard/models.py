@@ -301,11 +301,8 @@ class SiteSettings(models.Model):
             methods.append('cod')
         return methods
 
-    def to_paypal_amount(self, amount_egp):
-        rate = self.paypal_rate or Decimal('1')
-        if rate <= ZERO:
-            rate = Decimal('1')
-        return (Decimal(amount_egp or 0) / rate).quantize(Decimal('0.01'), rounding=ROUND_UP)
+    def to_paypal_amount(self, amount):
+        return Decimal(amount or 0).quantize(Decimal('0.01'), rounding=ROUND_UP)
 
     def free_threshold_for(self, country=None):
         """Free-shipping threshold for a country (its own value, else the general one). 0 = never free."""

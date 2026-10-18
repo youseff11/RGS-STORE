@@ -33,7 +33,7 @@ from .models import (
     staff_permissions,
 )
 from .templatetags.store_tags import money as fmt_money
-from .utils import Cart, money, save_ticket_attachments, ticket_uploads
+from .utils import Cart, save_ticket_attachments, ticket_uploads
 
 PAGE_SIZE = 12
 User = get_user_model()
@@ -1082,16 +1082,16 @@ def order_pay(request, number):
     site = SiteSettings.load()
     if order.is_paid or order.payment_method != 'paypal' or order.status == 'cancelled':
         return redirect('order_success', number=order.order_number)
-    if not order.pay_amount:
-        order.pay_amount = site.to_paypal_amount(order.total)
-        order.pay_currency = site.paypal_currency or 'USD'
+    amount = site.to_paypal_amount(order.total)
+    currency = site.paypal_currency or 'USD'
+    if order.pay_amount != amount or order.pay_currency != currency:
+        order.pay_amount, order.pay_currency = amount, currency
         order.save(update_fields=['pay_amount', 'pay_currency', 'updated_at'])
     return render(request, 'pages/payment.html', {
         'order': order,
         'smart': site.paypal_smart_ready,
         'client_id': site.paypal_client_id,
         'pay_link': _paypal_link_for(site, order),
-        'rate': money(site.paypal_rate),
         'page_title': t('payment_title'),
     })
 

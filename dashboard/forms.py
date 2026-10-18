@@ -562,13 +562,12 @@ class PaymentSettingsForm(StyledForm):
     class Meta:
         model = SiteSettings
         fields = [
-            'paypal_enabled', 'paypal_link', 'paypal_rate', 'paypal_currency',
+            'paypal_enabled', 'paypal_link', 'paypal_currency',
             'paypal_client_id', 'paypal_secret', 'paypal_sandbox', 'cod_enabled',
         ]
         labels = {
             'paypal_enabled': 'تفعيل الدفع عبر PayPal',
             'paypal_link': 'لينك الدفع (PayPal.me)',
-            'paypal_rate': 'سعر الدولار بالجنيه',
             'paypal_currency': 'عملة PayPal',
             'paypal_client_id': 'PayPal Client ID',
             'paypal_sandbox': 'وضع التجربة (Sandbox) — للاختبار بس',
@@ -576,7 +575,6 @@ class PaymentSettingsForm(StyledForm):
         }
         help_texts = {
             'paypal_link': 'مثال: https://paypal.me/YourName — لو لينك PayPal.me المبلغ بيتضاف له أوتوماتيك',
-            'paypal_rate': 'PayPal مش بيقبل الجنيه، فالمبلغ بيتقسم على الرقم ده — مثال: 50',
             'paypal_currency': 'غالبًا USD',
             'paypal_client_id': 'اختياري — مع الـ Secret بيظهر زرار PayPal الرسمي ويتأكد الدفع أوتوماتيك',
         }
@@ -593,12 +591,6 @@ class PaymentSettingsForm(StyledForm):
 
     def clean_paypal_currency(self):
         return (self.cleaned_data.get('paypal_currency') or 'USD').upper()[:3]
-
-    def clean_paypal_rate(self):
-        rate = self.cleaned_data.get('paypal_rate')
-        if rate is None or rate <= 0:
-            raise forms.ValidationError('اكتب سعر أكبر من صفر')
-        return rate
 
     def clean(self):
         data = super().clean()
